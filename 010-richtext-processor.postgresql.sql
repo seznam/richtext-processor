@@ -169,3 +169,92 @@ BEGIN
 END;
 $$;
 
+CREATE TYPE "rich_text"."_token_type" AS ENUM (
+  'COMMAND_START',
+  'COMMAND_END',
+  'TEXT',
+  'WHITESPACE'
+);
+
+CREATE TYPE "rich_text"."_token" AS (
+  "index" integer,
+  "type" "rich_text"."_token_type",
+  "token" character varying
+);
+
+CREATE FUNCTION "rich_text"."_tokenize"("rich_text" character varying)
+RETURNS SETOF "rich_text"."_token"
+RETURNS NULL ON NULL INPUT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  "COMMAND_TOKEN_START" character(1) DEFAULT '<';
+  "COMMAND_TOKEN_END" character(1) DEFAULT '>';
+  "is_command" boolean DEFAULT false;
+  "i" integer;
+  "current_character" character varying;
+  "token" "rich_text"."_token"
+    DEFAULT CAST(ROW(1, 'TEXT', '') AS "rich_text"."_token");
+BEGIN
+  FOR "i" IN 1..character_length("rich_text") LOOP
+    "current_character" := substring("rich_text" FROM "i" FOR 1);
+    CASE
+      WHEN "current_character" = "COMMAND_TOKEN_START" THEN
+        IF "is_command" THEN
+          RAISE EXCEPTION
+            'Commands cannot contain the < character, found at index %',
+            "i";
+        END IF;
+        "is_command" := true;
+        IF ("token")."token" <> '' THEN
+          "token"."index" := "i" - character_length(("token")."token");
+          RETURN NEXT "token";
+          "token"."token" := '';
+        END IF;
+      WHEN "current_character" = "COMMAND_TOKEN_END" THEN
+        IF "is_command" THEN
+          "is_command" := false;
+          "token"."index" := "i" - character_length(("token")."token") - 1;
+          IF substring(("token")."token" FOR 1) = '/' THEN
+            "token"."type" := 'COMMAND_END';
+            "token"."token" := substring(("token")."token" FROM 2);
+          ELSE
+            "token"."type" := 'COMMAND_START';
+          END IF;
+          RETURN NEXT "token";
+          "token"."type" := 'TEXT';
+          "token"."token" := '';
+        ELSE
+          "token"."token" := ("token")."token" || "current_character";
+        END IF;
+      WHEN "current_character" ~ '^[ \r\n\t]$' THEN
+        IF ("token")."token" <> '' THEN
+          "token"."index" := "i" - character_length(("token")."token");
+          RETURN NEXT "token";
+        END IF;
+        "token"."index" := "i";
+        "token"."type" := 'WHITESPACE';
+        "token"."token" := "current_character";
+        RETURN NEXT "token";
+        "token"."type" := 'TEXT';
+        "token"."token" := '';
+      ELSE
+        "token"."token" := ("token")."token" || "current_character";
+    END CASE;
+  END LOOP;
+
+  IF "is_command" THEN
+    RAISE EXCEPTION
+      'The provided text/richtext is malformed, encountered an unterminated (missing the ">" character) command <%> at index %',
+      ("token")."token",
+      character_length("rich_text") - character_length(("token")."token");
+  END IF;
+
+  IF ("token")."token" <> '' THEN
+    "token"."type" := 'TEXT';
+    "token"."index" :=
+      character_length("rich_text") - character_length(("token")."token") + 1;
+    RETURN NEXT "token";
+  END IF;
+END;
+$$;
