@@ -258,3 +258,137 @@ BEGIN
   END IF;
 END;
 $$;
+
+CREATE TYPE "rich_text"."node_type" AS ENUM (
+  'COMMAND',
+  'TEXT',
+  'WHITESPACE'
+);
+
+CREATE TYPE "rich_text"."node" AS (
+  "index" integer,
+  "type" "rich_text"."node_type",
+  "value" character varying,
+  "children" jsonb[]
+);
+
+CREATE FUNCTION "rich_text"."_parse"(
+  "rich_text" "rich_text"."_token"[],
+  "case_insensitive_commands" boolean DEFAULT true
+)
+RETURNS SETOF "rich_text"."node"
+RETURNS NULL ON NULL INPUT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  "command_stack" "rich_text"."node"[]
+    DEFAULT CAST(ARRAY[] AS "rich_text"."node"[]);
+  "i" integer;
+  "token" "rich_text"."_token";
+  "normalized_command" character varying;
+  "node" "rich_text"."node";
+BEGIN
+  FOR "i" IN 1..array_length("rich_text", 1) LOOP
+    "token" = "rich_text"["i"];
+    CASE ("token")."type"
+      WHEN 'COMMAND_START' THEN
+        "node" := CAST(ROW(
+          ("token")."index",
+          'COMMAND',
+          ("token")."token", CAST(ARRAY[] AS jsonb[])
+        ) AS "rich_text"."node");
+        IF "case_insensitive_commands" THEN
+          "normalized_command" := lower(("token")."token");
+        ELSE
+          "normalized_command" := ("token")."token";
+        END IF;
+        IF
+          "normalized_command" = 'lt' OR
+          "normalized_command" = 'nl' OR
+          "normalized_command" = 'np'
+        THEN
+          IF array_length("command_stack", 1) IS NOT NULL THEN
+            "command_stack"[1]."children" :=
+              ("command_stack"[1])."children" || to_jsonb("node");
+          ELSE
+            RETURN NEXT "node";
+          END IF;
+        ELSE
+          "command_stack" := "node" || "command_stack";
+        END IF;
+      WHEN 'COMMAND_END' THEN
+        IF "case_insensitive_commands" THEN
+          "normalized_command" := lower(("token")."token");
+        ELSE
+          "normalized_command" := ("token")."token";
+        END IF;
+        IF
+          "normalized_command" = 'lt' OR
+          "normalized_command" = 'nl' OR
+          "normalized_command" = 'np'
+        THEN
+          RAISE EXCEPTION
+            'No balancing </%> is allowed by text/richtext, but was encountered at index %',
+            ("token")."token",
+            ("token")."index";
+        END IF;
+        IF array_length("command_stack", 1) IS NULL THEN
+          RAISE EXCEPTION
+            'The provided text/richtext is not correctly balanced and nested, encountered unexpected </%> at index % with no matching <%> before it',
+            ("token")."token",
+            ("token")."index",
+            ("token")."token";
+        END IF;
+        IF
+          ("token")."token" <> ("command_stack"[1])."value" AND
+          (
+            NOT "case_insensitive_commands" OR
+            "normalized_command" <> lower(("command_stack"[1])."value")
+          )
+        THEN
+          RAISE EXCEPTION
+            'The provided text/richtext is not correctly balanced and nested, encountered unexpected </%> at index %, but the last started command was % at index %',
+            ("token")."token",
+            ("token")."index",
+            ("command_stack"[1])."value",
+            ("command_stack"[1])."index";
+        END IF;
+        "node" := "command_stack"[1];
+        "command_stack" := "command_stack"[2:];
+        IF array_length("command_stack", 1) IS NOT NULL THEN
+          "command_stack"[1]."children" :=
+            ("command_stack"[1])."children" || to_jsonb("node");
+        ELSE
+          RETURN NEXT "node";
+        END IF;
+      WHEN 'TEXT', 'WHITESPACE' THEN
+        "node" := CAST(
+          ROW(
+            ("token")."index",
+            CAST(("token")."type" AS character varying),
+            ("token")."token",
+            CAST(ARRAY[] AS jsonb[])
+          )
+          AS "rich_text"."node"
+        );
+        IF array_length("command_stack", 1) IS NOT NULL THEN
+          "command_stack"[1]."children" :=
+            ("command_stack")[1]."children" || to_jsonb("node");
+        ELSE
+          RETURN NEXT "node";
+        END IF;
+      ELSE
+        RAISE EXCEPTION
+          'Encountered an unknown or unsupported token type: %',
+          ("token")."type";
+    END CASE;
+  END LOOP;
+
+  IF array_length("command_stack", 1) IS NOT NULL THEN
+    RAISE EXCEPTION
+      'The provided text/richtext is not correctly balanced and nested, encountered an unbalanced <%> at index %',
+      ("command_stack"[1])."value",
+      ("command_stack"[1])."index";
+  END IF;
+END;
+$$;
