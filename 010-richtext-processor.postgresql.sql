@@ -584,3 +584,19 @@ BEGIN
   RETURN "command_interpretation";
 END;
 $$;
+
+CREATE FUNCTION "rich_text"."_deserialize_node_children"(
+  "node" "rich_text"."node"
+)
+RETURNS "rich_text"."node"[]
+RETURNS NULL ON NULL INPUT
+LANGUAGE SQL
+AS $$
+  SELECT array_agg("child")
+  FROM (
+    SELECT jsonb_populate_record(
+      CAST(NULL AS "rich_text"."node"),
+      unnest(("node")."children")
+    ) AS "child"
+  ) AS "children";
+$$;
