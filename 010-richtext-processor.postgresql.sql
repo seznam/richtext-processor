@@ -600,3 +600,70 @@ AS $$
     ) AS "child"
   ) AS "children";
 $$;
+
+CREATE TYPE "rich_text"."layout_block_paragraph_line" AS (
+  "index" integer,
+
+  "causing_command" "rich_text"."node",
+
+  -- May contain text, whitespace and the following commands:
+  --   - Content representing commands: lt
+  --   - Inline formatting commands: Bold, Italic, Fixed, Smaller, Bigger,
+  --     Underline, Subscript, Superscript
+  --   - Alignment commands: Indent, IndentRight, Outdent, OutdentRight
+  --   - Styling commands: Excerpt, Signature
+  --   - Metadata commands: Comment
+  --   - Any custom extensions treated as inline content
+  "content" "rich_text"."node"[]
+);
+
+CREATE TYPE "rich_text"."layout_block_content_alignment" AS ENUM (
+  'DEFAULT',
+  'JUSTIFY_LEFT',
+  'JUSTIFY_RIGHT',
+  'CENTER'
+);
+
+CREATE TYPE "rich_text"."layout_block_paragraph" AS (
+  "index" integer,
+
+  "causing_command" "rich_text"."node",
+
+  "content_alignment" "rich_text"."layout_block_content_alignment",
+
+  -- Only true for the <Paragraph> command and after </Paragraph> if nested
+  -- within another <Paragraph>, or custom command representing isolated
+  -- paragraph.
+  "is_explicit_paragraph" boolean,
+
+  -- Lines are paragraph fragments explicitly separated by the <nl> command and
+  -- do not neccessary map 1:1 to rows in rendered document, but every line
+  -- should be rendered as one or more rows of content, while not merging
+  -- multiple lines into a single row.
+  "lines" "rich_text"."layout_block_paragraph_line"[]
+);
+
+CREATE TYPE "rich_text"."layout_block_type" AS ENUM (
+  'HEADING',
+
+  'FOOTING',
+
+  'MAIN_CONTENT',
+
+  'PAGE_BREAK',
+
+  'SAME_PAGE_START',
+
+  'SAME_PAGE_END',
+
+  -- Caused only by custom commands for which the processing custom command
+  -- hook returns 'NEW_BLOCK'.
+  'CUSTOM'
+);
+
+CREATE TYPE "rich_text"."layout_block" AS (
+  "index" integer,
+  "type" "rich_text"."layout_block_type",
+  "causing_command" "rich_text"."node",
+  "paragraphs" "rich_text"."layout_block_paragraph"[]
+);
