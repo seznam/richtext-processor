@@ -392,3 +392,195 @@ BEGIN
   END IF;
 END;
 $$;
+
+CREATE TYPE "rich_text"."_command_layout_interpretation" AS ENUM (
+   -- The contents of the command will be interpreted as page heading content.
+  'HEADING_BLOCK',
+
+  -- The contents of the command will be interpreted as page footing content.
+  'FOOTING_BLOCK',
+
+  -- Can be used for implemeting additional content areas, for example an aside
+  -- column.
+  'NEW_BLOCK',
+
+  -- Move the subsequent content to a new page.
+  'NEW_PAGE',
+
+  -- The content of the command should be, if possible, layed out on a single
+  -- page.
+  'SAME_PAGE',
+
+  -- Starts a new implicit paragraph that continues after the causing command's
+  -- end.
+  'NEW_IMPLICIT_PARAGRAPH',
+
+  -- Starts a new implicit paragraph that ends after the causing command's end.
+  'NEW_ISOLATED_IMPLICIT_PARAGRAPH',
+
+  -- Starts a new line of content.
+  'NEW_LINE',
+
+  -- Start a new line that ends afters the causing command's end.
+  'NEW_ISOLATED_LINE',
+
+  -- The command will be appended to the current line's content.
+  'INLINE_CONTENT',
+
+  -- Same as INLINE_CONTENT, except any children of the command will just be
+  -- added to the current line's content with the command itself, and the
+  -- children will not have any effect on the computed layout blocks.
+  'COMMENT',
+
+  -- The command has no effect, layout, formating or otherwise, and will be
+  -- replaced by its children. This is the default behavior for custom commands
+  -- if no custom command hook is provided.
+  'NO_OP',
+
+  -- The command is not a standard richtext formatting command but a custom
+  -- one. Its layout interpretation will be determined by a custom command hook
+  -- function, if provided.
+  'CUSTOM'
+);
+
+CREATE FUNCTION "rich_text"."_get_standard_command_layout_interpretation"(
+  "node" "rich_text"."node",
+  "case_insensitive_commands" boolean DEFAULT true
+)
+RETURNS "rich_text"."_command_layout_interpretation"
+RETURNS NULL ON NULL INPUT
+LANGUAGE SQL
+AS $$
+  SELECT CAST(CASE
+    WHEN
+      ("node")."value" ~ '^(Bold|Italic|Fixed|Smaller|Bigger|Underline|Subscript|Superscript|Indent|IndentRight|Outdent|OutdentRight|Excerpt|Signature|lt)$' OR
+      (
+        "case_insensitive_commands" AND
+        ("node")."value" ~* '^(Bold|Italic|Fixed|Smaller|Bigger|Underline|Subscript|Superscript|Indent|IndentRight|Outdent|OutdentRight|Excerpt|Signature|lt)$'
+      )
+    THEN
+      'INLINE_CONTENT'
+    WHEN
+      ("node")."value" ~ '^(Center|FlushLeft|FlushRight|Paragraph)$' OR
+      (
+        "case_insensitive_commands" AND
+        ("node")."value" ~* '^(Center|FlushLeft|FlushRight|Paragraph)$'
+      )
+    THEN
+      'NEW_ISOLATED_IMPLICIT_PARAGRAPH'
+    WHEN
+      ("node")."value" = 'SamePage' OR
+      ("case_insensitive_commands" AND upper(("node")."value") = 'SAMEPAGE')
+    THEN
+      'SAME_PAGE'
+    WHEN
+      ("node")."value" = 'Heading' OR
+      ("case_insensitive_commands" AND upper(("node")."value") = 'HEADING')
+    THEN
+      'HEADING_BLOCK'
+    WHEN
+      ("node")."value" = 'Footing' OR
+      ("case_insensitive_commands" AND upper(("node")."value") = 'FOOTING')
+    THEN
+      'FOOTING_BLOCK'
+    WHEN
+      ("node")."value" ~ '^(ISO-8859-[1-9]|US-ASCII|No-op)$' OR
+      (
+        "case_insensitive_commands" AND
+        ("node")."value" ~* '^(ISO-8859-[1-9]|US-ASCII|NO-OP)$'
+      )
+    THEN
+      'NO_OP'
+    WHEN
+      ("node")."value" = 'Comment' OR
+      ("case_insensitive_commands" AND upper(("node")."value") = 'COMMENT')
+    THEN
+      'COMMENT'
+    WHEN
+      ("node")."value" = 'nl' OR
+      ("case_insensitive_commands" AND upper(("node")."value") = 'NL')
+    THEN
+      'NEW_LINE'
+    WHEN
+      ("node")."value" = 'np' OR
+      ("case_insensitive_commands" AND upper(("node")."value") = 'NP')
+    THEN
+      'NEW_PAGE'
+    ELSE
+      'CUSTOM'
+  END AS "rich_text"."_command_layout_interpretation");
+$$;
+
+CREATE TYPE "rich_text"."custom_command_layout_interpretation" AS ENUM (
+  -- Can be used for implemeting additional content areas, for example an aside
+  -- column.
+  'NEW_BLOCK',
+
+  -- Starts a new implicit paragraph that continues after the causing command's
+  -- end.
+  'NEW_IMPLICIT_PARAGRAPH',
+
+  -- Starts a new implicit paragraph that ends after the causing command's end.
+  'NEW_ISOLATED_IMPLICIT_PARAGRAPH',
+
+  -- Starts a new line that continues after the causing command's end.
+  'NEW_LINE',
+
+  -- Start a new line that ends afters the causing command's end.
+  'NEW_ISOLATED_LINE',
+
+   -- The command will be appended to the current line's content.
+  'INLINE_CONTENT',
+
+  -- The command has no effect, layout, formating or otherwise, and will be
+  -- replaced by its children. This is the default behavior for custom commands
+  -- if no custom command hook is provided.
+  'NO_OP'
+);
+
+CREATE FUNCTION "rich_text"."_get_command_layout_interpretation"(
+  "node" "rich_text"."node",
+
+  -- Optional callback to execute whenever the processor encounters a custom
+  -- command. The callback is specified as a string containing a quoted
+  -- function identifier. The function will be invoked with the following
+  -- arguments:
+  --   - command_node rich_text.node - the richtext node representing the
+  --     custom command.
+  --   - case_insensitive_commands boolean - the value of the
+  --     case_insensitive_commands flag passed to this function.
+  -- The function must return a rich_text.custom_command_layout_interpretation
+  -- enum constant.
+  -- Use an empty string to treat all custom commands as inline content (just
+  -- like the No-op command).
+  "custom_command_hook" character varying DEFAULT '',
+
+  "case_insensitive_commands" boolean DEFAULT true
+)
+RETURNS "rich_text"."_command_layout_interpretation"
+RETURNS NULL ON NULL INPUT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  "command_interpretation" "rich_text"."_command_layout_interpretation";
+  "custom_command_interpretation"
+    "rich_text"."custom_command_layout_interpretation";
+BEGIN
+  "command_interpretation" :=
+    "rich_text"."_get_standard_command_layout_interpretation"(
+      "node",
+      "case_insensitive_commands"
+    );
+  IF "command_interpretation" = 'CUSTOM' THEN
+    IF "custom_command_hook" <> '' THEN
+      EXECUTE 'SELECT ' || quote_ident("custom_command_hook") || '($1, $2)'
+      INTO STRICT "custom_command_interpretation"
+      USING "node", "case_insensitive_commands";
+      "command_interpretation" := "custom_command_interpretation";
+    ELSE
+      "command_interpretation" := 'NO_OP';
+    END IF;
+  END IF;
+  RETURN "command_interpretation";
+END;
+$$;
