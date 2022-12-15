@@ -1,6 +1,6 @@
-CREATE SCHEMA "rich_text";
+CREATE SCHEMA "richtext";
 
-CREATE FUNCTION "rich_text"."_rich_text_to_postgresql_encoding"(
+CREATE FUNCTION "richtext"."_richtext_to_postgresql_encoding"(
   "encoding_name" character varying,
   "case_insensitive" boolean DEFAULT true
 )
@@ -34,8 +34,8 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION "rich_text"."_normalize_encoding"(
-  "rich_text" bytea,
+CREATE FUNCTION "richtext"."_normalize_encoding"(
+  "richtext" bytea,
   "case_insensitive_commands" boolean DEFAULT true
 )
 RETURNS character varying
@@ -57,11 +57,11 @@ DECLARE
 BEGIN
   IF pg_client_encoding() <> 'UTF8' THEN
     RAISE EXCEPTION
-      'The rich_text._normalize_encoding function can be used only if client encoding is UTF8';
+      'The richtext._normalize_encoding function can be used only if client encoding is UTF8';
   END IF;
 
-  FOR "i" IN 1..octet_length("rich_text") LOOP
-    "current_character" := substring("rich_text" FROM "i" FOR 1);
+  FOR "i" IN 1..octet_length("richtext") LOOP
+    "current_character" := substring("richtext" FROM "i" FOR 1);
     CASE "current_character"
       WHEN "COMMAND_START" THEN
         IF "is_command" THEN
@@ -91,7 +91,7 @@ BEGIN
                 "result" ||
                 convert_from(
                   "chunk",
-                  "rich_text"."_rich_text_to_postgresql_encoding"(
+                  "richtext"."_richtext_to_postgresql_encoding"(
                     "chunk_encoding_stack"[1],
                     "case_insensitive_commands"
                   )
@@ -124,7 +124,7 @@ BEGIN
                 "result" ||
                 convert_from(
                   "chunk",
-                  "rich_text"."_rich_text_to_postgresql_encoding"(
+                  "richtext"."_richtext_to_postgresql_encoding"(
                     "chunk_encoding_stack"[1],
                     "case_insensitive_commands"
                   )
@@ -151,7 +151,7 @@ BEGIN
     RAISE EXCEPTION
       'The provided text/richtext is malformed, encountered an unterminated (missing the ">" character) command <%> at index %',
       convert_from("token", 'ISO88591'),
-      octet_length("rich_text") - octet_length("token");
+      octet_length("richtext") - octet_length("token");
   END IF;
 
   "chunk" := "chunk" || "token";
@@ -159,7 +159,7 @@ BEGIN
     "result" ||
     convert_from(
       "chunk",
-      "rich_text"."_rich_text_to_postgresql_encoding"(
+      "richtext"."_richtext_to_postgresql_encoding"(
         "chunk_encoding_stack"[1],
         "case_insensitive_commands"
       )
@@ -169,21 +169,21 @@ BEGIN
 END;
 $$;
 
-CREATE TYPE "rich_text"."_token_type" AS ENUM (
+CREATE TYPE "richtext"."_token_type" AS ENUM (
   'COMMAND_START',
   'COMMAND_END',
   'TEXT',
   'WHITESPACE'
 );
 
-CREATE TYPE "rich_text"."_token" AS (
+CREATE TYPE "richtext"."_token" AS (
   "index" integer,
-  "type" "rich_text"."_token_type",
+  "type" "richtext"."_token_type",
   "token" character varying
 );
 
-CREATE FUNCTION "rich_text"."_tokenize"("rich_text" character varying)
-RETURNS SETOF "rich_text"."_token"
+CREATE FUNCTION "richtext"."_tokenize"("richtext" character varying)
+RETURNS SETOF "richtext"."_token"
 RETURNS NULL ON NULL INPUT
 LANGUAGE plpgsql
 AS $$
@@ -193,11 +193,11 @@ DECLARE
   "is_command" boolean DEFAULT false;
   "i" integer;
   "current_character" character varying;
-  "token" "rich_text"."_token"
-    DEFAULT CAST(ROW(1, 'TEXT', '') AS "rich_text"."_token");
+  "token" "richtext"."_token"
+    DEFAULT CAST(ROW(1, 'TEXT', '') AS "richtext"."_token");
 BEGIN
-  FOR "i" IN 1..character_length("rich_text") LOOP
-    "current_character" := substring("rich_text" FROM "i" FOR 1);
+  FOR "i" IN 1..character_length("richtext") LOOP
+    "current_character" := substring("richtext" FROM "i" FOR 1);
     CASE
       WHEN "current_character" = "COMMAND_TOKEN_START" THEN
         IF "is_command" THEN
@@ -247,56 +247,56 @@ BEGIN
     RAISE EXCEPTION
       'The provided text/richtext is malformed, encountered an unterminated (missing the ">" character) command <%> at index %',
       ("token")."token",
-      character_length("rich_text") - character_length(("token")."token");
+      character_length("richtext") - character_length(("token")."token");
   END IF;
 
   IF ("token")."token" <> '' THEN
     "token"."type" := 'TEXT';
     "token"."index" :=
-      character_length("rich_text") - character_length(("token")."token") + 1;
+      character_length("richtext") - character_length(("token")."token") + 1;
     RETURN NEXT "token";
   END IF;
 END;
 $$;
 
-CREATE TYPE "rich_text"."node_type" AS ENUM (
+CREATE TYPE "richtext"."node_type" AS ENUM (
   'COMMAND',
   'TEXT',
   'WHITESPACE'
 );
 
-CREATE TYPE "rich_text"."node" AS (
+CREATE TYPE "richtext"."node" AS (
   "index" integer,
-  "type" "rich_text"."node_type",
+  "type" "richtext"."node_type",
   "value" character varying,
   "children" jsonb[]
 );
 
-CREATE FUNCTION "rich_text"."_parse"(
-  "rich_text" "rich_text"."_token"[],
+CREATE FUNCTION "richtext"."_parse"(
+  "richtext" "richtext"."_token"[],
   "case_insensitive_commands" boolean DEFAULT true
 )
-RETURNS SETOF "rich_text"."node"
+RETURNS SETOF "richtext"."node"
 RETURNS NULL ON NULL INPUT
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  "command_stack" "rich_text"."node"[]
-    DEFAULT CAST(ARRAY[] AS "rich_text"."node"[]);
+  "command_stack" "richtext"."node"[]
+    DEFAULT CAST(ARRAY[] AS "richtext"."node"[]);
   "i" integer;
-  "token" "rich_text"."_token";
+  "token" "richtext"."_token";
   "normalized_command" character varying;
-  "node" "rich_text"."node";
+  "node" "richtext"."node";
 BEGIN
-  FOR "i" IN 1..array_length("rich_text", 1) LOOP
-    "token" = "rich_text"["i"];
+  FOR "i" IN 1..array_length("richtext", 1) LOOP
+    "token" = "richtext"["i"];
     CASE ("token")."type"
       WHEN 'COMMAND_START' THEN
         "node" := CAST(ROW(
           ("token")."index",
           'COMMAND',
           ("token")."token", CAST(ARRAY[] AS jsonb[])
-        ) AS "rich_text"."node");
+        ) AS "richtext"."node");
         IF "case_insensitive_commands" THEN
           "normalized_command" := lower(("token")."token");
         ELSE
@@ -369,7 +369,7 @@ BEGIN
             ("token")."token",
             CAST(ARRAY[] AS jsonb[])
           )
-          AS "rich_text"."node"
+          AS "richtext"."node"
         );
         IF array_length("command_stack", 1) IS NOT NULL THEN
           "command_stack"[1]."children" :=
@@ -393,7 +393,7 @@ BEGIN
 END;
 $$;
 
-CREATE TYPE "rich_text"."_command_layout_interpretation" AS ENUM (
+CREATE TYPE "richtext"."_command_layout_interpretation" AS ENUM (
    -- The contents of the command will be interpreted as page heading content.
   'HEADING_BLOCK',
 
@@ -443,11 +443,11 @@ CREATE TYPE "rich_text"."_command_layout_interpretation" AS ENUM (
   'CUSTOM'
 );
 
-CREATE FUNCTION "rich_text"."_get_standard_command_layout_interpretation"(
-  "node" "rich_text"."node",
+CREATE FUNCTION "richtext"."_get_standard_command_layout_interpretation"(
+  "node" "richtext"."node",
   "case_insensitive_commands" boolean DEFAULT true
 )
-RETURNS "rich_text"."_command_layout_interpretation"
+RETURNS "richtext"."_command_layout_interpretation"
 RETURNS NULL ON NULL INPUT
 LANGUAGE SQL
 AS $$
@@ -508,10 +508,10 @@ AS $$
       'NEW_PAGE'
     ELSE
       'CUSTOM'
-  END AS "rich_text"."_command_layout_interpretation");
+  END AS "richtext"."_command_layout_interpretation");
 $$;
 
-CREATE TYPE "rich_text"."custom_command_layout_interpretation" AS ENUM (
+CREATE TYPE "richtext"."custom_command_layout_interpretation" AS ENUM (
   -- Can be used for implemeting additional content areas, for example an aside
   -- column.
   'NEW_BLOCK',
@@ -538,18 +538,18 @@ CREATE TYPE "rich_text"."custom_command_layout_interpretation" AS ENUM (
   'NO_OP'
 );
 
-CREATE FUNCTION "rich_text"."_get_command_layout_interpretation"(
-  "node" "rich_text"."node",
+CREATE FUNCTION "richtext"."_get_command_layout_interpretation"(
+  "node" "richtext"."node",
 
   -- Optional callback to execute whenever the processor encounters a custom
   -- command. The callback is specified as a string containing a quoted
   -- function identifier. The function will be invoked with the following
   -- arguments:
-  --   - command_node rich_text.node - the richtext node representing the
+  --   - command_node richtext.node - the richtext node representing the
   --     custom command.
   --   - case_insensitive_commands boolean - the value of the
   --     case_insensitive_commands flag passed to this function.
-  -- The function must return a rich_text.custom_command_layout_interpretation
+  -- The function must return a richtext.custom_command_layout_interpretation
   -- enum constant.
   -- Use an empty string to treat all custom commands as inline content (just
   -- like the No-op command).
@@ -557,17 +557,17 @@ CREATE FUNCTION "rich_text"."_get_command_layout_interpretation"(
 
   "case_insensitive_commands" boolean DEFAULT true
 )
-RETURNS "rich_text"."_command_layout_interpretation"
+RETURNS "richtext"."_command_layout_interpretation"
 RETURNS NULL ON NULL INPUT
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  "command_interpretation" "rich_text"."_command_layout_interpretation";
+  "command_interpretation" "richtext"."_command_layout_interpretation";
   "custom_command_interpretation"
-    "rich_text"."custom_command_layout_interpretation";
+    "richtext"."custom_command_layout_interpretation";
 BEGIN
   "command_interpretation" :=
-    "rich_text"."_get_standard_command_layout_interpretation"(
+    "richtext"."_get_standard_command_layout_interpretation"(
       "node",
       "case_insensitive_commands"
     );
@@ -585,26 +585,26 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION "rich_text"."_deserialize_node_children"(
-  "node" "rich_text"."node"
+CREATE FUNCTION "richtext"."_deserialize_node_children"(
+  "node" "richtext"."node"
 )
-RETURNS "rich_text"."node"[]
+RETURNS "richtext"."node"[]
 RETURNS NULL ON NULL INPUT
 LANGUAGE SQL
 AS $$
   SELECT array_agg("child")
   FROM (
     SELECT jsonb_populate_record(
-      CAST(NULL AS "rich_text"."node"),
+      CAST(NULL AS "richtext"."node"),
       unnest(("node")."children")
     ) AS "child"
   ) AS "children";
 $$;
 
-CREATE TYPE "rich_text"."layout_block_paragraph_line" AS (
+CREATE TYPE "richtext"."layout_block_paragraph_line" AS (
   "index" integer,
 
-  "causing_command" "rich_text"."node",
+  "causing_command" "richtext"."node",
 
   -- May contain text, whitespace and the following commands:
   --   - Content representing commands: lt
@@ -614,22 +614,22 @@ CREATE TYPE "rich_text"."layout_block_paragraph_line" AS (
   --   - Styling commands: Excerpt, Signature
   --   - Metadata commands: Comment
   --   - Any custom extensions treated as inline content
-  "content" "rich_text"."node"[]
+  "content" "richtext"."node"[]
 );
 
-CREATE TYPE "rich_text"."layout_block_content_alignment" AS ENUM (
+CREATE TYPE "richtext"."layout_block_content_alignment" AS ENUM (
   'DEFAULT',
   'JUSTIFY_LEFT',
   'JUSTIFY_RIGHT',
   'CENTER'
 );
 
-CREATE TYPE "rich_text"."layout_block_paragraph" AS (
+CREATE TYPE "richtext"."layout_block_paragraph" AS (
   "index" integer,
 
-  "causing_command" "rich_text"."node",
+  "causing_command" "richtext"."node",
 
-  "content_alignment" "rich_text"."layout_block_content_alignment",
+  "content_alignment" "richtext"."layout_block_content_alignment",
 
   -- Only true for the <Paragraph> command and after </Paragraph> if nested
   -- within another <Paragraph>, or custom command representing isolated
@@ -640,10 +640,10 @@ CREATE TYPE "rich_text"."layout_block_paragraph" AS (
   -- do not neccessary map 1:1 to rows in rendered document, but every line
   -- should be rendered as one or more rows of content, while not merging
   -- multiple lines into a single row.
-  "lines" "rich_text"."layout_block_paragraph_line"[]
+  "lines" "richtext"."layout_block_paragraph_line"[]
 );
 
-CREATE TYPE "rich_text"."layout_block_type" AS ENUM (
+CREATE TYPE "richtext"."layout_block_type" AS ENUM (
   'HEADING',
 
   'FOOTING',
@@ -661,9 +661,9 @@ CREATE TYPE "rich_text"."layout_block_type" AS ENUM (
   'CUSTOM'
 );
 
-CREATE TYPE "rich_text"."layout_block" AS (
+CREATE TYPE "richtext"."layout_block" AS (
   "index" integer,
-  "type" "rich_text"."layout_block_type",
-  "causing_command" "rich_text"."node",
-  "paragraphs" "rich_text"."layout_block_paragraph"[]
+  "type" "richtext"."layout_block_type",
+  "causing_command" "richtext"."node",
+  "paragraphs" "richtext"."layout_block_paragraph"[]
 );
