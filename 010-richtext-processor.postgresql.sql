@@ -667,3 +667,99 @@ CREATE TYPE "richtext"."layout_block" AS (
   "causing_command" "richtext"."node",
   "paragraphs" "richtext"."layout_block_paragraph"[]
 );
+
+CREATE FUNCTION "richtext"."_complete_paragraph_line"(
+  "line" "richtext"."layout_block_paragraph_line",
+  "content" "richtext"."node"[]
+)
+RETURNS "richtext"."layout_block_paragraph_line"
+RETURNS NULL ON NULL INPUT
+LANGUAGE SQL
+AS $$
+  SELECT CAST(
+    ROW(
+      ("line")."index",
+      ("line")."causing_command",
+      ("line")."content" || "content"
+    ) AS "richtext"."layout_block_paragraph_line"
+  );
+$$;
+
+CREATE FUNCTION "richtext"."_complete_paragraph"(
+  "paragraph" "richtext"."layout_block_paragraph",
+  "line" "richtext"."layout_block_paragraph_line"
+)
+RETURNS "richtext"."layout_block_paragraph"
+RETURNS NULL ON NULL INPUT
+LANGUAGE SQL
+AS $$
+  SELECT CASE
+    WHEN array_length(("line")."content", 1) IS NOT NULL THEN
+      CAST(
+        ROW(
+          "paragraph"."index",
+          "paragraph"."causing_command",
+          "paragraph"."content_alignment",
+          "paragraph"."is_explicit_paragraph",
+          "paragraph"."lines" || "line"
+        ) AS "richtext"."layout_block_paragraph"
+      )
+    ELSE
+      "paragraph"
+  END;
+$$;
+
+CREATE FUNCTION "richtext"."_complete_paragraph"(
+  "paragraph" "richtext"."layout_block_paragraph",
+  "line" "richtext"."layout_block_paragraph_line",
+  "content" "richtext"."node"[]
+)
+RETURNS "richtext"."layout_block_paragraph"
+RETURNS NULL ON NULL INPUT
+LANGUAGE SQL
+AS $$
+  SELECT "richtext"."_complete_paragraph"(
+    "paragraph",
+    "richtext"."_complete_paragraph_line"("line", "content")
+  );
+$$;
+
+CREATE FUNCTION "richtext"."_complete_layout_block"(
+  "block" "richtext"."layout_block",
+  "paragraph" "richtext"."layout_block_paragraph"
+)
+RETURNS "richtext"."layout_block"
+RETURNS NULL ON NULL INPUT
+LANGUAGE SQL
+AS $$
+  SELECT CASE
+    WHEN array_length(("paragraph")."lines", 1) IS NOT NULL THEN
+      CAST(
+        ROW(
+          "block"."index",
+          "block"."type",
+          "block"."causing_command",
+          "block"."paragraphs" || "paragraph"
+        ) AS "richtext"."layout_block"
+      )
+    ELSE
+      "block"
+  END;
+$$;
+
+CREATE FUNCTION "richtext"."_complete_layout_block"(
+  "block" "richtext"."layout_block",
+  "paragraph" "richtext"."layout_block_paragraph",
+  "line" "richtext"."layout_block_paragraph_line",
+  "content" "richtext"."node"[]
+)
+RETURNS "richtext"."layout_block"
+RETURNS NULL ON NULL INPUT
+LANGUAGE SQL
+AS $$
+  SELECT "richtext"."_complete_layout_block"(
+    "block",
+    "richtext"."_complete_paragraph"("paragraph", "line", "content")
+  );
+$$;
+
