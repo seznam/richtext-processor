@@ -668,6 +668,28 @@ CREATE TYPE "richtext"."layout_block" AS (
   "paragraphs" "richtext"."layout_block_paragraph"[]
 );
 
+CREATE FUNCTION "richtext"."_complete_paragraph_line_node"(
+  "node_stack" "richtext"."node"[]
+)
+RETURNS "richtext"."node"
+RETURNS NULL ON NULL INPUT
+LANGUAGE SQL
+AS $$
+  SELECT CASE
+    WHEN array_length("node_stack", 1) IS NULL THEN
+      NULL
+    WHEN array_length("node_stack", 1) = 1 THEN
+      "node_stack"[1]
+    ELSE -- Recursivelly process the node stack into the root node
+      "richtext"."_complete_paragraph_line_node"(CAST(ROW(
+        ("node_stack"[2])."index",
+        ("node_stack"[2])."type",
+        ("node_stack"[2])."value",
+        ("node_stack"[2])."children" || to_jsonb("node_stack"[1])
+      ) AS "richtext"."node") || "node_stack"[3:])
+  END;
+$$;
+
 CREATE FUNCTION "richtext"."_complete_paragraph_line"(
   "line" "richtext"."layout_block_paragraph_line",
   "content" "richtext"."node"[]
@@ -763,3 +785,22 @@ AS $$
   );
 $$;
 
+CREATE FUNCTION "richtext"."_complete_layout_block"(
+  "block" "richtext"."layout_block",
+  "paragraph" "richtext"."layout_block_paragraph",
+  "line" "richtext"."layout_block_paragraph_line",
+  "content" "richtext"."node"[],
+  "last_content_node_stack" "richtext"."node"[]
+)
+RETURNS "richtext"."layout_block"
+RETURNS NULL ON NULL INPUT
+LANGUAGE SQL
+AS $$
+  SELECT "richtext"."_complete_layout_block"(
+    "block",
+    "paragraph",
+    "line",
+    "content" ||
+      "richtext"."_complete_paragraph_line_node"("last_content_node_stack")
+  );
+$$;
