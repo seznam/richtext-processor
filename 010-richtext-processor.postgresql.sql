@@ -804,3 +804,499 @@ AS $$
       "richtext"."_complete_paragraph_line_node"("last_content_node_stack")
   );
 $$;
+
+-- Processes the provided parsed text/richtext into layouting blocks, composed
+-- of paragraphs, composed of lines. Any formatting commands that span multiple
+-- lines will be re-organized to be present in all affected lines with the same
+-- effect, so that formatting state does not have to be tracked across lines,
+-- paragraphs or blocks.
+-- The function also replaces the ISO-8859-X, US-ASCII and No-op commands with
+-- their content.
+CREATE FUNCTION "richtext"."process_layout"(
+  "richtext" "richtext"."node"[],
+
+  -- Optional callback to execute whenever the processor encounters a custom
+  -- command. The callback is specified as a string containing a quoted
+  -- function identifier. The function will be invoked with the following
+  -- arguments:
+  --   - command_node richtext.node - the richtext node representing the
+  --     custom command.
+  --   - case_insensitive_commands boolean - the value of the
+  --     case_insensitive_commands flag passed to this function.
+  -- The function must return a richtext.custom_command_layout_interpretation
+  -- enum constant.
+  -- Use an empty string to treat all custom commands as inline content (just
+  -- like the No-op command).
+  "custom_command_hook" character varying DEFAULT '',
+
+  "case_insensitive_commands" boolean DEFAULT true
+)
+RETURNS SETOF "richtext"."layout_block"
+RETURNS NULL ON NULL INPUT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  "block_type_stack" "richtext"."layout_block_type"[]
+    DEFAULT CAST(ARRAY['MAIN_CONTENT'] AS "richtext"."layout_block_type"[]);
+  -- stack of nodes which we nested into while traversing the input
+  "command_stack" "richtext"."node"[][]
+    DEFAULT CAST(ARRAY[] AS "richtext"."node"[][]);
+  -- stack of current formatting nodes, used for copying currently applied
+  -- formatting to the next line
+  "formatting_stack" "richtext"."node"[]
+    DEFAULT CAST(ARRAY[] AS "richtext"."node"[]);
+  -- stack of content alignments used for setting to paragraphs
+  "content_alignment_stack" "richtext"."layout_block_content_alignment"[]
+    DEFAULT CAST(
+      ARRAY['DEFAULT'] AS "richtext"."layout_block_content_alignment"[]
+    );
+  -- sibling nodes at the current level of the input node forest traversing
+  "current_level" "richtext"."node"[] DEFAULT "richtext";
+  -- the currently processed node
+  "node" "richtext"."node";
+  -- layout interpretation of the currently processed node
+  "command_layout_interpretation" "richtext"."_command_layout_interpretation";
+  -- currently constructed layout block
+  "block" "richtext"."layout_block" DEFAULT CAST(
+    ROW(1, 'MAIN_CONTENT', NULL, ARRAY[]) AS "richtext"."layout_block"
+  );
+  -- currently constructed layout block's paragraph
+  "paragraph" "richtext"."layout_block_paragraph"
+    DEFAULT CAST(ROW(
+      1,
+      NULL,
+      'DEFAULT',
+      false,
+      ARRAY[]
+    ) AS "richtext"."layout_block_paragraph");
+  -- currently constructed layout block's paragraph's line
+  "line" "richtext"."layout_block_paragraph_line" DEFAULT CAST(
+    ROW(1, NULL, ARRAY[]) AS "richtext"."layout_block_paragraph_line"
+  );
+  -- currently constructed layout block's paragraph's line's content
+  "line_content" "richtext"."node"[]
+    DEFAULT CAST(ARRAY[] AS "richtext"."node"[]);
+  -- node stack of currently constructed line content's node
+  "line_content_command_stack" "richtext"."node"[]
+    DEFAULT CAST(ARRAY[] AS "richtext"."node"[]);
+BEGIN
+  WHILE array_length("current_level", 1) IS NOT NULL LOOP
+    -- Traversing through and down into the node tree
+    "node" := "current_level"[1];
+    CASE ("node")."type"
+      WHEN 'COMMAND' THEN
+        "command_layout_interpretation" :=
+          "richtext"."_get_command_layout_interpretation"(
+            "node",
+            "custom_command_hook",
+            "case_insensitive_commands"
+          );
+        CASE "command_layout_interpretation"
+          WHEN 'HEADING_BLOCK', 'FOOTING_BLOCK', 'NEW_BLOCK' THEN
+            "block" := "richtext"."_complete_layout_block"(
+              "block",
+              "paragraph",
+              "line",
+              "line_content",
+              "line_content_command_stack"
+            );
+            IF array_length(("block")."paragraphs", 1) IS NOT NULL THEN
+              RETURN NEXT "block";
+            END IF;
+            "block" := CAST(
+              ROW(
+                ("node")."index",
+                CASE
+                  WHEN "command_layout_interpretation" = 'HEADING_BLOCK' THEN
+                    'HEADING'
+                  WHEN "command_layout_interpretation" = 'FOOTING_BLOCK' THEN
+                    'FOOTING'
+                  WHEN "command_layout_interpretation" = 'NEW_BLOCK' THEN
+                    'CUSTOM'
+                END,
+                "node",
+                ARRAY[]
+              ) AS "richtext"."layout_block"
+            );
+            "block_type_stack" := ("block")."type" || "block_type_stack";
+            "paragraph" := CAST(ROW(
+              ("node")."index",
+              "node",
+              "content_alignment_stack"[1],
+              false,
+              ARRAY[]
+            ) AS "richtext"."layout_block_paragraph");
+            "line" := CAST(
+              ROW(("node")."index", "node", ARRAY[])
+              AS "richtext"."layout_block_paragraph_line"
+            );
+            "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
+            "line_content_command_stack" := "formatting_stack";
+            "current_level" := "current_level"[2:];
+          WHEN 'NEW_PAGE' THEN
+            -- The <np> command is allowed in any other command, including
+            -- <Heading> and <Footing>. So, we'll do our best to do both.
+            "block" := "richtext"."_complete_layout_block"(
+              "block",
+              "paragraph",
+              "line",
+              "line_content",
+              "line_content_command_stack"
+            );
+            IF array_length(("block")."paragraphs", 1) IS NOT NULL THEN
+              RETURN NEXT "block";
+            END IF;
+            RETURN NEXT CAST(
+              ROW(("node")."index", 'PAGE_BREAK', "node", ARRAY[])
+              AS "richtext"."layout_block"
+            );
+            -- We only need to clear the paragraphs, as the next block is
+            -- caused by the same previous block-causing command node.
+            "block"."paragraphs" := CAST(
+              ARRAY[] AS "richtext"."layout_block_paragraph"[]
+            );
+            "paragraph" := CAST(ROW(
+              ("node")."index",
+              "node",
+              "content_alignment_stack"[1],
+              false,
+              ARRAY[]
+            ) AS "richtext"."layout_block_paragraph");
+            "line" := CAST(
+              ROW(("node")."index", "node", ARRAY[])
+              AS "richtext"."layout_block_paragraph_line"
+            );
+            "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
+            "line_content_command_stack" := "formatting_stack";
+            "current_level" := "current_level"[2:];
+          WHEN 'SAME_PAGE' THEN
+            "block" := "richtext"."_complete_layout_block"(
+              "block",
+              "paragraph",
+              "line",
+              "line_content",
+              "line_content_command_stack"
+            );
+            IF array_length(("block")."paragraphs", 1) IS NOT NULL THEN
+              RETURN NEXT "block";
+            END IF;
+            IF array_length(("node")."children", 1) IS NOT NULL THEN
+              -- There is no point in emmitting the SAME_PAGE_START block if
+              -- there is no content in it.
+              RETURN NEXT CAST(
+                ROW(("node")."index", 'SAME_PAGE_START', "node", ARRAY[])
+                AS "richtext"."layout_block"
+              );
+              "command_stack" := "current_level" || "command_stack";
+              "current_level" :=
+                "richtext"."_deserialize_node_children"("node");
+            END IF;
+            "block" := CAST(
+              ROW(("node")."index", ("block")."type", "node", ARRAY[])
+              AS "richtext"."layout_block"
+            );
+            "paragraph" := CAST(ROW(
+              ("node")."index",
+              "node",
+              "content_alignment_stack"[1],
+              false,
+              ARRAY[]
+            ) AS "richtext"."layout_block_paragraph");
+            "line" := CAST(
+              ROW(("node")."index", "node", ARRAY[])
+              AS "richtext"."layout_block_paragraph_line"
+            );
+            "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
+            "line_content_command_stack" := "formatting_stack";
+          WHEN 'NEW_IMPLICIT_PARAGRAPH', 'NEW_ISOLATED_IMPLICIT_PARAGRAPH' THEN
+            "paragraph" := "richtext"."_complete_paragraph"(
+              "paragraph",
+              "line",
+              "line_content" || "richtext"."_complete_paragraph_line_node"(
+                "line_content_command_stack"
+              )
+            );
+            "block"."paragraphs" := "block"."paragraphs" || "paragraph";
+            "content_alignment_stack" := CAST(
+              CASE
+                WHEN
+                  ("node")."value" = "Center" OR
+                  (
+                    "case_insensitive_commands" AND
+                    ("node")."value" ~* "^Center$"
+                  )
+                THEN
+                  'CENTER'
+                WHEN
+                  ("node")."value" = "FlushLeft" OR
+                  (
+                    "case_insensitive_commands" AND
+                    ("node")."value" ~* "^FlushLeft$"
+                  )
+                THEN
+                  'JUSTIFY_LEFT'
+                WHEN
+                  ("node")."value" = "FlushRight" OR
+                  (
+                    "case_insensitive_commands" AND
+                    ("node")."value" ~* "^FlushRight$"
+                  )
+                THEN
+                  'JUSTIFY_RIGHT'
+                ELSE
+                  "content_alignment_stack"[1]
+              END AS "richtext"."layout_block_content_alignment"
+            ) || "content_alignment_stack";
+            "paragraph" := CAST(ROW(
+              ("node")."index",
+              "node",
+              "content_alignment_stack"[1],
+              "command_layout_interpretation" =
+                'NEW_ISOLATED_IMPLICIT_PARAGRAPH',
+              ARRAY[]
+            ) AS "richtext"."layout_block_paragraph");
+            "line" := CAST(
+              ROW(("node")."index", "node", ARRAY[])
+              AS "richtext"."layout_block_paragraph_line"
+            );
+            "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
+            "line_content_command_stack" := "formatting_stack";
+            "command_stack" := "current_level" || "command_stack";
+            "current_level" := "richtext"."_deserialize_node_children"("node");
+          WHEN 'NEW_LINE', 'NEW_ISOLATED_LINE' THEN
+            "paragraph" := "richtext"."_complete_paragraph"(
+              "paragraph",
+              "line",
+              "line_content" || "richtext"."_complete_paragraph_line_node"(
+                "line_content_command_stack"
+              )
+            );
+            "line" := CAST(
+              ROW(("node")."index", "node", ARRAY[])
+              AS "richtext"."layout_block_paragraph_line"
+            );
+            "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
+            "line_content_command_stack" := "formatting_stack";
+            "command_stack" := "current_level" || "command_stack";
+            "current_level" := "richtext"."_deserialize_node_children"("node");
+          WHEN 'INLINE_CONTENT' THEN
+            "line_content_command_stack" :=
+              "node" || "line_content_command_stack";
+            IF array_length(("node")."children", 1) IS NOT NULL THEN
+              "command_stack" := "current_level" || "command_stack";
+              -- The only command resolved as INLINE_CONTENT that should not be
+              -- put on the formatting stack is the <lt> command, which never
+              -- has any children, so there is no need for additional condition
+              -- here.
+              "formatting_stack" := CAST(ROW(
+                ("node")."index",
+                ("node")."type",
+                ("node")."value",
+                ARRAY[]
+              ) AS "richtext"."node") || "formatting_stack";
+              "current_level" :=
+                "richtext"."_deserialize_node_children"("node");
+            END IF;
+          WHEN 'COMMENT' THEN
+            IF array_length("line_content_command_stack", 1) IS NOT NULL THEN
+              "line_content_command_stack"[1]."children" =
+                "line_content_command_stack"[1]."children" || to_jsonb("node");
+            ELSE
+              "line_content" := "line_content" || "node";
+            END IF;
+            "current_level" := "current_level"[2:];
+          WHEN 'NO_OP' THEN
+            "current_level" :=
+              "richtext"."_deserialize_node_children"("node") ||
+              "current_level"[2:];
+          ELSE
+            RAISE EXCEPTION
+              'Encountered an unknown, unsupported or unexpected command layout interpretation % (command % parsed at index %)',
+              "command_layout_interpretation",
+              ("node")."type",
+              ("node")."index";
+        END CASE;
+      WHEN 'TEXT', 'WHITESPACE' THEN
+        IF array_length("line_content_command_stack", 1) IS NOT NULL THEN
+          "line_content_command_stack"[1]."children" =
+            "line_content_command_stack"[1]."children" || to_jsonb("node");
+        ELSE
+          "line_content" := "line_content" || "node";
+        END IF;
+      ELSE
+        RAISE EXCEPTION
+          'Encountered an unknown or unsupported node type % (parsed at index %)',
+          ("node")."type",
+          ("node")."index";
+    END CASE;
+
+    -- Traversing to the next sibling node or the parent in the node tree.
+    WHILE
+      array_length("current_level", 1) IS NULL AND
+      array_length("command_stack", 1) IS NOT NULL
+    LOOP
+      "current_level" := "command_stack"[1];
+      "command_stack" := "command_stack"[2:];
+      "node" := "current_level"[1];
+      "current_level" := "current_level"[2:];
+      "command_layout_interpretation" :=
+        "richtext"."_get_command_layout_interpretation"(
+          "node",
+          "custom_command_hook",
+          "case_insensitive_commands"
+        );
+      CASE "command_layout_interpretation"
+        WHEN 'HEADING_BLOCK', 'FOOTING_BLOCK', 'NEW_BLOCK' THEN
+          "block" := "richtext"."_complete_layout_block"(
+            "block",
+            "paragraph",
+            "line",
+            "line_content",
+            "line_content_command_stack"
+          );
+          IF array_length(("block")."paragraphs", 1) IS NOT NULL THEN
+            RETURN NEXT "block";
+          END IF;
+          "block_type_stack" := "block_type_stack"[2:];
+          "block" := CAST(
+            ROW(("node")."index", "block_type_stack"[1], "node", ARRAY[])
+            AS "richtext"."layout_block"
+          );
+          "paragraph" := CAST(ROW(
+            ("node")."index",
+            "node",
+            "content_alignment_stack"[1],
+            false,
+            ARRAY[]
+          ) AS "richtext"."layout_block_paragraph");
+          "line" := CAST(
+            ROW(("node")."index", "node", ARRAY[])
+            AS "richtext"."layout_block_paragraph_line"
+          );
+          "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
+          "line_content_command_stack" := "formatting_stack";
+        WHEN 'SAME_PAGE' THEN
+          "block" := "richtext"."_complete_layout_block"(
+            "block",
+            "paragraph",
+            "line",
+            "line_content",
+            "line_content_command_stack"
+          );
+          IF array_length(("block")."paragraphs", 1) IS NOT NULL THEN
+            RETURN NEXT "block";
+          END IF;
+          RETURN NEXT CAST(
+            ROW(("node")."index", 'SAME_PAGE_END', "node", ARRAY[])
+            AS "richtext"."layout_block"
+          );
+          "block" := CAST(
+            ROW(("node")."index", "block_type_stack"[1], "node", ARRAY[])
+            AS "richtext"."layout_block"
+          );
+          "paragraph" := CAST(ROW(
+            ("node")."index",
+            "node",
+            "content_alignment_stack"[1],
+            false,
+            ARRAY[]
+          ) AS "richtext"."layout_block_paragraph");
+          "line" := CAST(
+            ROW(("node")."index", "node", ARRAY[])
+            AS "richtext"."layout_block_paragraph_line"
+          );
+          "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
+          "line_content_command_stack" := "formatting_stack";
+        WHEN 'NEW_IMPLICIT_PARAGRAPH' THEN
+          "content_alignment_stack" := "content_alignment_stack"[2:];
+        WHEN 'NEW_ISOLATED_IMPLICIT_PARAGRAPH' THEN
+          "paragraph" := "richtext"."_complete_paragraph"(
+            "paragraph",
+            "line",
+            "line_content" || "richtext"."_complete_paragraph_line_node"(
+              "line_content_command_stack"
+            )
+          );
+          "block"."paragraphs" := ("block")."paragraphs" || "paragraph";
+          "content_alignment_stack" := "content_alignment_stack"[2:];
+          "paragraph" := CAST(ROW(
+            ("node")."index",
+            "node",
+            "content_alignment_stack"[1],
+            EXISTS( -- Are we inside a <Paragraph>?
+              SELECT 1
+              FROM unnest("command_stack"[:][1])
+              WHERE "value" = 'Paragraph' OR
+                ("case_insensitive_commands" AND "value" ~* '^Paragraph$')
+            ),
+            ARRAY[]
+          ) AS "richtext"."layout_block_paragraph");
+          "line" := CAST(
+            ROW(("node")."index", "node", ARRAY[])
+            AS "richtext"."layout_block_paragraph_line"
+          );
+          "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
+          "line_content_command_stack" := "formatting_stack";
+        WHEN 'NEW_LINE' THEN
+          NULL; -- Nothing to do.
+        WHEN 'NEW_ISOLATED_LINE' THEN
+          "line" := "richtext"."_complete_paragraph_line"(
+            "line",
+            "line_content" || "richtext"."_complete_paragraph_line_node"(
+              "line_content_command_stack"
+            )
+          );
+          "paragraph"."lines" := ("paragraph")."lines" || "line";
+          "line" := CAST(
+            ROW(("node")."index", "node", ARRAY[])
+            AS "richtext"."layout_block_paragraph_line"
+          );
+          "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
+          "line_content_command_stack" := "formatting_stack";
+        WHEN 'INLINE_CONTENT' THEN
+          IF
+            ("node")."index" <> ("formatting_stack"[1])."index" OR
+            ("node")."value" <> ("formatting_stack"[1])."value"
+          THEN
+            RAISE EXCEPTION
+              'The formatting stack is desynchronized with the traversal of the command node tree, the formatting stack head is the % command parsed at %, current traversed node is the % command parsed at %',
+              ("formatting_stack"[1])."value",
+              ("formatting_stack"[1])."index",
+              ("node")."value",
+              ("node")."index";
+          END IF;
+          "formatting_stack" := "formatting_stack"[2:];
+          IF array_length("line_content_command_stack", 1) = 1 THEN
+            "line_content" :=
+              "line_content" || "line_content_command_stack"[1];
+            "line_content_command_stack" = "formatting_stack";
+          END IF;
+        WHEN
+          'NEW_PAGE', 'COMMENT', 'NO_OP'
+        THEN
+          RAISE EXCEPTION
+            'Encountered a % command with % layout interpretation on the stack while traversing up the command node tree, but such commands are not allowed on the stack',
+            ("node")."type",
+            "command_layout_interpretation";
+        ELSE
+          RAISE EXCEPTION
+            'Encountered an unknown or unsupported command layout interpretation % (command % parsed at index %) while traversing the node tree upwards',
+            "command_layout_interpretation",
+            ("node")."value",
+            ("node")."index";
+      END CASE;
+    END LOOP;
+  END LOOP;
+
+  "block" := "richtext"."_complete_layout_block"(
+    "block",
+    "paragraph",
+    "line",
+    "line_content",
+    "line_content_command_stack"
+  );
+  IF array_length(("block")."paragraphs", 1) IS NOT NULL THEN
+    RETURN NEXT "block";
+  END IF;
+END;
+$$;
