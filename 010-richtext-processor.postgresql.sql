@@ -453,19 +453,16 @@ LANGUAGE SQL
 AS $$
   SELECT CAST(CASE
     WHEN
-      ("node")."value" ~ '^(Bold|Italic|Fixed|Smaller|Bigger|Underline|Subscript|Superscript|Indent|IndentRight|Outdent|OutdentRight|Excerpt|Signature|lt)$' OR
+      ("node")."value" ~ '^(Bold|Italic|Fixed|Smaller|Bigger|Underline|Subscript|Superscript|Center|FlushLeft|FlushRight|Indent|IndentRight|Outdent|OutdentRight|Excerpt|Signature|lt)$' OR
       (
         "case_insensitive_commands" AND
-        ("node")."value" ~* '^(Bold|Italic|Fixed|Smaller|Bigger|Underline|Subscript|Superscript|Indent|IndentRight|Outdent|OutdentRight|Excerpt|Signature|lt)$'
+        ("node")."value" ~* '^(Bold|Italic|Fixed|Smaller|Bigger|Underline|Subscript|Superscript|Center|FlushLeft|FlushRight|Indent|IndentRight|Outdent|OutdentRight|Excerpt|Signature|lt)$'
       )
     THEN
       'INLINE_CONTENT'
     WHEN
-      ("node")."value" ~ '^(Center|FlushLeft|FlushRight|Paragraph)$' OR
-      (
-        "case_insensitive_commands" AND
-        ("node")."value" ~* '^(Center|FlushLeft|FlushRight|Paragraph)$'
-      )
+      ("node")."value" = 'Paragraph' OR
+      ("case_insensitive_commands" AND upper(("node")."value") = 'PARAGRAPH')
     THEN
       'NEW_ISOLATED_IMPLICIT_PARAGRAPH'
     WHEN
@@ -610,7 +607,8 @@ CREATE TYPE "richtext"."layout_block_paragraph_line" AS (
   --   - Content representing commands: lt
   --   - Inline formatting commands: Bold, Italic, Fixed, Smaller, Bigger,
   --     Underline, Subscript, Superscript
-  --   - Alignment commands: Indent, IndentRight, Outdent, OutdentRight
+  --   - Alignment commands: Center, FlushLeft, FlushRight, Indent,
+  --     IndentRight, Outdent, OutdentRight
   --   - Styling commands: Excerpt, Signature
   --   - Metadata commands: Comment
   --   - Any custom extensions treated as inline content
