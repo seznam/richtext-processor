@@ -1,8 +1,7 @@
 # text/richtext processor
 
 Utility for processing formatted text content in `text/richtext` format, as
-defined in [RFC 1341](https://datatracker.ietf.org/doc/html/rfc1341), section
-7.1.3.
+defined in [RFC 1341](https://www.rfc-editor.org/rfc/rfc1341), section 7.1.3.
 
 ## Differences from the format specification
 
