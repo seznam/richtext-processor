@@ -9,7 +9,7 @@ This implementation, while compatible with the specification, is slightly more
 lenient as for what kind of input it tolerates, but also supports a more strict
 behavior.
 
-The differences are the following:
+## Explicit differences
 
 - Command names may be of any length and contain any characters except for `<`
   and `>`, while the RFC states that a command name must be up to 40
@@ -20,7 +20,7 @@ The differences are the following:
   default behavior is to treat command names as case-insensitive, so that the
   implementation is compliant with the standard.
 
-Behavior based on vagueness or ambiguity in the specification:
+## Behavior based on vagueness or ambiguity in the specification
 
 - Comment content, if containing commands, must be well-formed. The
   specification does not state how should the commands insides comments be
