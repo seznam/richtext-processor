@@ -801,7 +801,7 @@ $$;
 -- paragraphs or blocks.
 -- The function also replaces the ISO-8859-X, US-ASCII and No-op commands with
 -- their content.
-CREATE FUNCTION "richtext"."process_layout"(
+CREATE FUNCTION "richtext"."_resolve_layout_blocks"(
   "richtext" "richtext"."node"[],
 
   -- Optional callback to execute whenever the processor encounters a custom
