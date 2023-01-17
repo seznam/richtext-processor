@@ -615,19 +615,10 @@ CREATE TYPE "richtext"."layout_block_paragraph_line" AS (
   "content" "richtext"."node"[]
 );
 
-CREATE TYPE "richtext"."layout_block_content_alignment" AS ENUM (
-  'DEFAULT',
-  'JUSTIFY_LEFT',
-  'JUSTIFY_RIGHT',
-  'CENTER'
-);
-
 CREATE TYPE "richtext"."layout_block_paragraph" AS (
   "index" integer,
 
   "causing_command" "richtext"."node",
-
-  "content_alignment" "richtext"."layout_block_content_alignment",
 
   -- Only true for the <Paragraph> command and after </Paragraph> if nested
   -- within another <Paragraph>, or custom command representing isolated
@@ -843,11 +834,6 @@ DECLARE
   -- formatting to the next line
   "formatting_stack" "richtext"."node"[]
     DEFAULT CAST(ARRAY[] AS "richtext"."node"[]);
-  -- stack of content alignments used for setting to paragraphs
-  "content_alignment_stack" "richtext"."layout_block_content_alignment"[]
-    DEFAULT CAST(
-      ARRAY['DEFAULT'] AS "richtext"."layout_block_content_alignment"[]
-    );
   -- sibling nodes at the current level of the input node forest traversing
   "current_level" "richtext"."node"[] DEFAULT "richtext";
   -- the currently processed node
@@ -863,7 +849,6 @@ DECLARE
     DEFAULT CAST(ROW(
       1,
       NULL,
-      'DEFAULT',
       false,
       ARRAY[]
     ) AS "richtext"."layout_block_paragraph");
@@ -920,7 +905,6 @@ BEGIN
             "paragraph" := CAST(ROW(
               ("node")."index",
               "node",
-              "content_alignment_stack"[1],
               false,
               ARRAY[]
             ) AS "richtext"."layout_block_paragraph");
@@ -956,7 +940,6 @@ BEGIN
             "paragraph" := CAST(ROW(
               ("node")."index",
               "node",
-              "content_alignment_stack"[1],
               false,
               ARRAY[]
             ) AS "richtext"."layout_block_paragraph");
@@ -996,7 +979,6 @@ BEGIN
             "paragraph" := CAST(ROW(
               ("node")."index",
               "node",
-              "content_alignment_stack"[1],
               false,
               ARRAY[]
             ) AS "richtext"."layout_block_paragraph");
@@ -1015,40 +997,9 @@ BEGIN
               )
             );
             "block"."paragraphs" := "block"."paragraphs" || "paragraph";
-            "content_alignment_stack" := CAST(
-              CASE
-                WHEN
-                  ("node")."value" = "Center" OR
-                  (
-                    "case_insensitive_commands" AND
-                    ("node")."value" ~* "^Center$"
-                  )
-                THEN
-                  'CENTER'
-                WHEN
-                  ("node")."value" = "FlushLeft" OR
-                  (
-                    "case_insensitive_commands" AND
-                    ("node")."value" ~* "^FlushLeft$"
-                  )
-                THEN
-                  'JUSTIFY_LEFT'
-                WHEN
-                  ("node")."value" = "FlushRight" OR
-                  (
-                    "case_insensitive_commands" AND
-                    ("node")."value" ~* "^FlushRight$"
-                  )
-                THEN
-                  'JUSTIFY_RIGHT'
-                ELSE
-                  "content_alignment_stack"[1]
-              END AS "richtext"."layout_block_content_alignment"
-            ) || "content_alignment_stack";
             "paragraph" := CAST(ROW(
               ("node")."index",
               "node",
-              "content_alignment_stack"[1],
               "command_layout_interpretation" =
                 'NEW_ISOLATED_IMPLICIT_PARAGRAPH',
               ARRAY[]
@@ -1163,7 +1114,6 @@ BEGIN
           "paragraph" := CAST(ROW(
             ("node")."index",
             "node",
-            "content_alignment_stack"[1],
             false,
             ARRAY[]
           ) AS "richtext"."layout_block_paragraph");
@@ -1195,7 +1145,6 @@ BEGIN
           "paragraph" := CAST(ROW(
             ("node")."index",
             "node",
-            "content_alignment_stack"[1],
             false,
             ARRAY[]
           ) AS "richtext"."layout_block_paragraph");
@@ -1206,7 +1155,7 @@ BEGIN
           "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
           "line_content_command_stack" := "formatting_stack";
         WHEN 'NEW_IMPLICIT_PARAGRAPH' THEN
-          "content_alignment_stack" := "content_alignment_stack"[2:];
+          NULL; -- Nothing to do.
         WHEN 'NEW_ISOLATED_IMPLICIT_PARAGRAPH' THEN
           "paragraph" := "richtext"."_complete_paragraph"(
             "paragraph",
@@ -1216,11 +1165,9 @@ BEGIN
             )
           );
           "block"."paragraphs" := ("block")."paragraphs" || "paragraph";
-          "content_alignment_stack" := "content_alignment_stack"[2:];
           "paragraph" := CAST(ROW(
             ("node")."index",
             "node",
-            "content_alignment_stack"[1],
             EXISTS( -- Are we inside a <Paragraph>?
               SELECT 1
               FROM unnest("command_stack"[:][1])
