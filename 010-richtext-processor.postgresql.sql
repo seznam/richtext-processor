@@ -981,6 +981,8 @@ BEGIN
               "command_stack" := "current_level" || "command_stack";
               "current_level" :=
                 "richtext"."_deserialize_node_children"("node");
+            ELSE
+              "current_level" := "current_level"[2:];
             END IF;
             "block" := CAST(ROW(
               ("node")."index",
@@ -1060,6 +1062,8 @@ BEGIN
               ) AS "richtext"."node") || "formatting_stack";
               "current_level" :=
                 "richtext"."_deserialize_node_children"("node");
+            ELSE
+              "current_level" := "current_level"[2:];
             END IF;
           WHEN 'COMMENT' THEN
             IF array_length("line_content_command_stack", 1) IS NOT NULL THEN
@@ -1087,6 +1091,7 @@ BEGIN
         ELSE
           "line_content" := "line_content" || "node";
         END IF;
+        "current_level" := "current_level"[2:];
       ELSE
         RAISE EXCEPTION
           'Encountered an unknown or unsupported node type % (parsed at index %)',
