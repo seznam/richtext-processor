@@ -1063,7 +1063,7 @@ BEGIN
             END IF;
           WHEN 'COMMENT' THEN
             IF array_length("line_content_command_stack", 1) IS NOT NULL THEN
-              "line_content_command_stack"[1]."children" =
+              "line_content_command_stack"[1]."children" :=
                 "line_content_command_stack"[1]."children" || to_jsonb("node");
             ELSE
               "line_content" := "line_content" || "node";
