@@ -841,20 +841,24 @@ DECLARE
   -- layout interpretation of the currently processed node
   "command_layout_interpretation" "richtext"."_command_layout_interpretation";
   -- currently constructed layout block
-  "block" "richtext"."layout_block" DEFAULT CAST(
-    ROW(1, 'MAIN_CONTENT', NULL, ARRAY[]) AS "richtext"."layout_block"
-  );
+  "block" "richtext"."layout_block" DEFAULT CAST(ROW(
+    1,
+    'MAIN_CONTENT',
+    NULL,
+    CAST(ARRAY[] AS "richtext"."layout_block_paragraph"[])
+  ) AS "richtext"."layout_block");
   -- currently constructed layout block's paragraph
   "paragraph" "richtext"."layout_block_paragraph"
     DEFAULT CAST(ROW(
       1,
       NULL,
       false,
-      ARRAY[]
+      CAST(ARRAY[] AS "richtext"."layout_block_paragraph_line"[])
     ) AS "richtext"."layout_block_paragraph");
   -- currently constructed layout block's paragraph's line
   "line" "richtext"."layout_block_paragraph_line" DEFAULT CAST(
-    ROW(1, NULL, ARRAY[]) AS "richtext"."layout_block_paragraph_line"
+    ROW(1, NULL, CAST(ARRAY[] AS "richtext"."node"[]))
+    AS "richtext"."layout_block_paragraph_line"
   );
   -- currently constructed layout block's paragraph's line's content
   "line_content" "richtext"."node"[]
@@ -898,7 +902,7 @@ BEGIN
                     'CUSTOM'
                 END,
                 "node",
-                ARRAY[]
+                CAST(ARRAY[] AS "richtext"."layout_block_paragraph"[])
               ) AS "richtext"."layout_block"
             );
             "block_type_stack" := ("block")."type" || "block_type_stack";
@@ -906,12 +910,13 @@ BEGIN
               ("node")."index",
               "node",
               false,
-              ARRAY[]
+              CAST(ARRAY[] AS "richtext"."layout_block_paragraph_line")
             ) AS "richtext"."layout_block_paragraph");
-            "line" := CAST(
-              ROW(("node")."index", "node", ARRAY[])
-              AS "richtext"."layout_block_paragraph_line"
-            );
+            "line" := CAST(ROW(
+              ("node")."index",
+              "node",
+              CAST(ARRAY[] AS "richtext"."node"[])
+            ) AS "richtext"."layout_block_paragraph_line");
             "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
             "line_content_command_stack" := "formatting_stack";
             "current_level" := "current_level"[2:];
@@ -928,10 +933,12 @@ BEGIN
             IF array_length(("block")."paragraphs", 1) IS NOT NULL THEN
               RETURN NEXT "block";
             END IF;
-            RETURN NEXT CAST(
-              ROW(("node")."index", 'PAGE_BREAK', "node", ARRAY[])
-              AS "richtext"."layout_block"
-            );
+            RETURN NEXT CAST(ROW(
+              ("node")."index",
+              'PAGE_BREAK',
+              "node",
+              CAST(ARRAY[] AS "richtext"."layout_block_paragraph"[])
+            ) AS "richtext"."layout_block");
             -- We only need to clear the paragraphs, as the next block is
             -- caused by the same previous block-causing command node.
             "block"."paragraphs" := CAST(
@@ -941,12 +948,13 @@ BEGIN
               ("node")."index",
               "node",
               false,
-              ARRAY[]
+              CAST(ARRAY[] AS "richtext"."layout_block_paragraph_line"[])
             ) AS "richtext"."layout_block_paragraph");
-            "line" := CAST(
-              ROW(("node")."index", "node", ARRAY[])
-              AS "richtext"."layout_block_paragraph_line"
-            );
+            "line" := CAST(ROW(
+              ("node")."index",
+              "node",
+              CAST(ARRAY[] AS "richtext"."node"[])
+            ) AS "richtext"."layout_block_paragraph_line");
             "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
             "line_content_command_stack" := "formatting_stack";
             "current_level" := "current_level"[2:];
@@ -964,28 +972,33 @@ BEGIN
             IF array_length(("node")."children", 1) IS NOT NULL THEN
               -- There is no point in emmitting the SAME_PAGE_START block if
               -- there is no content in it.
-              RETURN NEXT CAST(
-                ROW(("node")."index", 'SAME_PAGE_START', "node", ARRAY[])
-                AS "richtext"."layout_block"
-              );
+              RETURN NEXT CAST(ROW(
+                ("node")."index",
+                'SAME_PAGE_START',
+                "node",
+                CAST(ARRAY[] AS "richtext"."layout_block_paragraph"[])
+              ) AS "richtext"."layout_block");
               "command_stack" := "current_level" || "command_stack";
               "current_level" :=
                 "richtext"."_deserialize_node_children"("node");
             END IF;
-            "block" := CAST(
-              ROW(("node")."index", ("block")."type", "node", ARRAY[])
-              AS "richtext"."layout_block"
-            );
+            "block" := CAST(ROW(
+              ("node")."index",
+              ("block")."type",
+              "node",
+              CAST(ARRAY[] AS "richtext"."layout_block_paragraph"[])
+            ) AS "richtext"."layout_block");
             "paragraph" := CAST(ROW(
               ("node")."index",
               "node",
               false,
-              ARRAY[]
+              CAST(ARRAY[] AS "richtext"."layout_block_paragraph_line"[])
             ) AS "richtext"."layout_block_paragraph");
-            "line" := CAST(
-              ROW(("node")."index", "node", ARRAY[])
-              AS "richtext"."layout_block_paragraph_line"
-            );
+            "line" := CAST(ROW(
+              ("node")."index",
+              "node",
+              CAST(ARRAY[] AS "richtext"."node"[])
+            ) AS "richtext"."layout_block_paragraph_line");
             "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
             "line_content_command_stack" := "formatting_stack";
           WHEN 'NEW_IMPLICIT_PARAGRAPH', 'NEW_ISOLATED_IMPLICIT_PARAGRAPH' THEN
@@ -1002,12 +1015,13 @@ BEGIN
               "node",
               "command_layout_interpretation" =
                 'NEW_ISOLATED_IMPLICIT_PARAGRAPH',
-              ARRAY[]
+              CAST(ARRAY[] AS "richtext"."layout_block_paragraph_line"[])
             ) AS "richtext"."layout_block_paragraph");
-            "line" := CAST(
-              ROW(("node")."index", "node", ARRAY[])
-              AS "richtext"."layout_block_paragraph_line"
-            );
+            "line" := CAST(ROW(
+              ("node")."index",
+              "node",
+              CAST(ARRAY[] AS "richtext"."node"[])
+            ) AS "richtext"."layout_block_paragraph_line");
             "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
             "line_content_command_stack" := "formatting_stack";
             "command_stack" := "current_level" || "command_stack";
@@ -1020,10 +1034,11 @@ BEGIN
                 "line_content_command_stack"
               )
             );
-            "line" := CAST(
-              ROW(("node")."index", "node", ARRAY[])
-              AS "richtext"."layout_block_paragraph_line"
-            );
+            "line" := CAST(ROW(
+              ("node")."index",
+              "node",
+              CAST(ARRAY[] AS "richtext"."node"[])
+            ) AS "richtext"."layout_block_paragraph_line");
             "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
             "line_content_command_stack" := "formatting_stack";
             "command_stack" := "current_level" || "command_stack";
@@ -1041,7 +1056,7 @@ BEGIN
                 ("node")."index",
                 ("node")."type",
                 ("node")."value",
-                ARRAY[]
+                CAST(ARRAY[] AS jsonb[])
               ) AS "richtext"."node") || "formatting_stack";
               "current_level" :=
                 "richtext"."_deserialize_node_children"("node");
@@ -1107,20 +1122,23 @@ BEGIN
             RETURN NEXT "block";
           END IF;
           "block_type_stack" := "block_type_stack"[2:];
-          "block" := CAST(
-            ROW(("node")."index", "block_type_stack"[1], "node", ARRAY[])
-            AS "richtext"."layout_block"
-          );
+          "block" := CAST(ROW(
+            ("node")."index",
+            "block_type_stack"[1],
+            "node",
+            CAST(ARRAY[] AS "richtext"."layout_block_paragraph"[])
+          ) AS "richtext"."layout_block");
           "paragraph" := CAST(ROW(
             ("node")."index",
             "node",
             false,
-            ARRAY[]
+            CAST(ARRAY[] AS "richtext"."layout_block_paragraph_line"[])
           ) AS "richtext"."layout_block_paragraph");
-          "line" := CAST(
-            ROW(("node")."index", "node", ARRAY[])
-            AS "richtext"."layout_block_paragraph_line"
-          );
+          "line" := CAST(ROW(
+            ("node")."index",
+            "node",
+            CAST(ARRAY[] AS "richtext"."node"[])
+          ) AS "richtext"."layout_block_paragraph_line");
           "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
           "line_content_command_stack" := "formatting_stack";
         WHEN 'SAME_PAGE' THEN
@@ -1134,24 +1152,29 @@ BEGIN
           IF array_length(("block")."paragraphs", 1) IS NOT NULL THEN
             RETURN NEXT "block";
           END IF;
-          RETURN NEXT CAST(
-            ROW(("node")."index", 'SAME_PAGE_END', "node", ARRAY[])
-            AS "richtext"."layout_block"
-          );
-          "block" := CAST(
-            ROW(("node")."index", "block_type_stack"[1], "node", ARRAY[])
-            AS "richtext"."layout_block"
-          );
+          RETURN NEXT CAST(ROW(
+            ("node")."index",
+            'SAME_PAGE_END',
+            "node",
+            CAST(ARRAY[] AS "richtext"."layout_block_paragraph"[])
+          ) AS "richtext"."layout_block");
+          "block" := CAST(ROW(
+            ("node")."index",
+            "block_type_stack"[1],
+            "node",
+            CAST(ARRAY[] AS "richtext"."layout_block_paragraph"[])
+          ) AS "richtext"."layout_block");
           "paragraph" := CAST(ROW(
             ("node")."index",
             "node",
             false,
-            ARRAY[]
+            CAST(ARRAY[] AS "richtext"."layout_block_paragraph_line"[])
           ) AS "richtext"."layout_block_paragraph");
-          "line" := CAST(
-            ROW(("node")."index", "node", ARRAY[])
-            AS "richtext"."layout_block_paragraph_line"
-          );
+          "line" := CAST(ROW(
+            ("node")."index",
+            "node",
+            CAST(ARRAY[] AS "richtext"."node"[])
+          ) AS "richtext"."layout_block_paragraph_line");
           "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
           "line_content_command_stack" := "formatting_stack";
         WHEN 'NEW_IMPLICIT_PARAGRAPH' THEN
@@ -1174,12 +1197,13 @@ BEGIN
               WHERE "value" = 'Paragraph' OR
                 ("case_insensitive_commands" AND "value" ~* '^Paragraph$')
             ),
-            ARRAY[]
+            CAST(ARRAY[] AS "richtext"."layout_block_paragraph_line"[])
           ) AS "richtext"."layout_block_paragraph");
-          "line" := CAST(
-            ROW(("node")."index", "node", ARRAY[])
-            AS "richtext"."layout_block_paragraph_line"
-          );
+          "line" := CAST(ROW(
+            ("node")."index",
+            "node",
+            CAST(ARRAY[] AS "richtext"."node"[])
+          ) AS "richtext"."layout_block_paragraph_line");
           "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
           "line_content_command_stack" := "formatting_stack";
         WHEN 'NEW_LINE' THEN
@@ -1192,10 +1216,11 @@ BEGIN
             )
           );
           "paragraph"."lines" := ("paragraph")."lines" || "line";
-          "line" := CAST(
-            ROW(("node")."index", "node", ARRAY[])
-            AS "richtext"."layout_block_paragraph_line"
-          );
+          "line" := CAST(ROW((
+            "node")."index",
+            "node",
+            CAST(ARRAY[] AS "richtext"."node"[])
+          ) AS "richtext"."layout_block_paragraph_line");
           "line_content" := CAST(ARRAY[] AS "richtext"."node"[]);
           "line_content_command_stack" := "formatting_stack";
         WHEN 'INLINE_CONTENT' THEN
