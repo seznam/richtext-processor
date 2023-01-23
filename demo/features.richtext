@@ -1,0 +1,228 @@
+This is a stand-alone paragraph, containing <Bold>bold</Bold>,
+<Italic>italic</Italic>, <Underline>underlined</Underline> and
+a <Bold><Italic><Underline>combined formatting</Underline></Italic></Bold>.
+Text can also be rendered in <Smaller>smaller</Smaller>, even
+<Smaller><Smaller>very small</Smaller></Smaller> font, but also
+<Bigger>bigger</Bigger> and <Bigger><Bigger>very big</Bigger></Bigger> fonts.
+Combining and balancing the <lt>Smaller> and <lt>Bigger> commands results in
+text rendered in <Smaller><Bigger>regular font</Bigger></Smaller>. It is also
+possible to use <Superscript>superscript</Superscript> and
+<Subscript>subscript</Subscript>, which can be useful especialy for
+mathematical formula.
+
+<Paragraph>
+  Multiple    whitespace characters will be rendered  as single   space in
+  variable-width (the default) font. Horizontal	tabs, even mixed with regular
+  space characters,	 	are treated as single space characters.
+</Paragraph>
+
+<Paragraph>
+  <Fixed>
+    This text will be rendered  using fixed-width font, with special treatement
+    of the	horizontal	tab	character, respecting the common semantics of the
+    TAB (HT) character should be observed, namely that it moves to the next
+    column position that is a multiple of 8.
+  </Fixed>
+</Paragraph>
+
+<Paragraph>
+  Line breaks are interpreted as "soft" line breaks, and therefore treated as
+  single space characters.<nl>
+  The <lt>nl> command causes a "hard" line break (an alternative is to use
+  <lt>Paragraph>).
+</Paragraph>
+
+<Heading>
+  This content will be interpreted as a page heading.
+  <Footing>This content will be interpreted as a page footing.</Footing>
+  This is a continuation of the page <Bold>heading</Bold> content.
+</Heading>
+
+<np>
+
+<Paragraph>
+  A page break can be inserted using the <lt>np> command.
+  <Paragraph>
+    Paragraphs can be nested.
+  </Paragraph>
+  This causes the content after a nested paragraph's end to be treated as
+  another paragraph.<nl>
+  The <lt>No-op> command has <No-op>no effect</No-op>, as is the case with any
+  <X-Custom>custom commands not recognized by the processor</X-Custom>. The
+  processor supports providing a custom command hook function for intrepreting
+  any non-standard commands.
+</Paragraph>
+
+<Comment>
+  Any content inside a comment, while required to be a valid
+  <Fixed>text/richtext</Fixed> (with correct command termination and nesting),
+  is not meant to be shown to the end user.
+</Comment>
+
+<Paragraph>
+  <Center>
+    Text can be centered,
+  </Center>
+  <nl>
+  <FlushLeft>
+    aligned explicitly to the left,
+  </FlushLeft>
+  <nl>
+  <FlushRight>
+  or right-aligned.
+  </FlushRight>
+  <nl>
+  <Center>
+    combine all of these
+    <FlushLeft>
+      It is possible to
+      <FlushRight>on a single line.</FlushRight>
+    </FlushLeft>
+  </Center>
+  <nl>
+  If, however, the text becomes too long to fit in a single row in the rendered
+  form,
+  <FlushRight>
+    it can be placed on another row automatically by the renderer (this is
+    better compared to overlapping the text).
+  </FlushRight>
+</Paragraph>
+
+<Paragraph>
+  <Indent>
+    Text can be indented.<nl>
+    <Indent>Indentation can be increased as mush as needed.</Indent>
+  </Indent>
+</Paragraph>
+
+<Paragraph>
+  <FlushRight>
+    <IndentRight>
+      Text can also be indented at the right margin.
+      <IndentRight>
+        Right-indenting can be increased as needed as well.
+      </IndentRight>
+    </IndentRight>
+  </FlushRight>
+</Paragraph>
+
+<Paragraph>
+  <Outdent>Text can also be outdented to the left...</Outdent><nl>
+  <FlushRight>
+    <OutdentRight>
+      ...or to the right.
+    </OutdentRight>
+  </FlushRight>
+</Paragraph>
+
+<np>
+
+<SamePage>
+  <Paragraph>
+    The <lt>SamePage> command can be used to group content that should be, if
+    possible, rendered on a single page (or screen, etc).<nl>
+    The renderer should do its best to put such content together.<nl>
+    <SamePage>
+      It is possible to nest the <lt>SamePage> commands to prioritize grouping
+      parts of such content if all of it cannot be rendered together.
+    </SamePage>
+  </Paragraph>
+  <Paragraph>
+    If SamePage content overflows the remaining space on the current page, it
+    will be moved to the following page. 
+  </Paragraph>
+  <Paragraph>
+    Content wrapped inside the <lt>SamePage> command is processed as a separate
+    block for practical reasons, but the renderer can render it as inline
+    content if designed to do so (although computing the layout in such case is
+    lot more complicated).
+  </Paragraph>
+</SamePage>
+
+<Paragraph>
+  It is also possible to format
+  <Excerpt>content as an excerpt from another source</Excerpt>.
+  The specification states that 'Typically this will be displayed using
+  indentation and an alternate font, but such decisions are up to the
+  viewer.' - or, in this case, the used renderer of processed richtext.
+</Paragraph>
+
+<Paragraph>
+  The following demonstrates the use of the <lt>Signature> command:
+  <Signature>A demo signature</Signature>
+</Paragraph>
+
+<Paragraph>
+  The specification states that 'Some systems may wish to display signatures in
+  a smaller font or otherwise set them apart from the main text of the
+  message.'
+</Paragraph>
+
+<np>
+
+<Heading>
+  This text will be in page heading.<nl>
+  <Bold>
+    <Italic>
+      Heading/footing text can be formatted as well.
+      <SamePage>
+        <Footing>
+          This text will be in page footing.<nl>
+          <Comment>
+            <Underline>
+              The comments will have no effect on the layout.
+            </Underline>
+            <np>
+          </Comment>
+          <lt>SamePage> content may contain the <lt>np> command. The
+          <lt>SamePage instructs the reader to show the command's content on a
+          single page if possible, but the <lt>np> command causes a page break.
+          Because of this, the <lt>np> command takes precedence and splits the
+          content into two <lt>SamePage> contents displayed on (at least) two
+          pages.
+          <np>
+          <Heading>
+            <Indent>
+              <Center>
+                This content overrides the heading content for the previous
+                page, and will be slightly off-center.
+              </Center>
+            </Indent>
+          </Heading>
+        </Footing>
+      </SamePage>
+    </Italic>
+  </Bold>
+</Heading>
+
+<Paragraph>
+  This feature demo does not feature the <lt>ISO-8859-1> to <lt>ISO-8859-9>
+  commands nor the <lt>US-ASCII> command. This whole demo document is authored
+  in US-ASCII encoding (or UTF-8, if you will) primarily because authoring
+  documents containing texts in various encoding is tedious and this feature,
+  <Bold>while fully supported by this processor</Bold> has little use since the
+  adoption of unicode, and was included in richtext only because unicode was
+  incomplete at the time of writing of the RFC 1341 (see section 7.1.1 The
+  charset parameter, page 21).
+</Paragraph>
+
+<Indent>
+  <Italic>
+    <Bigger>
+      <Paragraph>
+        This is a demo o formatting commands being applied across<nl>
+        multiple lines,
+      </Paragraph>
+      <Paragraph>
+        paragraphs,
+      </Paragraph>
+      <Footing>
+        and even blocks.
+        <Paragraph>
+          It makes the renderer of processed richtext simpler when it does not
+          have to keep track of formatting across multiple layout elements.
+        </Paragraph>
+      </Footing>
+    </Bigger>
+  </Italic>
+</Indent>
