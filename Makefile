@@ -12,5 +12,6 @@ richtext:
 		-Wstrict-prototypes \
 		-Wdeclaration-after-statement \
 		-Wcast-qual \
-		richtext.c \
+		*.h \
+		*.c \
 		-o richtext
