@@ -6,4 +6,7 @@ typedef struct string {
 	char *content;
 } string;
 
+string *string_substring(string * source, unsigned long start,
+			 unsigned long end);
+
 #endif
