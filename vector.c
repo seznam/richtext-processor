@@ -40,7 +40,7 @@ unsigned long capacity;
 	if (vector == NULL) {
 		return NULL;
 	}
-	if (vector->size.capacity <= capacity) {
+	if (vector->size.capacity >= capacity) {
 		return vector;
 	}
 
@@ -73,7 +73,7 @@ void *value;
 		    VECTOR_AUTO_GROW_LIMIT /
 		    VECTOR_AUTO_GROW_FACTOR ? VECTOR_AUTO_GROW_LIMIT :
 		    currentCapacity * VECTOR_AUTO_GROW_FACTOR;
-		vector = Vector_grow(vector, grownCapacity);
+		vector = Vector_grow(vector, grownCapacity || 1);
 		if (vector == NULL) {
 			return NULL;
 		}
