@@ -184,3 +184,19 @@ void *value;
 
 	return vector;
 }
+
+void Vector_clear(vector)
+Vector * vector;
+{
+	if (vector == NULL) {
+		return;
+	}
+
+	if (vector->items != NULL) {
+		free(vector->items);
+		vector->items = NULL;
+	}
+
+	vector->size.length = 0;
+	vector->size.capacity = 0;
+}
