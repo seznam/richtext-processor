@@ -18,6 +18,13 @@ unsigned long end;
 		return NULL;
 	}
 
+	if (start > source->length) {
+		start = source->length;
+	}
+	if (end > source->length) {
+		end = source->length;
+	}
+
 	substring->length = end - start;
 	substring->content = NULL;
 	if (!substring->length) {
