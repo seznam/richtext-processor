@@ -1,3 +1,4 @@
 /richtext
 *.c~
 *.h~
+*.o
