@@ -186,7 +186,7 @@ void *value;
 }
 
 void Vector_clear(vector)
-Vector * vector;
+Vector *vector;
 {
 	if (vector == NULL) {
 		return;
