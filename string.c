@@ -2,6 +2,40 @@
 #include <string.h>
 #include "string.h"
 
+string *string_create(length)
+unsigned long length;
+{
+	string *newString = malloc(sizeof(string));
+	if (newString == NULL) {
+		return NULL;
+	}
+
+	newString->length = length;
+	if (length) {
+		newString->content = malloc(sizeof(char) * length);
+		if (newString->content == NULL) {
+			free(newString);
+			return NULL;
+		}
+	}
+
+	return newString;
+}
+
+string *string_from(text)
+char *text;
+{
+	unsigned long length = strlen(text);
+	string *newString = string_create(length);
+	if (newString == NULL) {
+		return NULL;
+	}
+
+	memcpy(newString->content, text, newString->length);
+
+	return newString;
+}
+
 string *string_substring(source, start, end)
 string *source;
 unsigned long start;
@@ -40,4 +74,18 @@ unsigned long end;
 	memcpy(substring->content, source->content + start, substring->length);
 
 	return substring;
+}
+
+void string_free(stringPtr)
+string *stringPtr;
+{
+	if (stringPtr == NULL) {
+		return;
+	}
+
+	if (stringPtr->content != NULL) {
+		free(stringPtr->content);
+	}
+
+	free(stringPtr);
 }
