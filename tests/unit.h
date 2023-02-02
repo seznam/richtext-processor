@@ -18,8 +18,6 @@ static char * test_##testName()\
   return NULL;\
 }
 
-#endif
-
 #define assert(test, message)\
 do {\
   if (!(test)) {\
@@ -54,3 +52,5 @@ do {\
 
 extern unsigned int tests_run;
 extern unsigned int tests_failed;
+
+#endif
