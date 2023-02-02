@@ -25,6 +25,12 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 
 TARGET  = richtext
 
+# Inspired by check and GNU Autotools - https://libcheck.github.io/check/
+# TODO: integrate MinUnit https://jera.com/techinfo/jtns/jtn002
+TESTS = $(patsubst tests/%,%,$(patsubst %.c,%,$(wildcard tests/*.c)))
+check_PROGRAMS = $(TESTS)
+check_CFLAGS = $(CFLAGS)
+
 .PHONY: all
 
 all: $(TARGET)
@@ -44,8 +50,19 @@ clean:
 distclean:
 	$(RM) $(TARGET)
 
+test: check
+	$(foreach test,$(TESTS),/tmp/richtext-processor/tests/$(test))
+	$(RM) -r /tmp/richtext-processor/tests/
+
+check:
+	@mkdir -p /tmp/richtext-processor/tests/
+	$(foreach program,$(check_PROGRAMS), \
+		$(CC) $($(program)_CFLAGS) $(LDFLAGS) \
+			-o /tmp/richtext-processor/tests/$(program) $($(program)_SOURCES) \
+	)
+
 indent:
-	indent $(INDENTFLAGS) *.h *.c
+	indent $(INDENTFLAGS) *.h *.c tests/*.h tests/*.c
 
 $(DEPDIR):
 	@mkdir -p $@
