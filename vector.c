@@ -14,7 +14,7 @@ unsigned long capacity;
 		return NULL;
 	}
 
-	vector = (Vector *) malloc(sizeof(Vector));
+	vector = malloc(sizeof(Vector));
 	if (vector == NULL) {
 		return NULL;
 	}
