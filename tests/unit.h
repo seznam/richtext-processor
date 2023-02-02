@@ -8,6 +8,8 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define START_TEST(testName)\
 static char * test_##testName(void);\
@@ -20,8 +22,11 @@ static char * test_##testName()\
 
 #define assert(test, message)\
 do {\
+  char *formattedMessage;\
   if (!(test)) {\
-    return message;\
+    formattedMessage = malloc(sizeof(char) * (strlen(message) + strlen(__FILE__) + 10 + 4));\
+    sprintf(formattedMessage, "%s:%u: %s", __FILE__, __LINE__, message);\
+    return formattedMessage;\
   }\
 } while (0)
 
