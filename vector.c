@@ -185,11 +185,11 @@ void *value;
 	return vector;
 }
 
-void Vector_clear(vector)
+Vector *Vector_clear(vector)
 Vector *vector;
 {
 	if (vector == NULL) {
-		return;
+		return NULL;
 	}
 
 	if (vector->items != NULL) {
@@ -199,4 +199,6 @@ Vector *vector;
 
 	vector->size.length = 0;
 	vector->size.capacity = 0;
+
+	return vector;
 }

@@ -56,6 +56,6 @@ Vector *Vector_get(Vector * vector, unsigned long index, void *value);
 
 Vector *Vector_set(Vector * vector, unsigned long index, void *value);
 
-void Vector_clear(Vector * vector);
+Vector *Vector_clear(Vector * vector);
 
 #endif
