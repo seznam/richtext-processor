@@ -53,15 +53,15 @@ distclean:
 	$(RM) $(TARGET)
 
 test: check
-	$(foreach test,$(TESTS),/tmp/richtext-processor/tests/$(test))
+	$(foreach test,$(TESTS),/tmp/richtext-processor/tests/$(test) &&) true
 	$(RM) -r /tmp/richtext-processor/tests/
 
 check:
 	@mkdir -p /tmp/richtext-processor/tests/
 	$(foreach program,$(check_PROGRAMS), \
 		$(CC) $($(program)_CFLAGS) $(LDFLAGS) \
-			-o /tmp/richtext-processor/tests/$(program) $($(program)_SOURCES) \
-	)
+			-o /tmp/richtext-processor/tests/$(program) $($(program)_SOURCES) && \
+	) true
 
 indent:
 	indent $(INDENTFLAGS) *.h *.c tests/*.h tests/*.c
