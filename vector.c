@@ -202,3 +202,16 @@ Vector *vector;
 
 	return vector;
 }
+
+void Vector_free(vector)
+Vector * vector;
+{
+	if (vector == NULL) {
+		return;
+	}
+
+	if (vector->items != NULL) {
+		free(vector->items);
+	}
+	free(vector);
+}

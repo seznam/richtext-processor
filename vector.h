@@ -58,4 +58,6 @@ Vector *Vector_set(Vector * vector, unsigned long index, void *value);
 
 Vector *Vector_clear(Vector * vector);
 
+void Vector_free(Vector * vector);
+
 #endif
