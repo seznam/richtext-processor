@@ -68,12 +68,13 @@ void *value;
 
 	currentCapacity = vector->size.capacity;
 	if (vector->size.length == currentCapacity) {
-		grownCapacity =
-		    currentCapacity >
-		    VECTOR_AUTO_GROW_LIMIT /
-		    VECTOR_AUTO_GROW_FACTOR ? VECTOR_AUTO_GROW_LIMIT :
-		    currentCapacity * VECTOR_AUTO_GROW_FACTOR;
-		vector = Vector_grow(vector, grownCapacity || 1);
+		grownCapacity = currentCapacity +
+		    (currentCapacity >
+		     VECTOR_AUTO_GROW_LIMIT /
+		     VECTOR_AUTO_GROW_FACTOR ? VECTOR_AUTO_GROW_LIMIT :
+		     currentCapacity * VECTOR_AUTO_GROW_FACTOR);
+		vector =
+		    Vector_grow(vector, grownCapacity > 0 ? grownCapacity : 1);
 		if (vector == NULL) {
 			return NULL;
 		}
