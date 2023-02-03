@@ -82,6 +82,7 @@ void *value;
 	bucket =
 	    (char *)vector->items + vector->size.itemSize * vector->size.length;
 	memcpy(bucket, value, vector->size.itemSize);
+	vector->size.length++;
 
 	return vector;
 }
