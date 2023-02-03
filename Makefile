@@ -32,6 +32,8 @@ check_PROGRAMS = $(TESTS)
 check_CFLAGS = $(CFLAGS)
 check_string_SOURCES = string.c tests/check_string.c
 check_string_CFLAGS  = $(check_CFLAGS)
+check_vector_SOURCES = vector.c tests/check_vector.c
+check_vector_CFLAGS  = $(check_CFLAGS)
 
 .PHONY: all
 
