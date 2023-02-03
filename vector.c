@@ -205,7 +205,7 @@ Vector *vector;
 }
 
 void Vector_free(vector)
-Vector * vector;
+Vector *vector;
 {
 	if (vector == NULL) {
 		return;
