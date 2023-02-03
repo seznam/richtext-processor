@@ -49,7 +49,7 @@ $(TARGET): $(OBJS)
 clean:
 	$(RM) $(OBJS)
 	$(RM) -r $(DEPDIR)
-	$(RM) *.h~ *.c~
+	$(RM) *.h~ *.c~ tests/*.h~ tests/*.c~
 
 distclean:
 	$(RM) $(TARGET)
