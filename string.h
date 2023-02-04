@@ -3,7 +3,7 @@
 
 typedef struct string {
 	unsigned long length;
-	char *content;
+	unsigned char *content;
 } string;
 
 string *string_create(unsigned long length);
