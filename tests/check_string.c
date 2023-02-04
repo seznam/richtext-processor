@@ -5,6 +5,11 @@
 #include "../string.h"
 #include "unit.h"
 
+/*
+   This file does not always bother to free heap-allocated memory because it a
+	 suite of unit tests, ergo it's not a big deal.
+ */
+
 unsigned int tests_run = 0;
 unsigned int tests_failed = 0;
 
@@ -116,6 +121,49 @@ START_TEST(string_substring_returnsSubstringIsolatedFromSource)
 	       "the returned substring referenced the source byte array");
 END_TEST}
 
+START_TEST(string_compare_returns0ForNullInput)
+{
+	assert(string_compare(NULL, NULL) == 0,
+	       "Expected 0 returned for NULL strings");
+END_TEST}
+
+START_TEST(string_compare_treatsNullStringAsLessThanNonNullStrings)
+{
+	assert(string_compare(NULL, string_from("")) < 0,
+	       "Expected NULL to treated as lower value than any non-NULL string");
+	assert(string_compare(string_from(""), NULL) > 0,
+	       "Expected NULL to be treated as lower value than any non-NULL string");
+END_TEST}
+
+START_TEST(string_compare_comparesStringsOfEqualLengthByContents)
+{
+	assert(string_compare(string_from(""), string_from("")) == 0,
+	       "Expected 0 for matching strings");
+	assert(string_compare(string_from("abc"), string_from("abc")) == 0,
+	       "Expected 0 for matching strings");
+	assert(string_compare(string_from("abc"), string_from("acc")) < 0,
+	       "Expected negative int for first string being lower than the second one");
+	assert(string_compare(string_from("bbc"), string_from("abc")) > 0,
+	       "Expected positive int for first string being greater than the second one");
+END_TEST}
+
+START_TEST(string_compare_treatsPrefixAsBeingLowerValueThanPrefixed)
+{
+	assert(string_compare(string_from("abc"), string_from("abcd")) < 0,
+	       "Expected negative int for the first string being a prefix of the second");
+	assert(string_compare(string_from("abcd"), string_from("abc")) > 0,
+	       "Expected positive int for the second string being a prefix of the first");
+END_TEST}
+
+START_TEST(string_compare_compareStringsMismatchingInSharedLength)
+{
+	assert(string_compare(string_from("abcde"), string_from("abde")) < 0,
+	       "Expected negative int for the first string being lower than the second one");
+	assert(string_compare(string_from("abeeeeee"), string_from("abcde")) >
+	       0,
+	       "Expected positive int for the first string being greater than the second one");
+END_TEST}
+
 START_TEST(string_free_acceptsNullInput)
 {
 	string_free(NULL);
@@ -142,6 +190,11 @@ static void all_tests()
 	run_test(string_substring_returnsNullContentForEmptySubstring);
 	run_test(string_substring_returnsRequestedSlice);
 	run_test(string_substring_returnsSubstringIsolatedFromSource);
+	run_test(string_compare_returns0ForNullInput);
+	run_test(string_compare_treatsNullStringAsLessThanNonNullStrings);
+	run_test(string_compare_comparesStringsOfEqualLengthByContents);
+	run_test(string_compare_treatsPrefixAsBeingLowerValueThanPrefixed);
+	run_test(string_compare_compareStringsMismatchingInSharedLength);
 	run_test(string_free_acceptsNullInput);
 	run_test(string_free_acceptsStringWillNullContent);
 	run_test(string_free_freesStringContent);

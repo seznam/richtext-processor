@@ -76,6 +76,39 @@ unsigned long end;
 	return substring;
 }
 
+int string_compare(string1, string2)
+const string *string1;
+const string *string2;
+{
+	unsigned long minLength;
+	int memcmpResult;
+
+	if (string1 == NULL && string2 == NULL) {
+		return 0;
+	}
+	if (string1 == NULL) {
+		return -1;
+	}
+	if (string2 == NULL) {
+		return 1;
+	}
+
+	if (string1->length == string2->length) {
+		return memcmp(string1->content, string2->content,
+			      string1->length);
+	}
+
+	minLength =
+	    string1->length <
+	    string2->length ? string1->length : string2->length;
+	memcmpResult = memcmp(string1->content, string2->content, minLength);
+	if (memcmpResult == 0) {
+		return string1->length < string2->length ? -1 : 1;
+	}
+
+	return memcmpResult;
+}
+
 void string_free(stringPtr)
 string *stringPtr;
 {
