@@ -24,7 +24,7 @@ static char * test_##testName()\
 do {\
   char *formattedMessage;\
   if (!(test)) {\
-    formattedMessage = malloc(sizeof(char) * (strlen(message) + strlen(__FILE__) + 10 + 4));\
+    formattedMessage = malloc(sizeof(char) * (strlen(message) + strlen(__FILE__) + 10 + 4 + 1));\
     sprintf(formattedMessage, "%s:%u: %s", __FILE__, __LINE__, message);\
     return formattedMessage;\
   }\
