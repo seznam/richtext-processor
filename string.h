@@ -8,9 +8,9 @@ typedef struct string {
 
 string *string_create(unsigned long length);
 
-string *string_from(char *text);
+string *string_from(const char *text);
 
-string *string_substring(string * source, unsigned long start,
+string *string_substring(const string * source, unsigned long start,
 			 unsigned long end);
 
 void string_free(string * stringPtr);

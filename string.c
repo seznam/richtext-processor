@@ -23,7 +23,7 @@ unsigned long length;
 }
 
 string *string_from(text)
-char *text;
+const char *text;
 {
 	unsigned long length = strlen(text);
 	string *newString = string_create(length);
@@ -37,7 +37,7 @@ char *text;
 }
 
 string *string_substring(source, start, end)
-string *source;
+const string *source;
 unsigned long start;
 unsigned long end;
 {
