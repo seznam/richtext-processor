@@ -183,21 +183,21 @@ END_TEST}
 
 static void all_tests()
 {
-	run_test(string_create_createsStringOfDesiredSize);
-	run_test(string_from_copiesTheSourceString);
-	run_test(string_substring_returnsNullIfEndIsLowerThanStart);
-	run_test(string_substring_returnsEmptyStringForIndexesOutOfBounds);
-	run_test(string_substring_returnsNullContentForEmptySubstring);
-	run_test(string_substring_returnsRequestedSlice);
-	run_test(string_substring_returnsSubstringIsolatedFromSource);
-	run_test(string_compare_returns0ForNullInput);
-	run_test(string_compare_treatsNullStringAsLessThanNonNullStrings);
-	run_test(string_compare_comparesStringsOfEqualLengthByContents);
-	run_test(string_compare_treatsPrefixAsBeingLowerValueThanPrefixed);
-	run_test(string_compare_compareStringsMismatchingInSharedLength);
-	run_test(string_free_acceptsNullInput);
-	run_test(string_free_acceptsStringWillNullContent);
-	run_test(string_free_freesStringContent);
+	runTest(string_create_createsStringOfDesiredSize);
+	runTest(string_from_copiesTheSourceString);
+	runTest(string_substring_returnsNullIfEndIsLowerThanStart);
+	runTest(string_substring_returnsEmptyStringForIndexesOutOfBounds);
+	runTest(string_substring_returnsNullContentForEmptySubstring);
+	runTest(string_substring_returnsRequestedSlice);
+	runTest(string_substring_returnsSubstringIsolatedFromSource);
+	runTest(string_compare_returns0ForNullInput);
+	runTest(string_compare_treatsNullStringAsLessThanNonNullStrings);
+	runTest(string_compare_comparesStringsOfEqualLengthByContents);
+	runTest(string_compare_treatsPrefixAsBeingLowerValueThanPrefixed);
+	runTest(string_compare_compareStringsMismatchingInSharedLength);
+	runTest(string_free_acceptsNullInput);
+	runTest(string_free_acceptsStringWillNullContent);
+	runTest(string_free_freesStringContent);
 }
 
 int main()

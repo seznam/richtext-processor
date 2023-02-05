@@ -27,12 +27,12 @@ TARGET  = richtext
 
 # Inspired by check and GNU Autotools - https://libcheck.github.io/check/
 # TODO: integrate MinUnit https://jera.com/techinfo/jtns/jtn002
-TESTS = $(patsubst tests/%,%,$(patsubst %.c,%,$(wildcard tests/*.c)))
+TESTS = $(patsubst tests/%,%,$(patsubst %.c,%,$(wildcard tests/check_*.c)))
 check_PROGRAMS = $(TESTS)
 check_CFLAGS = $(CFLAGS)
-check_string_SOURCES = string.c tests/check_string.c
+check_string_SOURCES = string.c tests/unit.c tests/check_string.c
 check_string_CFLAGS  = $(check_CFLAGS)
-check_vector_SOURCES = vector.c tests/check_vector.c
+check_vector_SOURCES = vector.c tests/unit.c tests/check_vector.c
 check_vector_CFLAGS  = $(check_CFLAGS)
 
 .PHONY: all

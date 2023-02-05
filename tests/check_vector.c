@@ -548,44 +548,44 @@ END_TEST}
 
 static void all_tests()
 {
-	run_test(Vector_new_returnsNULLIfCapacityIsLessThanLength);
-	run_test(Vector_new_createsAVectorIfLengthMatchesCapacity);
-	run_test(Vector_new_createsAVectorOfRequestedProperties);
-	run_test(Vector_grow_returnsNullForNullVector);
-	run_test(Vector_grow_doesNotModifyVectorIfNotNeeded);
-	run_test(Vector_grow_increasesCapacityWhilePreservingData);
-	run_test(Vector_append_returnNullForNullVector);
-	run_test(Vector_append_returnNullForNullValuePointer);
-	run_test(Vector_append_appendsWithoutGrowingCapacityIfPossible);
-	run_test(Vector_append_copiesTheProvidedValue);
-	run_test(Vector_append_appendsMultipleValues);
-	run_test(Vector_append_growsCapacityWhenNeeded);
-	run_test(Vector_append_growsCapacityByNoMoreThanLimit);
-	run_test(Vector_pop_returnsNullForNullVectorOrValue);
-	run_test(Vector_pop_returnsNullForEmptyVector);
-	run_test(Vector_pop_removesLastItemFromVector);
-	run_test(Vector_bigSlice_returnsNullForNullInputOrFromLargerThanTo);
-	run_test(Vector_bigSlice_returnsSliceWithDataCopyForValidInput);
-	run_test(Vector_bigSlice_capsToIndexToPreventOverflow);
-	run_test(Vector_bigSlice_capsFromIndexToPreventOverflow);
-	run_test(Vector_bigSlice_returnsEmptySliceIfFromMatchesTo);
-	run_test(Vector_slice_returnsNullForNullVector);
-	run_test(Vector_slice_returnsSliceWithDataCopyForValidInput);
-	run_test(Vector_slice_wrapsNegativeFromIndexAroundVectorLength);
-	run_test(Vector_slice_wrapsNegativeToIndexAroundVectorLength);
-	run_test
+	runTest(Vector_new_returnsNULLIfCapacityIsLessThanLength);
+	runTest(Vector_new_createsAVectorIfLengthMatchesCapacity);
+	runTest(Vector_new_createsAVectorOfRequestedProperties);
+	runTest(Vector_grow_returnsNullForNullVector);
+	runTest(Vector_grow_doesNotModifyVectorIfNotNeeded);
+	runTest(Vector_grow_increasesCapacityWhilePreservingData);
+	runTest(Vector_append_returnNullForNullVector);
+	runTest(Vector_append_returnNullForNullValuePointer);
+	runTest(Vector_append_appendsWithoutGrowingCapacityIfPossible);
+	runTest(Vector_append_copiesTheProvidedValue);
+	runTest(Vector_append_appendsMultipleValues);
+	runTest(Vector_append_growsCapacityWhenNeeded);
+	runTest(Vector_append_growsCapacityByNoMoreThanLimit);
+	runTest(Vector_pop_returnsNullForNullVectorOrValue);
+	runTest(Vector_pop_returnsNullForEmptyVector);
+	runTest(Vector_pop_removesLastItemFromVector);
+	runTest(Vector_bigSlice_returnsNullForNullInputOrFromLargerThanTo);
+	runTest(Vector_bigSlice_returnsSliceWithDataCopyForValidInput);
+	runTest(Vector_bigSlice_capsToIndexToPreventOverflow);
+	runTest(Vector_bigSlice_capsFromIndexToPreventOverflow);
+	runTest(Vector_bigSlice_returnsEmptySliceIfFromMatchesTo);
+	runTest(Vector_slice_returnsNullForNullVector);
+	runTest(Vector_slice_returnsSliceWithDataCopyForValidInput);
+	runTest(Vector_slice_wrapsNegativeFromIndexAroundVectorLength);
+	runTest(Vector_slice_wrapsNegativeToIndexAroundVectorLength);
+	runTest
 	    (Vector_get_returnNullForNullVectorOrNullValuePointerOrOutOfBoundsIndex);
-	run_test(Vector_get_extractsCopyOfIndexedItem);
-	run_test
+	runTest(Vector_get_extractsCopyOfIndexedItem);
+	runTest
 	    (Vector_set_returnNullForNullVectorOrNullValuePointerOrOutOfBoundsIndex);
-	run_test(Vector_set_setsAValueCopyToIndexedSlot);
-	run_test(Vector_clear_returnsNullForNullVector);
-	run_test(Vector_clear_clearsVectorOfAllData);
-	run_test(Vector_grow_canGrowClearedVector);
-	run_test(Vector_append_canAppendToClearedVector);
-	run_test(Vector_free_acceptsNullVector);
-	run_test(Vector_free_acceptsVectorWithData);
-	run_test(Vector_free_acceptsVectorWithNullItemsPointer);
+	runTest(Vector_set_setsAValueCopyToIndexedSlot);
+	runTest(Vector_clear_returnsNullForNullVector);
+	runTest(Vector_clear_clearsVectorOfAllData);
+	runTest(Vector_grow_canGrowClearedVector);
+	runTest(Vector_append_canAppendToClearedVector);
+	runTest(Vector_free_acceptsNullVector);
+	runTest(Vector_free_acceptsVectorWithData);
+	runTest(Vector_free_acceptsVectorWithNullItemsPointer);
 }
 
 int main()

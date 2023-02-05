@@ -22,40 +22,26 @@ static char * test_##testName()\
 
 #define assert(test, message)\
 do {\
-  char *formattedMessage;\
-  if (!(test)) {\
-    formattedMessage = malloc(sizeof(char) * (strlen(message) + strlen(__FILE__) + 10 + 4 + 1));\
-    sprintf(formattedMessage, "%s:%u: %s", __FILE__, __LINE__, message);\
-    return formattedMessage;\
+  char *_formattedMessage = unit_assert(__FILE__, __LINE__, (test), (message));\
+  if (_formattedMessage != NULL) {\
+    return _formattedMessage;\
   }\
 } while (0)
 
-#define runTestSuite(suiteFunction)\
-do {\
-  suiteFunction();\
-  if (tests_failed > 0) {\
-    printf("TEST SUITE FAILED\n");\
-  } else {\
-    printf("ALL TESTS PASSED\n");\
-  } \
-  printf("Tests run: %d \tSuccess: %d \tFailures: %d\n", tests_run, tests_run - tests_failed, tests_failed);\
-} while(0)
+#define runTestSuite(suiteFunction) unit_runTestSuite(suiteFunction)
 
-#define run_test(testName)\
-do {\
-  char *message;\
-	printf("%s: ", #testName);\
-  message = test_##testName();\
-  tests_run++;\
-  if (message) {\
-    tests_failed++; \
-    printf("%s\n", message); \
-  } else {\
-    printf("OK\n"); \
-  }\
-} while (0)
+#define runTest(testName) unit_runTest(#testName, test_##testName)
 
 extern unsigned int tests_run;
 extern unsigned int tests_failed;
+
+/* Internal API */
+
+void unit_runTestSuite(void testSuiteFunction(void));
+
+void unit_runTest(char *testName, char *unitTest(void));
+
+char *unit_assert(char *fileName, unsigned int lineOfCode, int test,
+		  char *errorMessage);
 
 #endif
