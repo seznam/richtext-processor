@@ -55,7 +55,9 @@ distclean:
 	$(RM) $(TARGET)
 
 test: check
-	$(foreach test,$(TESTS),/tmp/richtext-processor/tests/$(test) &&) true
+	$(foreach test,$(TESTS),\
+		echo "$(test)" && /tmp/richtext-processor/tests/$(test) && echo &&\
+	) true
 	$(RM) -r /tmp/richtext-processor/tests/
 
 check:
