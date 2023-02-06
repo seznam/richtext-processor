@@ -8,12 +8,12 @@
   Note: UTF-8 uses 1-4 bytes to encode a codepoint, but some "characters" may
 	consists of multiple codepoints (for example national flags use 2 4-byte
 	codepoints, therefore occupying 8 bytes).
-	To keep things reasonably simple, this code provides both byte indexes and
-	codepoint indexes of lexes and errors, but does not provide "character"
-	indexes (this is also due to the fact that new characters constructed of
-	multiple codepoints are still being added to Unicode as of writing this).
-	See https://en.wikipedia.org/wiki/UTF-8#Encoding for more details on UTF-8
-	encoding.
+	To keep things reasonably simple, this code provides both byte indexes
+	and codepoint indexes of lexes and errors, but does not provide
+	"character" indexes (this is also due to the fact that new characters
+	constructed of multiple codepoints are still being added to Unicode as
+	of writing this). See https://en.wikipedia.org/wiki/UTF-8#Encoding for
+	more details on UTF-8 encoding.
  */
 
 typedef enum TokenType {
