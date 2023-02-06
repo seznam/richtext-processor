@@ -8,6 +8,11 @@
 	decoder first as a separate function.
  */
 
+static LexerResult *addWarning(LexerResult * result, Vector ** warnings,
+			       Vector * tokens, unsigned long byteIndex,
+			       unsigned long codepointIndex,
+			       LexerWarningCode code);
+
 static LexerResult *finalizeToError(LexerResult * result,
 				    unsigned long byteIndex,
 				    unsigned long codepointIndex,
@@ -19,16 +24,15 @@ string *richtext;
 {
 	unsigned long tokenCountEstimate;
 	LexerResult *result = malloc(sizeof(LexerResult));
+	LexerResult *errorResult;
 	Vector *tokens;
 	Vector *resizedTokens;
 	Vector *warnings = Vector_new(sizeof(LexerWarning), 0, 0);
-	Vector *resizedWarnings;
 	Token token;
-	LexerWarning warning;
 	unsigned char *currentByte;
 	unsigned char nextByte, nextNextByte;
 	unsigned long currentByteIndex;
-	unsigned long tokenCodepointLength = 0;
+	unsigned long codepointIndex = 0;
 	bool isInsideCommand;
 
 	if (richtext == NULL) {
@@ -74,23 +78,20 @@ string *richtext;
 		case '<':
 			if (isInsideCommand) {
 				return finalizeToError(result, currentByteIndex,
-						       token.codepointIndex +
-						       tokenCodepointLength,
+						       codepointIndex,
 						       LexerErrorCode_UNEXPECTED_COMMAND_START,
 						       warnings, tokens);
 			}
 			isInsideCommand = true;
 
-			if (tokenCodepointLength > 0) {
+			if (currentByteIndex > token.byteIndex) {
 				token.value =
 				    string_substring(richtext, token.byteIndex,
 						     currentByteIndex);
 				if (token.value == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 							       warnings,
 							       tokens);
@@ -99,16 +100,13 @@ string *richtext;
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
 							       warnings,
 							       tokens);
 				}
 				tokens = resizedTokens;
-				token.codepointIndex += tokenCodepointLength;
-				tokenCodepointLength = 0;
+				token.codepointIndex = codepointIndex;
 			}
 
 			nextByte =
@@ -117,7 +115,7 @@ string *richtext;
 			token.type = nextByte == '/' ?
 			    TokenType_COMMAND_END : TokenType_COMMAND_START;
 			token.byteIndex = currentByteIndex;
-			tokenCodepointLength++;
+			codepointIndex++;
 			break;
 		case '>':
 			if (isInsideCommand) {
@@ -131,9 +129,7 @@ string *richtext;
 				if (token.value == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 							       warnings,
 							       tokens);
@@ -142,9 +138,7 @@ string *richtext;
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
 							       warnings,
 							       tokens);
@@ -152,12 +146,10 @@ string *richtext;
 				tokens = resizedTokens;
 
 				token.byteIndex = currentByteIndex + 1;
-				token.codepointIndex +=
-				    tokenCodepointLength + 1;
+				token.codepointIndex = ++codepointIndex;
 				token.type = TokenType_TEXT;
-				tokenCodepointLength = 0;
 			} else {
-				tokenCodepointLength++;
+				codepointIndex++;
 			}
 			break;
 		case ' ':
@@ -166,20 +158,18 @@ string *richtext;
 		case '\v':	/* vertical tab */
 		case '\f':	/* form feed, richtext documents should use <np> instead */
 			if (isInsideCommand) {
-				tokenCodepointLength++;
+				codepointIndex++;
 				break;
 			}
 
-			if (tokenCodepointLength > 0) {
+			if (currentByteIndex > token.byteIndex) {
 				token.value =
 				    string_substring(richtext, token.byteIndex,
 						     currentByteIndex);
 				if (token.value == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 							       warnings,
 							       tokens);
@@ -188,16 +178,13 @@ string *richtext;
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
 							       warnings,
 							       tokens);
 				}
 				tokens = resizedTokens;
-				token.codepointIndex += tokenCodepointLength;
-				tokenCodepointLength = 0;
+				token.codepointIndex = codepointIndex;
 			}
 
 			token.byteIndex = currentByteIndex;
@@ -207,41 +194,37 @@ string *richtext;
 					     currentByteIndex + 1);
 			if (token.value == NULL) {
 				return finalizeToError(result, currentByteIndex,
-						       token.codepointIndex +
-						       tokenCodepointLength,
+						       codepointIndex,
 						       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 						       warnings, tokens);
 			}
 			resizedTokens = Vector_append(tokens, &token);
 			if (resizedTokens == NULL) {
 				return finalizeToError(result, currentByteIndex,
-						       token.codepointIndex +
-						       tokenCodepointLength,
+						       codepointIndex,
 						       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
 						       warnings, tokens);
 			}
 			tokens = resizedTokens;
 
 			token.byteIndex = currentByteIndex + 1;
-			token.codepointIndex++;
+			token.codepointIndex = ++codepointIndex;
 			token.type = TokenType_TEXT;
 			break;
 		case '\r':	/* carriage return */
 			if (isInsideCommand) {
-				tokenCodepointLength++;
+				codepointIndex++;
 				break;
 			}
 
-			if (tokenCodepointLength > 0) {
+			if (currentByteIndex > token.byteIndex) {
 				token.value =
 				    string_substring(richtext, token.byteIndex,
 						     currentByteIndex);
 				if (token.value == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 							       warnings,
 							       tokens);
@@ -250,17 +233,14 @@ string *richtext;
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
 							       warnings,
 							       tokens);
 				}
 				tokens = resizedTokens;
 
-				token.codepointIndex += tokenCodepointLength;
-				tokenCodepointLength = 0;
+				token.codepointIndex = codepointIndex;
 			}
 
 			token.byteIndex = currentByteIndex;
@@ -280,9 +260,7 @@ string *richtext;
 				if (token.value == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 							       warnings,
 							       tokens);
@@ -291,9 +269,7 @@ string *richtext;
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
 							       warnings,
 							       tokens);
@@ -301,7 +277,7 @@ string *richtext;
 				tokens = resizedTokens;
 				currentByte++;
 				currentByteIndex++;
-				token.codepointIndex++;
+				token.codepointIndex = ++codepointIndex;
 			} else {
 				token.value = string_substring(richtext,
 							       currentByteIndex,
@@ -310,9 +286,7 @@ string *richtext;
 				if (token.value == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 							       warnings,
 							       tokens);
@@ -321,9 +295,7 @@ string *richtext;
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
+							       codepointIndex,
 							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
 							       warnings,
 							       tokens);
@@ -332,12 +304,12 @@ string *richtext;
 			}
 
 			token.byteIndex = currentByteIndex + 1;
-			token.codepointIndex++;
+			token.codepointIndex = ++codepointIndex;
 			token.type = TokenType_TEXT;
 			break;
 		default:
 			if (isInsideCommand) {
-				tokenCodepointLength++;
+				codepointIndex++;
 				break;
 			}
 
@@ -355,28 +327,18 @@ string *richtext;
 			 */
 			if (*currentByte < 128) {
 				/* single-byte UTF-8 codepoints */
-				tokenCodepointLength++;
+				codepointIndex++;
 			} else if (*currentByte <= 192) {
 				/* unexpected continuation byte */
-				warning.byteIndex = currentByteIndex;
-				warning.codepointIndex =
-				    token.codepointIndex + tokenCodepointLength;
-				warning.code =
-				    LexerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE;
-				resizedWarnings =
-				    Vector_append(warnings, &warning);
-				if (resizedWarnings == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_WARNINGS,
-							       warnings,
-							       tokens);
+				errorResult =
+				    addWarning(result, &warnings, tokens,
+					       currentByteIndex,
+					       codepointIndex,
+					       LexerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE);
+				if (errorResult != NULL) {
+					return errorResult;
 				}
-				warnings = resizedWarnings;
-				tokenCodepointLength++;
+				codepointIndex++;
 			} else if (*currentByte <= 223) {
 				/* Two-byte UTF-8 codepoints */
 				nextByte =
@@ -388,20 +350,17 @@ string *richtext;
 				    /* no-break space */
 				    (*currentByte == 194 && nextByte == 160)
 				    ) {
-					if (tokenCodepointLength > 0) {
+					if (currentByteIndex > token.byteIndex) {
 						token.value =
 						    string_substring(richtext,
-								     token.
-								     byteIndex,
+								     token.byteIndex,
 								     currentByteIndex);
 						if (token.value == NULL) {
 							return
 							    finalizeToError
 							    (result,
 							     currentByteIndex,
-							     token.codepointIndex
-							     +
-							     tokenCodepointLength,
+							     codepointIndex,
 							     LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 							     warnings, tokens);
 						}
@@ -413,16 +372,13 @@ string *richtext;
 							    finalizeToError
 							    (result,
 							     currentByteIndex,
-							     token.codepointIndex
-							     +
-							     tokenCodepointLength,
+							     codepointIndex,
 							     LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
 							     warnings, tokens);
 						}
 						tokens = resizedTokens;
-						token.codepointIndex +=
-						    tokenCodepointLength;
-						tokenCodepointLength = 0;
+						token.codepointIndex =
+						    codepointIndex;
 					}
 
 					token.byteIndex = currentByteIndex;
@@ -436,9 +392,7 @@ string *richtext;
 						return
 						    finalizeToError(result,
 								    currentByteIndex,
-								    token.codepointIndex
-								    +
-								    tokenCodepointLength,
+								    codepointIndex,
 								    LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 								    warnings,
 								    tokens);
@@ -449,9 +403,7 @@ string *richtext;
 						return
 						    finalizeToError(result,
 								    currentByteIndex,
-								    token.codepointIndex
-								    +
-								    tokenCodepointLength,
+								    codepointIndex,
 								    LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
 								    warnings,
 								    tokens);
@@ -459,10 +411,10 @@ string *richtext;
 					tokens = resizedTokens;
 
 					token.byteIndex = currentByteIndex + 2;
-					token.codepointIndex++;
+					token.codepointIndex = ++codepointIndex;
 					token.type = TokenType_TEXT;
 				} else {	/* Other two-byte codepoints */
-					tokenCodepointLength++;
+					codepointIndex++;
 				}
 
 				/* Skip over the continuation byte */
@@ -554,20 +506,17 @@ string *richtext;
 					    && nextByte == 128
 					    && nextNextByte == 128)
 				    ) {
-					if (tokenCodepointLength > 0) {
+					if (currentByteIndex > token.byteIndex) {
 						token.value =
 						    string_substring(richtext,
-								     token.
-								     byteIndex,
+								     token.byteIndex,
 								     currentByteIndex);
 						if (token.value == NULL) {
 							return
 							    finalizeToError
 							    (result,
 							     currentByteIndex,
-							     token.codepointIndex
-							     +
-							     tokenCodepointLength,
+							     codepointIndex,
 							     LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 							     warnings, tokens);
 						}
@@ -579,16 +528,13 @@ string *richtext;
 							    finalizeToError
 							    (result,
 							     currentByteIndex,
-							     token.codepointIndex
-							     +
-							     tokenCodepointLength,
+							     codepointIndex,
 							     LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
 							     warnings, tokens);
 						}
 						tokens = resizedTokens;
-						token.codepointIndex +=
-						    tokenCodepointLength;
-						tokenCodepointLength = 0;
+						token.codepointIndex =
+						    codepointIndex;
 					}
 
 					token.byteIndex = currentByteIndex;
@@ -602,9 +548,7 @@ string *richtext;
 						return
 						    finalizeToError(result,
 								    currentByteIndex,
-								    token.codepointIndex
-								    +
-								    tokenCodepointLength,
+								    codepointIndex,
 								    LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 								    warnings,
 								    tokens);
@@ -615,9 +559,7 @@ string *richtext;
 						return
 						    finalizeToError(result,
 								    currentByteIndex,
-								    token.codepointIndex
-								    +
-								    tokenCodepointLength,
+								    codepointIndex,
 								    LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
 								    warnings,
 								    tokens);
@@ -625,11 +567,11 @@ string *richtext;
 					tokens = resizedTokens;
 
 					token.byteIndex = currentByteIndex + 3;
-					token.codepointIndex++;
+					token.codepointIndex = ++codepointIndex;
 					token.type = TokenType_TEXT;
 				} else {
 					/* Other three-byte codepoints */
-					tokenCodepointLength++;
+					codepointIndex++;
 				}
 
 				/* Skip over the continuation bytes */
@@ -637,31 +579,21 @@ string *richtext;
 				currentByte += 2;
 			} else if (*currentByte <= 247) {
 				/* four-byte UTF-8 codepoints */
-				tokenCodepointLength++;
+				codepointIndex++;
 				/* Skip over the continuation bytes */
 				currentByteIndex += 3;
 				currentByte += 3;
 			} else {
 				/* Invalid UTF-8 character */
-				warning.byteIndex = currentByteIndex;
-				warning.codepointIndex =
-				    token.codepointIndex + tokenCodepointLength;
-				warning.code =
-				    LexerWarningCode_INVALID_UTF8_CHARACTER;
-				resizedWarnings =
-				    Vector_append(warnings, &warning);
-				if (resizedWarnings == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       token.codepointIndex
-							       +
-							       tokenCodepointLength,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_WARNINGS,
-							       warnings,
-							       tokens);
+				errorResult =
+				    addWarning(result, &warnings, tokens,
+					       currentByteIndex,
+					       codepointIndex,
+					       LexerWarningCode_INVALID_UTF8_CHARACTER);
+				if (errorResult != NULL) {
+					return errorResult;
 				}
-				warnings = resizedWarnings;
-				tokenCodepointLength++;
+				codepointIndex++;
 			}
 			break;
 		}
@@ -670,8 +602,7 @@ string *richtext;
 	if (token.byteIndex < richtext->length) {
 		if (isInsideCommand) {
 			return finalizeToError(result, richtext->length,
-					       token.codepointIndex +
-					       tokenCodepointLength,
+					       codepointIndex,
 					       LexerErrorCode_UNTERMINATED_COMMAND,
 					       warnings, tokens);
 		}
@@ -707,6 +638,30 @@ LexerResult *result;
 	}
 
 	free(result);
+}
+
+static LexerResult *addWarning(result, warnings, tokens, byteIndex,
+			       codepointIndex, code)
+LexerResult *result;
+Vector **warnings;
+Vector *tokens;
+unsigned long byteIndex;
+unsigned long codepointIndex;
+LexerWarningCode code;
+{
+	LexerWarning warning;
+	Vector *resizedWarnings;
+	warning.byteIndex = byteIndex;
+	warning.codepointIndex = codepointIndex;
+	warning.code = code;
+	resizedWarnings = Vector_append(*warnings, &warning);
+	if (resizedWarnings != NULL) {
+		*warnings = resizedWarnings;
+		return NULL;
+	}
+	return finalizeToError(result, byteIndex, codepointIndex,
+			       LexerErrorCode_OUT_OF_MEMORY_FOR_WARNINGS,
+			       *warnings, tokens);
 }
 
 static LexerResult *finalizeToError(result, byteIndex, codepointIndex,
