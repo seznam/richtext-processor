@@ -34,6 +34,8 @@ check_string_SOURCES = string.c tests/unit.c tests/check_string.c
 check_string_CFLAGS  = $(check_CFLAGS)
 check_vector_SOURCES = vector.c tests/unit.c tests/check_vector.c
 check_vector_CFLAGS  = $(check_CFLAGS)
+check_lexer_SOURCES  = lexer.c string.c vector.c tests/unit.c tests/check_lexer.c
+check_lexer_CFLAGS   = $(check_CFLAGS)
 
 .PHONY: all
 
