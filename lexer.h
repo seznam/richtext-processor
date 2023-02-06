@@ -81,4 +81,6 @@ typedef struct LexerResult {
 
 LexerResult *tokenize(string * richtext);
 
+void LexerResult_free(LexerResult * result);
+
 #endif

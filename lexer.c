@@ -450,23 +450,23 @@ string *richtext;
 					if (tokenCodepointLength > 0) {
 						token.value =
 						    string_substring(richtext,
-								     token.byteIndex,
+								     token.
+								     byteIndex,
 								     currentByteIndex);
 						if (token.value == NULL) {
 							Vector_free(tokens);
 							result->type =
 							    LexerResultType_ERROR;
-							result->result.
-							    error.byteIndex =
+							result->result.error.
+							    byteIndex =
 							    currentByteIndex;
-							result->result.
-							    error.codepointIndex
-							    =
-							    token.codepointIndex
-							    +
+							result->result.error.
+							    codepointIndex =
+							    token.
+							    codepointIndex +
 							    tokenCodepointLength;
-							result->result.
-							    error.code =
+							result->result.error.
+							    code =
 							    LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING;
 							result->warnings =
 							    (LexerWarningVector
@@ -480,17 +480,16 @@ string *richtext;
 							Vector_free(tokens);
 							result->type =
 							    LexerResultType_ERROR;
-							result->result.
-							    error.byteIndex =
+							result->result.error.
+							    byteIndex =
 							    currentByteIndex;
-							result->result.
-							    error.codepointIndex
-							    =
-							    token.codepointIndex
-							    +
+							result->result.error.
+							    codepointIndex =
+							    token.
+							    codepointIndex +
 							    tokenCodepointLength;
-							result->result.
-							    error.code =
+							result->result.error.
+							    code =
 							    LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS;
 							result->warnings =
 							    (LexerWarningVector
@@ -516,8 +515,8 @@ string *richtext;
 						    LexerResultType_ERROR;
 						result->result.error.byteIndex =
 						    currentByteIndex;
-						result->result.
-						    error.codepointIndex =
+						result->result.error.
+						    codepointIndex =
 						    token.codepointIndex +
 						    tokenCodepointLength;
 						result->result.error.code =
@@ -535,8 +534,8 @@ string *richtext;
 						    LexerResultType_ERROR;
 						result->result.error.byteIndex =
 						    currentByteIndex;
-						result->result.
-						    error.codepointIndex =
+						result->result.error.
+						    codepointIndex =
 						    token.codepointIndex +
 						    tokenCodepointLength;
 						result->result.error.code =
@@ -642,23 +641,23 @@ string *richtext;
 					if (tokenCodepointLength > 0) {
 						token.value =
 						    string_substring(richtext,
-								     token.byteIndex,
+								     token.
+								     byteIndex,
 								     currentByteIndex);
 						if (token.value == NULL) {
 							Vector_free(tokens);
 							result->type =
 							    LexerResultType_ERROR;
-							result->result.
-							    error.byteIndex =
+							result->result.error.
+							    byteIndex =
 							    currentByteIndex;
-							result->result.
-							    error.codepointIndex
-							    =
-							    token.codepointIndex
-							    +
+							result->result.error.
+							    codepointIndex =
+							    token.
+							    codepointIndex +
 							    tokenCodepointLength;
-							result->result.
-							    error.code =
+							result->result.error.
+							    code =
 							    LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING;
 							result->warnings =
 							    (LexerWarningVector
@@ -672,17 +671,16 @@ string *richtext;
 							Vector_free(tokens);
 							result->type =
 							    LexerResultType_ERROR;
-							result->result.
-							    error.byteIndex =
+							result->result.error.
+							    byteIndex =
 							    currentByteIndex;
-							result->result.
-							    error.codepointIndex
-							    =
-							    token.codepointIndex
-							    +
+							result->result.error.
+							    codepointIndex =
+							    token.
+							    codepointIndex +
 							    tokenCodepointLength;
-							result->result.
-							    error.code =
+							result->result.error.
+							    code =
 							    LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS;
 							result->warnings =
 							    (LexerWarningVector
@@ -708,8 +706,8 @@ string *richtext;
 						    LexerResultType_ERROR;
 						result->result.error.byteIndex =
 						    currentByteIndex;
-						result->result.
-						    error.codepointIndex =
+						result->result.error.
+						    codepointIndex =
 						    token.codepointIndex +
 						    tokenCodepointLength;
 						result->result.error.code =
@@ -727,8 +725,8 @@ string *richtext;
 						    LexerResultType_ERROR;
 						result->result.error.byteIndex =
 						    currentByteIndex;
-						result->result.
-						    error.codepointIndex =
+						result->result.error.
+						    codepointIndex =
 						    token.codepointIndex +
 						    tokenCodepointLength;
 						result->result.error.code =
@@ -805,4 +803,26 @@ string *richtext;
 	result->result.tokens = (TokenVector *) tokens;
 	result->warnings = (LexerWarningVector *) warnings;
 	return result;
+}
+
+void LexerResult_free(result)
+LexerResult *result;
+{
+	if (result == NULL) {
+		return;
+	}
+
+	Vector_free((Vector *) result->warnings);
+
+	switch (result->type) {
+	case LexerResultType_SUCCESS:
+		Vector_free((Vector *) result->result.tokens);
+		break;
+	case LexerResultType_ERROR:
+		break;
+	default:
+		break;
+	}
+
+	free(result);
 }

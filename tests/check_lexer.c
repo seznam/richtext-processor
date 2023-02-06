@@ -412,6 +412,17 @@ START_TEST(tokenize_treatsCommandEndDelimiterInTextAsText)
 		    "ab>c");
 END_TEST}
 
+START_TEST(LexerResult_free_acceptsNull)
+{
+	LexerResult_free(NULL);
+END_TEST}
+
+START_TEST(LexerResult_free_freesSuccessfulResult)
+{
+	LexerResult *result = tokenize(string_from("a"));
+	LexerResult_free(result);
+END_TEST}
+
 static void all_tests()
 {
 	runTest(tokenize_returnsNullForNullInput);
@@ -431,6 +442,8 @@ static void all_tests()
 	runTest(tokenize_rejectsUnterminatedCommand);
 	runTest(tokenize_returnsEncounteredWarningsOnError);
 	runTest(tokenize_treatsCommandEndDelimiterInTextAsText);
+	runTest(LexerResult_free_acceptsNull);
+	runTest(LexerResult_free_freesSuccessfulResult);
 }
 
 int main()
