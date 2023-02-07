@@ -38,6 +38,7 @@ string *richtext;
 	unsigned char *currentByte;
 	unsigned char nextByte, nextNextByte;
 	unsigned long currentByteIndex;
+	unsigned long tokenByteIndex = 0;
 	unsigned long codepointIndex = 0;
 	bool isInsideCommand;
 
@@ -357,9 +358,11 @@ string *richtext;
 				    (*currentByte == 194 && nextByte == 160)
 				    ) {
 					if (currentByteIndex > token.byteIndex) {
+						tokenByteIndex =
+						    token.byteIndex;
 						token.value =
 						    string_substring(richtext,
-								     token.byteIndex,
+								     tokenByteIndex,
 								     currentByteIndex);
 						if (token.value == NULL) {
 							return
@@ -513,9 +516,11 @@ string *richtext;
 					    && nextNextByte == 128)
 				    ) {
 					if (currentByteIndex > token.byteIndex) {
+						tokenByteIndex =
+						    token.byteIndex;
 						token.value =
 						    string_substring(richtext,
-								     token.byteIndex,
+								     tokenByteIndex,
 								     currentByteIndex);
 						if (token.value == NULL) {
 							return
