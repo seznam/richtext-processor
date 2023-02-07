@@ -8,6 +8,12 @@
 	decoder first as a separate function.
  */
 
+/*
+   Note: this code was mostly written before applying the code style, that is
+   why its design does not match the code style perfectly. Still, it works, and
+   that matters the most.
+ */
+
 static LexerResult *addWarning(LexerResult * result, Vector ** warnings,
 			       Vector * tokens, unsigned long byteIndex,
 			       unsigned long codepointIndex,
