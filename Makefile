@@ -29,14 +29,18 @@ TARGET  = richtext
 
 # Inspired by check and GNU Autotools - https://libcheck.github.io/check/
 # TODO: integrate MinUnit https://jera.com/techinfo/jtns/jtn002
-TESTS = $(patsubst tests/%,%,$(patsubst %.c,%,$(wildcard tests/check_*.c)))
+TESTDIR = tests
+TESTS = $(patsubst $(TESTDIR)/%,%,\
+                $(patsubst %.c,%,$(wildcard $(TESTDIR)/check_*.c))\
+        )
 check_PROGRAMS = $(TESTS)
 check_CFLAGS = $(CFLAGS)
-check_string_SOURCES = src/string.c tests/unit.c tests/check_string.c
+check_string_SOURCES = src/string.c $(TESTDIR)/unit.c $(TESTDIR)/check_string.c
 check_string_CFLAGS  = $(check_CFLAGS)
-check_vector_SOURCES = src/vector.c tests/unit.c tests/check_vector.c
+check_vector_SOURCES = src/vector.c $(TESTDIR)/unit.c $(TESTDIR)/check_vector.c
 check_vector_CFLAGS  = $(check_CFLAGS)
-check_lexer_SOURCES  = src/lexer.c src/string.c src/vector.c tests/unit.c tests/check_lexer.c
+check_lexer_SOURCES  = src/lexer.c src/string.c src/vector.c $(TESTDIR)/unit.c \
+                       $(TESTDIR)/check_lexer.c
 check_lexer_CFLAGS   = $(check_CFLAGS)
 
 .PHONY: all
@@ -52,14 +56,15 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPDIR)/%.d | $(DEPDIR) $(OBJDIR)
 clean:
 	$(RM) $(OBJS)
 	$(RM) -r $(DEPDIR)
-	$(RM) $(SRCDIR)/*.h~ $(SRCDIR)/*.c~ tests/*.h~ tests/*.c~
+	$(RM) $(SRCDIR)/*.h~ $(SRCDIR)/*.c~ $(TESTDIR)/*.h~ $(TESTDIR)/*.c~
 
 distclean:
 	$(RM) $(TARGET)
 
 test: check
 	$(foreach test,$(TESTS),\
-		echo "$(test)" && /tmp/richtext-processor/tests/$(test) && echo &&\
+		echo "$(test)" && /tmp/richtext-processor/tests/$(test) && \
+		echo &&\
 	) true
 	$(RM) -r /tmp/richtext-processor/tests/
 
@@ -67,11 +72,12 @@ check:
 	@mkdir -p /tmp/richtext-processor/tests/
 	$(foreach program,$(check_PROGRAMS), \
 		$(CC) $($(program)_CFLAGS) $(LDFLAGS) \
-			-o /tmp/richtext-processor/tests/$(program) $($(program)_SOURCES) && \
+			-o /tmp/richtext-processor/tests/$(program) \
+			$($(program)_SOURCES) && \
 	) true
 
 indent:
-	indent $(INDENTFLAGS) $(SRCDIR)/*.h $(SRCDIR)/*.c tests/*.h tests/*.c
+	indent $(INDENTFLAGS) $(SRCDIR)/*.h $(SRCDIR)/*.c $(TESTDIR)/*.h $(TESTDIR)/*.c
 
 $(DEPDIR) $(OBJDIR):
 	@mkdir -p $@
