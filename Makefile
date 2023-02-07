@@ -20,8 +20,10 @@ INDENTFLAGS = -nbad -bap -nbc -bbo -hnl -br -brs -c33 -cd33 -ncdb -ce -ci4 \
               -cli0 -d0 -di1 -nfc1 -i8 -ip0 -l80 -lp -npcs -nprs -npsl -sai \
               -saf -saw -ncs -nsc -sob -nfca -cp33 -ss -ts8 -il1
 
-SRCS = $(wildcard *.c)
-OBJS = $(patsubst %.c,%.o,$(SRCS))
+SRCDIR = src
+OBJDIR = obj
+SRCS   = $(wildcard $(SRCDIR)/*.c)
+OBJS   = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
 
 TARGET  = richtext
 
@@ -30,11 +32,11 @@ TARGET  = richtext
 TESTS = $(patsubst tests/%,%,$(patsubst %.c,%,$(wildcard tests/check_*.c)))
 check_PROGRAMS = $(TESTS)
 check_CFLAGS = $(CFLAGS)
-check_string_SOURCES = string.c tests/unit.c tests/check_string.c
+check_string_SOURCES = src/string.c tests/unit.c tests/check_string.c
 check_string_CFLAGS  = $(check_CFLAGS)
-check_vector_SOURCES = vector.c tests/unit.c tests/check_vector.c
+check_vector_SOURCES = src/vector.c tests/unit.c tests/check_vector.c
 check_vector_CFLAGS  = $(check_CFLAGS)
-check_lexer_SOURCES  = lexer.c string.c vector.c tests/unit.c tests/check_lexer.c
+check_lexer_SOURCES  = src/lexer.c src/string.c src/vector.c tests/unit.c tests/check_lexer.c
 check_lexer_CFLAGS   = $(check_CFLAGS)
 
 .PHONY: all
@@ -44,14 +46,13 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-%.o: %.c
-%.o: %.c $(DEPDIR)/%.d | $(DEPDIR)
+$(OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPDIR)/%.d | $(DEPDIR) $(OBJDIR)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 clean:
 	$(RM) $(OBJS)
 	$(RM) -r $(DEPDIR)
-	$(RM) *.h~ *.c~ tests/*.h~ tests/*.c~
+	$(RM) $(SRCDIR)/*.h~ $(SRCDIR)/*.c~ tests/*.h~ tests/*.c~
 
 distclean:
 	$(RM) $(TARGET)
@@ -70,12 +71,12 @@ check:
 	) true
 
 indent:
-	indent $(INDENTFLAGS) *.h *.c tests/*.h tests/*.c
+	indent $(INDENTFLAGS) $(SRCDIR)/*.h $(SRCDIR)/*.c tests/*.h tests/*.c
 
-$(DEPDIR):
+$(DEPDIR) $(OBJDIR):
 	@mkdir -p $@
 
-DEPFILES := $(SRCS:%.c=$(DEPDIR)/%.d)
+DEPFILES := $(SRCS:$(SRCDIR)/%.c=$(DEPDIR)/%.d)
 $(DEPFILES):
 
 include $(wildcard $(DEPFILES))

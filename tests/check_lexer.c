@@ -1,5 +1,5 @@
 #include <string.h>
-#include "../lexer.h"
+#include "../src/lexer.h"
 #include "../string.h"
 #include "unit.h"
 

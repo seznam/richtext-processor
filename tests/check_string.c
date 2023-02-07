@@ -1,8 +1,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../bool.h"
-#include "../string.h"
+#include "../src/bool.h"
+#include "../src/string.h"
 #include "unit.h"
 
 /*
