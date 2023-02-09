@@ -25,6 +25,8 @@ static LexerResult *finalizeToError(LexerResult * result,
 				    LexerErrorCode code, Vector * warnings,
 				    Vector * tokens);
 
+static void freeTokens(Vector * tokens);
+
 LexerResult *tokenize(richtext)
 string *richtext;
 {
@@ -640,7 +642,7 @@ LexerResult *result;
 
 	switch (result->type) {
 	case LexerResultType_SUCCESS:
-		Vector_free((Vector *) result->result.tokens);
+		freeTokens((Vector *) result->result.tokens);
 		break;
 	case LexerResultType_ERROR:
 		break;
@@ -684,11 +686,27 @@ LexerErrorCode code;
 Vector *warnings;
 Vector *tokens;
 {
-	Vector_free(tokens);
+	freeTokens(tokens);
 	result->type = LexerResultType_ERROR;
 	result->result.error.byteIndex = byteIndex;
 	result->result.error.codepointIndex = codepointIndex;
 	result->result.error.code = code;
 	result->warnings = (LexerWarningVector *) warnings;
 	return result;
+}
+
+static void freeTokens(tokens)
+Vector *tokens;
+{
+	Token *token;
+	unsigned long i = 0;
+
+	if (tokens == NULL) {
+		return;
+	}
+
+	for (token = tokens->items; i < tokens->size.length; i++, token++) {
+		string_free(token->value);
+	}
+	Vector_free(tokens);
 }
