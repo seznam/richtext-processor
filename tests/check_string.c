@@ -164,6 +164,77 @@ START_TEST(string_compare_compareStringsMismatchingInSharedLength)
 	       "Expected positive int for the first string being greater than the second one");
 END_TEST}
 
+START_TEST(string_caseInsensitiveCompare_returns0ForNullInput)
+{
+	assert(string_caseInsensitiveCompare(NULL, NULL) == 0,
+	       "Expected 0 returned for NULL strings");
+END_TEST}
+
+START_TEST
+    (string_caseInsensitiveCompare_treatsNullStringAsLessThanNonNullStrings) {
+	assert(string_caseInsensitiveCompare(NULL, string_from("")) < 0,
+	       "Expected NULL to treated as lower value than any non-NULL string");
+	assert(string_caseInsensitiveCompare(string_from(""), NULL) > 0,
+	       "Expected NULL to be treated as lower value than any non-NULL string");
+END_TEST}
+
+START_TEST(string_caseInsensitiveCompare_comparesStringsOfEqualLengthByContents)
+{
+	assert(string_caseInsensitiveCompare(string_from(""), string_from(""))
+	       == 0, "Expected 0 for matching strings");
+	assert(string_caseInsensitiveCompare
+	       (string_from("abc"), string_from("abc")) == 0,
+	       "Expected 0 for matching strings");
+	assert(string_caseInsensitiveCompare
+	       (string_from("abc"), string_from("acc")) < 0,
+	       "Expected negative int for first string being lower than the second one");
+	assert(string_caseInsensitiveCompare
+	       (string_from("bbc"), string_from("abc")) > 0,
+	       "Expected positive int for first string being greater than the second one");
+END_TEST}
+
+START_TEST
+    (string_caseInsensitiveCompare_treatsPrefixAsBeingLowerValueThanPrefixed) {
+	assert(string_caseInsensitiveCompare
+	       (string_from("abc"), string_from("abcd")) < 0,
+	       "Expected negative int for the first string being a prefix of the second");
+	assert(string_caseInsensitiveCompare
+	       (string_from("abcd"), string_from("abc")) > 0,
+	       "Expected positive int for the second string being a prefix of the first");
+END_TEST}
+
+START_TEST
+    (string_caseInsensitiveCompare_compareStringsMismatchingInSharedLength) {
+	assert(string_caseInsensitiveCompare
+	       (string_from("abcde"), string_from("abde")) < 0,
+	       "Expected negative int for the first string being lower than the second one");
+	assert(string_caseInsensitiveCompare
+	       (string_from("abeeeeee"), string_from("abcde")) > 0,
+	       "Expected positive int for the first string being greater than the second one");
+END_TEST}
+
+START_TEST(string_caseInsensitiveCompare_compareEnglishLettersCaseInsensitively)
+{
+	assert(string_caseInsensitiveCompare
+	       (string_from("abcxyz"), string_from("ABCXYZ")) == 0,
+	       "Expected string containing same letters to match");
+	assert(string_caseInsensitiveCompare
+	       (string_from("ABCXYZ"), string_from("abcxyz")) == 0,
+	       "Expected string containing same letters to match");
+	assert(string_caseInsensitiveCompare
+	       (string_from("abc"), string_from("aBcd")) < 0,
+	       "Expected prefix to be lower value to the prefixed");
+	assert(string_caseInsensitiveCompare
+	       (string_from("aBcd"), string_from("abc")) > 0,
+	       "Expected prefix to be lower value to the prefixed");
+	assert(string_caseInsensitiveCompare
+	       (string_from("ABEEE"), string_from("abcde")) > 0,
+	       "Expected positive int for th first string greater than the second");
+	assert(string_caseInsensitiveCompare
+	       (string_from("abcde"), string_from("ABEEE")) < 0,
+	       "Expected positive int for th first string greater than the second");
+END_TEST}
+
 START_TEST(string_free_acceptsNullInput)
 {
 	string_free(NULL);
@@ -198,6 +269,17 @@ static void all_tests()
 	runTest(string_free_acceptsNullInput);
 	runTest(string_free_acceptsStringWillNullContent);
 	runTest(string_free_freesStringContent);
+	runTest(string_caseInsensitiveCompare_returns0ForNullInput);
+	runTest
+	    (string_caseInsensitiveCompare_treatsNullStringAsLessThanNonNullStrings);
+	runTest
+	    (string_caseInsensitiveCompare_comparesStringsOfEqualLengthByContents);
+	runTest
+	    (string_caseInsensitiveCompare_treatsPrefixAsBeingLowerValueThanPrefixed);
+	runTest
+	    (string_caseInsensitiveCompare_compareStringsMismatchingInSharedLength);
+	runTest
+	    (string_caseInsensitiveCompare_compareEnglishLettersCaseInsensitively);
 }
 
 int main()

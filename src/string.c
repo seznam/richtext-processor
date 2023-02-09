@@ -109,6 +109,55 @@ const string *string2;
 	return memcmpResult;
 }
 
+int string_caseInsensitiveCompare(string1, string2)
+const string *string1;
+const string *string2;
+{
+	unsigned char *char1Pointer, *char2Pointer, char1, char2;
+	unsigned long i = 0;
+	unsigned long minLength;
+
+	if (string1 == NULL && string2 == NULL) {
+		return 0;
+	}
+	if (string1 == NULL) {
+		return -1;
+	}
+	if (string2 == NULL) {
+		return 1;
+	}
+
+	char1Pointer = string1->content;
+	char2Pointer = string2->content;
+	minLength =
+	    string1->length <
+	    string2->length ? string1->length : string2->length;
+	for (; i < minLength; i++, char1Pointer++, char2Pointer++) {
+		char1 = *char1Pointer;
+		char2 = *char2Pointer;
+		if (char1 == char2) {
+			continue;
+		}
+
+		if (char1 >= 65 /* A */  && char1 <= 90 /* Z */ ) {
+			char1 += 32;	/* convert to lowercase */
+		}
+		if (char2 >= 65 /* A */  && char2 <= 90 /* Z */ ) {
+			char2 += 32;	/* convert to lowercase */
+		}
+		if (char1 == char2) {
+			continue;
+		}
+
+		return char1 < char2 ? -1 : 1;
+	}
+
+	if (string1->length == string2->length) {
+		return 0;
+	}
+	return string1->length < string2->length ? -1 : 1;
+}
+
 void string_free(stringPtr)
 string *stringPtr;
 {

@@ -15,6 +15,9 @@ string *string_substring(const string * source, unsigned long start,
 
 int string_compare(const string * string1, const string * string2);
 
+int string_caseInsensitiveCompare(const string * string1,
+				  const string * string2);
+
 void string_free(string * stringPtr);
 
 #endif
