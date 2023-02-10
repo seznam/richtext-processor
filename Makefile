@@ -35,12 +35,14 @@ TESTS = $(patsubst $(TESTDIR)/%,%,\
         )
 check_PROGRAMS = $(TESTS)
 check_CFLAGS = $(CFLAGS)
-check_string_SOURCES = src/string.c $(TESTDIR)/unit.c $(TESTDIR)/check_string.c
+check_string_SOURCES = $(SRCDIR)/string.c $(TESTDIR)/unit.c \
+                       $(TESTDIR)/check_string.c
 check_string_CFLAGS  = $(check_CFLAGS)
-check_vector_SOURCES = src/vector.c $(TESTDIR)/unit.c $(TESTDIR)/check_vector.c
+check_vector_SOURCES = $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
+                       $(TESTDIR)/check_vector.c
 check_vector_CFLAGS  = $(check_CFLAGS)
-check_lexer_SOURCES  = src/lexer.c src/string.c src/vector.c $(TESTDIR)/unit.c \
-                       $(TESTDIR)/check_lexer.c
+check_lexer_SOURCES  = $(SRCDIR)/lexer.c $(SRCDIR)/string.c $(SRCDIR)/vector.c \
+                       $(TESTDIR)/unit.c $(TESTDIR)/check_lexer.c
 check_lexer_CFLAGS   = $(check_CFLAGS)
 
 .PHONY: all
