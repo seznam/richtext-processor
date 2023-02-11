@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "unit.h"
 
 void unit_runTestSuite(testSuiteFunction)
