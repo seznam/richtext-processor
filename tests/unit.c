@@ -49,3 +49,56 @@ char *errorMessage;
 	}
 	return NULL;
 }
+
+char *unit_assertUnsignedLongEquals(fileName, lineOfCode, valueDescription,
+				    matchedValue, expectedValue)
+char *fileName;
+unsigned int lineOfCode;
+char *valueDescription;
+unsigned long matchedValue;
+unsigned long expectedValue;
+{
+	char *messageFormat, *formattedMessage;
+	if (matchedValue == expectedValue) {
+		return NULL;
+	}
+
+	if (valueDescription == NULL) {
+		valueDescription = "provided value";
+	}
+	messageFormat = "Expected the %s to be %lu, but was %lu";
+	formattedMessage =
+	    malloc(sizeof(char) *
+		   (strlen(messageFormat) + strlen(valueDescription) +
+		    20 + 20 + 1));
+	sprintf(formattedMessage, messageFormat, valueDescription,
+		expectedValue, matchedValue);
+	return unit_assert(fileName, lineOfCode,
+			   matchedValue == expectedValue, formattedMessage);
+}
+
+char *unit_assertCStringEquals(fileName, lineOfCode, valueDescription,
+			       matchedValue, expectedValue)
+char *fileName;
+unsigned int lineOfCode;
+char *valueDescription;
+char *matchedValue;
+char *expectedValue;
+{
+	char *messageFormat, *formattedMessage;
+	if (strcmp(matchedValue, expectedValue) == 0) {
+		return NULL;
+	}
+
+	if (valueDescription == NULL) {
+		valueDescription = "provided value";
+	}
+	messageFormat = "Expected the %s to be %s, but was %s";
+	formattedMessage =
+	    malloc(sizeof(char) *
+		   (strlen(messageFormat) + strlen(valueDescription) +
+		    strlen(expectedValue) + strlen(matchedValue) + 1));
+	sprintf(formattedMessage, messageFormat, valueDescription,
+		expectedValue, matchedValue);
+	return unit_assert(fileName, lineOfCode, 0, formattedMessage);
+}

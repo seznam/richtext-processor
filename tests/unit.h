@@ -28,6 +28,28 @@ do {\
   }\
 } while (0)
 
+#define assertUnsignedLongEquals(valueDescription, matchedValue, expectedValue)\
+do {\
+	char *_formattedMessage;\
+	_formattedMessage =\
+	    unit_assertUnsignedLongEquals(__FILE__, __LINE__, valueDescription,\
+					  matchedValue, expectedValue);\
+	if (_formattedMessage != NULL) {\
+		return _formattedMessage;\
+	}\
+} while (0)
+
+#define assertCStringEquals(valueDescription, matchedValue, expectedValue)\
+do {\
+	char *_formattedMessage;\
+	_formattedMessage =\
+	    unit_assertCStringEquals(__FILE__, __LINE__, valueDescription,\
+				     matchedValue, expectedValue);\
+	if (_formattedMessage != NULL) {\
+		return _formattedMessage;\
+	}\
+} while (0)
+
 #define runTestSuite(suiteFunction) unit_runTestSuite(suiteFunction)
 
 #define runTest(testName) unit_runTest(#testName, test_##testName)
@@ -43,5 +65,14 @@ void unit_runTest(char *testName, char *unitTest(void));
 
 char *unit_assert(char *fileName, unsigned int lineOfCode, int test,
 		  char *errorMessage);
+
+char *unit_assertUnsignedLongEquals(char *fileName, unsigned int lineOfCode,
+				    char *valueDescription,
+				    unsigned long matchedValue,
+				    unsigned long expectedValue);
+
+char *unit_assertCStringEquals(char *fileName, unsigned int lineOfCode,
+			       char *valueDescription, char *matchedValue,
+			       char *expectedValue);
 
 #endif
