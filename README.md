@@ -9,7 +9,7 @@ This implementation, while compatible with the specification, is slightly more
 lenient as for what kind of input it tolerates, but also supports a more strict
 behavior.
 
-### Explicit differences
+### Supported (optional) extensions to text/richtext syntax
 
 - Command names may be of any length and contain any characters except for `<`
   and `>`, while the RFC states that a command name must be up to 40
@@ -18,7 +18,13 @@ behavior.
   a custom command hook if desired).
 - Command names can be processed in a case-sensitive way if desired. The
   default behavior is to treat command names as case-insensitive, so that the
-  implementation is compliant with the standard.
+  implementation is compliant with the standard. The standard command names are
+  recognized in capitalization used in their definitions on pages 23 and 24 of
+  RFC 1341 when in case-sensitive mode.
+
+  Please note that the C implementation is capable of interpreting only the A-Z
+  letters of english alphabet in case-insensitive mode (which is compliant with
+  the RFC 1341) due to complexity of turning unicode text to upper/lower case.
 
 ### Behavior based on vagueness or ambiguity in the specification
 
