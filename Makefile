@@ -44,6 +44,10 @@ check_vector_CFLAGS  = $(check_CFLAGS)
 check_lexer_SOURCES  = $(SRCDIR)/lexer.c $(SRCDIR)/string.c $(SRCDIR)/vector.c \
                        $(TESTDIR)/unit.c $(TESTDIR)/check_lexer.c
 check_lexer_CFLAGS   = $(check_CFLAGS)
+check_parser_SOURCES = $(SRCDIR)/parser.c $(SRCDIR)/lexer.c $(SRCDIR)/string.c \
+                       $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
+		       $(TESTDIR)/check_parser.c
+check_parser_CFLAGS  = $(check_CFLAGS)
 
 .PHONY: all
 
