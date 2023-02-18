@@ -62,8 +62,7 @@ bool caseInsensitiveCommands;
 	}
 
 	for (token = tokens->items, tokenIndex = 0;
-	     tokenIndex < tokens->size.length
-	     && errorCode == ParserErrorCode_OK; tokenIndex++, token++) {
+	     tokenIndex < tokens->size.length; tokenIndex++, token++) {
 		node = malloc(sizeof(ASTNode));
 		if (node == NULL) {
 			errorCode = ParserErrorCode_OUT_OF_MEMORY_FOR_NODES;
@@ -191,6 +190,10 @@ bool caseInsensitiveCommands;
 			errorCode = ParserErrorCode_UNSUPPORTED_TOKEN_TYPE;
 			break;
 		}
+
+		if (errorCode != ParserErrorCode_OK) {
+			break;
+		}
 	}
 
 	string_free(command_lt);
@@ -220,12 +223,7 @@ bool caseInsensitiveCommands;
 			    createError(parent->byteIndex,
 					parent->codepointIndex,
 					parent->tokenIndex, errorCode);
-		} else if (tokenIndex <= tokens->size.length) {
-			if (tokenIndex > 0) {
-				/* These two still get incremented on break */
-				tokenIndex--;
-				token--;
-			}
+		} else if (tokenIndex < tokens->size.length) {
 			result->result.error =
 			    createError(token->byteIndex, token->codepointIndex,
 					tokenIndex, errorCode);
