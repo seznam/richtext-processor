@@ -28,7 +28,6 @@ OBJS   = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
 TARGET  = richtext
 
 # Inspired by check and GNU Autotools - https://libcheck.github.io/check/
-# TODO: integrate MinUnit https://jera.com/techinfo/jtns/jtn002
 TESTDIR = tests
 TESTS = $(patsubst $(TESTDIR)/%,%,\
                 $(patsubst %.c,%,$(wildcard $(TESTDIR)/check_*.c))\
