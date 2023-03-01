@@ -3,9 +3,10 @@
 #include "lexer.h"
 #include "parser.h"
 #include "string.h"
+#include "typed_pointer_vector.h"
 #include "vector.h"
 
-static void freeNodes(ASTNodeVector * nodes);
+static void freeNodes(ASTNodePointerVector * nodes);
 
 static ParserError createError(unsigned long byteIndex,
 			       unsigned long codepointIndex,
@@ -22,12 +23,12 @@ bool caseInsensitiveCommands;
 	ParserResult *result;
 	Token *token;
 	unsigned long tokenIndex = 0;
-	ASTNodeVector *nodes;
-	ASTNodeVector *grownNodes;
+	ASTNodePointerVector *nodes;
+	ASTNodePointerVector *grownNodes;
 	ASTNode *parent = NULL;
 	ASTNode *node = NULL;
 	string *value;
-	ASTNodeVector *siblings;
+	ASTNodePointerVector *siblings;
 	ParserErrorCode errorCode = ParserErrorCode_OK;
 	string *command_lt, *command_nl, *command_np;
 
@@ -45,7 +46,7 @@ bool caseInsensitiveCommands;
 
 	result->type = ParserResultType_SUCCESS;
 
-	nodes = (ASTNodeVector *) Vector_new(sizeof(ASTNode *), 0, 0);
+	nodes = ASTNodePointerVector_new(0, 0);
 	if (nodes == NULL) {
 		result->type = ParserResultType_ERROR;
 		result->result.error =
@@ -84,9 +85,7 @@ bool caseInsensitiveCommands;
 		switch (token->type) {
 		case TokenType_COMMAND_START:
 			node->type = ASTNodeType_COMMAND;
-			node->children =
-			    (ASTNodeVector *) Vector_new(sizeof(ASTNode *), 0,
-							 0);
+			node->children = ASTNodePointerVector_new(0, 0);
 			if (node->children == NULL) {
 				errorCode =
 				    ParserErrorCode_OUT_OF_MEMORY_FOR_NODES;
@@ -95,8 +94,7 @@ bool caseInsensitiveCommands;
 
 			siblings = parent == NULL ? nodes : parent->children;
 			grownNodes =
-			    (ASTNodeVector *) Vector_append((Vector *) siblings,
-							    &node);
+			    ASTNodePointerVector_append(siblings, &node);
 			if (grownNodes == NULL) {
 				errorCode =
 				    ParserErrorCode_OUT_OF_MEMORY_FOR_NODES;
@@ -167,8 +165,7 @@ bool caseInsensitiveCommands;
 			    ASTNodeType_TEXT : ASTNodeType_WHITESPACE;
 			siblings = parent == NULL ? nodes : parent->children;
 			grownNodes =
-			    (ASTNodeVector *) Vector_append((Vector *) siblings,
-							    &node);
+			    ASTNodePointerVector_append(siblings, &node);
 
 			if (grownNodes == NULL) {
 				errorCode =
@@ -274,7 +271,7 @@ ParserResult *result;
 }
 
 static void freeNodes(nodes)
-ASTNodeVector *nodes;
+ASTNodePointerVector *nodes;
 {
 	ASTNode **node;
 	unsigned long index = 0;
@@ -288,7 +285,7 @@ ASTNodeVector *nodes;
 		free(*node);
 	}
 
-	Vector_free((Vector *) nodes);
+	ASTNodePointerVector_free(nodes);
 }
 
 static ParserError createError(byteIndex, codepointIndex, tokenIndex, errorCode)
@@ -316,3 +313,5 @@ bool caseInsensitive;
 		return string_compare(string1, string2) == 0;
 	}
 }
+
+Vector_ofPointerImplementation(ASTNode)

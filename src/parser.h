@@ -4,6 +4,7 @@
 #include "bool.h"
 #include "lexer.h"
 #include "string.h"
+#include "typed_pointer_vector.h"
 #include "vector.h"
 
 typedef enum ASTNodeType {
@@ -12,7 +13,7 @@ typedef enum ASTNodeType {
 	ASTNodeType_WHITESPACE
 } ASTNodeType;
 
-struct ASTNodeVector;
+struct ASTNodePointerVector;
 
 typedef struct ASTNode {
 	unsigned long byteIndex;
@@ -21,14 +22,10 @@ typedef struct ASTNode {
 	ASTNodeType type;
 	string *value;
 	struct ASTNode *parent;
-	struct ASTNodeVector *children;
+	struct ASTNodePointerVector *children;
 } ASTNode;
 
-typedef struct ASTNodeVector {
-	VectorSize size;
-	ASTNode **items;
-} ASTNodeVector;
-
+Vector_ofPointer(ASTNode)
 typedef enum ParserErrorCode {
 	ParserErrorCode_OK,
 	ParserErrorCode_NULL_TOKENS,
@@ -57,7 +54,7 @@ typedef enum ParserResultType {
 typedef struct ParserResult {
 	ParserResultType type;
 	union {
-		ASTNodeVector *nodes;
+		ASTNodePointerVector *nodes;
 		ParserError error;
 	} result;
 } ParserResult;

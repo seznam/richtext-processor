@@ -19,8 +19,8 @@ int main(void);
 static ParserResult *parseStringToResult(const char *input,
 					 bool caseInsensitiveCommands);
 
-static ASTNodeVector *parseString(const char *input,
-				  bool caseInsensitiveCommands);
+static ASTNodePointerVector *parseString(const char *input,
+					 bool caseInsensitiveCommands);
 
 static char *_assert_node(char *filename, unsigned int line,
 			  unsigned int nodeOrdinalNumber, ASTNode * node,
@@ -70,7 +70,7 @@ END_TEST}
 
 START_TEST(parse_processesPlainText)
 {
-	ASTNodeVector *nodes = parseString("foo  bar baz", false);
+	ASTNodePointerVector *nodes = parseString("foo  bar baz", false);
 	ASTNode **nodePointer;
 	assert(nodes != NULL, "Expected the text to be parsed");
 	assert(nodes->size.length == 6,
@@ -97,7 +97,7 @@ END_TEST}
 
 START_TEST(parse_processesCommandContentAsChildNodes)
 {
-	ASTNodeVector *nodes = parseString("<foo>bar</foo>", false);
+	ASTNodePointerVector *nodes = parseString("<foo>bar</foo>", false);
 	ASTNode **nodePointer;
 	assert(nodes != NULL
 	       && nodes->size.length == 1, "Expected 1 root node");
@@ -116,7 +116,8 @@ END_TEST}
 
 START_TEST(parse_processesNestedCommandsAsChildNodes)
 {
-	ASTNodeVector *nodes = parseString("<foo><bar>baz</bar></foo>", false);
+	ASTNodePointerVector *nodes =
+	    parseString("<foo><bar>baz</bar></foo>", false);
 	ASTNode *root, *child, *leaf;
 	assert(nodes != NULL
 	       && nodes->size.length == 1, "Expected 1 root node");
@@ -135,7 +136,7 @@ END_TEST}
 
 START_TEST(parse_processesMultipleRootCommandsAsSiblings)
 {
-	ASTNodeVector *nodes =
+	ASTNodePointerVector *nodes =
 	    parseString("<foo>bar</foo>baz<foobar>abc</foobar>", false);
 	ASTNode **nodePointer;
 	assert(nodes != NULL
@@ -149,7 +150,7 @@ END_TEST}
 
 START_TEST(parse_emptyCommandsHaveEmptyNonNullChildrenVector)
 {
-	ASTNodeVector *nodes = parseString("<a></a>", false);
+	ASTNodePointerVector *nodes = parseString("<a></a>", false);
 	ASTNode *node;
 	assert(nodes != NULL
 	       && nodes->size.length == 1, "Expected 1 root node");
@@ -163,7 +164,7 @@ START_TEST(parse_matchingBalancingCommandEndsInCaseInsensitiveWay)
 {
 	LexerResult *lexerResult = tokenize(string_from("<abc></ABC>"));
 	ParserResult *result;
-	ASTNodeVector *nodes;
+	ASTNodePointerVector *nodes;
 	ASTNode *node;
 	assert(lexerResult != NULL
 	       && lexerResult->type == LexerResultType_SUCCESS,
@@ -192,7 +193,7 @@ START_TEST(parse_processesNonBalancingCommandsWithoutNesting)
 {
 	LexerResult *lexerResult = tokenize(string_from("<lt><nl><np>"));
 	ParserResult *result;
-	ASTNodeVector *nodes;
+	ASTNodePointerVector *nodes;
 	ASTNode **nodePointer;
 	assert(lexerResult != NULL
 	       && lexerResult->type == LexerResultType_SUCCESS,
@@ -233,7 +234,7 @@ END_TEST}
 
 START_TEST(parse_correctlyReflectsTokenCodepointIndexes)
 {
-	ASTNodeVector *nodes = parseString(" <a>\302\205x</a>", false);
+	ASTNodePointerVector *nodes = parseString(" <a>\302\205x</a>", false);
 	ASTNode *node;
 	assert(nodes != NULL
 	       && nodes->size.length == 2, "Expected 2 root nodes");
@@ -369,7 +370,7 @@ bool caseInsensitiveCommands;
 	return parse(lexerResult->result.tokens, caseInsensitiveCommands);
 }
 
-static ASTNodeVector *parseString(input, caseInsensitiveCommands)
+static ASTNodePointerVector *parseString(input, caseInsensitiveCommands)
 const char *input;
 bool caseInsensitiveCommands;
 {
