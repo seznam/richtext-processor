@@ -14,18 +14,20 @@
    that matters the most.
  */
 
-static LexerResult *addWarning(LexerResult * result, Vector ** warnings,
-			       Vector * tokens, unsigned long byteIndex,
+static LexerResult *addWarning(LexerResult * result,
+			       LexerWarningVector ** warnings,
+			       TokenVector * tokens, unsigned long byteIndex,
 			       unsigned long codepointIndex,
 			       LexerWarningCode code);
 
 static LexerResult *finalizeToError(LexerResult * result,
 				    unsigned long byteIndex,
 				    unsigned long codepointIndex,
-				    LexerErrorCode code, Vector * warnings,
-				    Vector * tokens);
+				    LexerErrorCode code,
+				    LexerWarningVector * warnings,
+				    TokenVector * tokens);
 
-static void freeTokens(Vector * tokens);
+static void freeTokens(TokenVector * tokens);
 
 LexerResult *tokenize(richtext)
 string *richtext;
@@ -33,9 +35,9 @@ string *richtext;
 	unsigned long tokenCountEstimate;
 	LexerResult *result = malloc(sizeof(LexerResult));
 	LexerResult *errorResult;
-	Vector *tokens;
-	Vector *resizedTokens;
-	Vector *warnings = Vector_new(sizeof(LexerWarning), 0, 0);
+	TokenVector *tokens;
+	TokenVector *resizedTokens;
+	LexerWarningVector *warnings = LexerWarningVector_new(0, 0);
 	Token token;
 	unsigned char *currentByte;
 	unsigned char nextByte, nextNextByte;
@@ -45,9 +47,14 @@ string *richtext;
 	bool isInsideCommand;
 
 	if (richtext == NULL) {
+		LexerWarningVector_free(warnings);
+		if (result != NULL) {
+			free(result);
+		}
 		return NULL;
 	}
 	if (result == NULL) {
+		LexerWarningVector_free(warnings);
 		return NULL;
 	}
 
@@ -62,11 +69,11 @@ string *richtext;
 	}
 
 	tokenCountEstimate = richtext->length / 1024;
-	tokens = Vector_new(sizeof(Token), 0, tokenCountEstimate);
+	tokens = TokenVector_new(0, tokenCountEstimate);
 
 	result->type = LexerResultType_SUCCESS;
-	result->result.tokens = (TokenVector *) tokens;
-	result->warnings = (LexerWarningVector *) warnings;
+	result->result.tokens = tokens;
+	result->warnings = warnings;
 
 	if (tokens == NULL) {
 		return finalizeToError(result, 0, 0,
@@ -105,7 +112,8 @@ string *richtext;
 							       warnings,
 							       tokens);
 				}
-				resizedTokens = Vector_append(tokens, &token);
+				resizedTokens =
+				    TokenVector_append(tokens, &token);
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
@@ -143,7 +151,8 @@ string *richtext;
 							       warnings,
 							       tokens);
 				}
-				resizedTokens = Vector_append(tokens, &token);
+				resizedTokens =
+				    TokenVector_append(tokens, &token);
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
@@ -183,7 +192,8 @@ string *richtext;
 							       warnings,
 							       tokens);
 				}
-				resizedTokens = Vector_append(tokens, &token);
+				resizedTokens =
+				    TokenVector_append(tokens, &token);
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
@@ -207,7 +217,7 @@ string *richtext;
 						       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 						       warnings, tokens);
 			}
-			resizedTokens = Vector_append(tokens, &token);
+			resizedTokens = TokenVector_append(tokens, &token);
 			if (resizedTokens == NULL) {
 				return finalizeToError(result, currentByteIndex,
 						       codepointIndex,
@@ -238,7 +248,8 @@ string *richtext;
 							       warnings,
 							       tokens);
 				}
-				resizedTokens = Vector_append(tokens, &token);
+				resizedTokens =
+				    TokenVector_append(tokens, &token);
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
@@ -274,7 +285,8 @@ string *richtext;
 							       warnings,
 							       tokens);
 				}
-				resizedTokens = Vector_append(tokens, &token);
+				resizedTokens =
+				    TokenVector_append(tokens, &token);
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
@@ -300,7 +312,8 @@ string *richtext;
 							       warnings,
 							       tokens);
 				}
-				resizedTokens = Vector_append(tokens, &token);
+				resizedTokens =
+				    TokenVector_append(tokens, &token);
 				if (resizedTokens == NULL) {
 					return finalizeToError(result,
 							       currentByteIndex,
@@ -376,8 +389,8 @@ string *richtext;
 							     warnings, tokens);
 						}
 						resizedTokens =
-						    Vector_append(tokens,
-								  &token);
+						    TokenVector_append(tokens,
+								       &token);
 						if (resizedTokens == NULL) {
 							return
 							    finalizeToError
@@ -409,7 +422,7 @@ string *richtext;
 								    tokens);
 					}
 					resizedTokens =
-					    Vector_append(tokens, &token);
+					    TokenVector_append(tokens, &token);
 					if (resizedTokens == NULL) {
 						return
 						    finalizeToError(result,
@@ -534,8 +547,8 @@ string *richtext;
 							     warnings, tokens);
 						}
 						resizedTokens =
-						    Vector_append(tokens,
-								  &token);
+						    TokenVector_append(tokens,
+								       &token);
 						if (resizedTokens == NULL) {
 							return
 							    finalizeToError
@@ -567,7 +580,7 @@ string *richtext;
 								    tokens);
 					}
 					resizedTokens =
-					    Vector_append(tokens, &token);
+					    TokenVector_append(tokens, &token);
 					if (resizedTokens == NULL) {
 						return
 						    finalizeToError(result,
@@ -623,7 +636,7 @@ string *richtext;
 		token.value =
 		    string_substring(richtext, token.byteIndex,
 				     richtext->length);
-		tokens = Vector_append(tokens, &token);
+		tokens = TokenVector_append(tokens, &token);
 	}
 
 	result->result.tokens = (TokenVector *) tokens;
@@ -638,11 +651,11 @@ LexerResult *result;
 		return;
 	}
 
-	Vector_free((Vector *) result->warnings);
+	LexerWarningVector_free(result->warnings);
 
 	switch (result->type) {
 	case LexerResultType_SUCCESS:
-		freeTokens((Vector *) result->result.tokens);
+		freeTokens(result->result.tokens);
 		break;
 	case LexerResultType_ERROR:
 		break;
@@ -656,18 +669,18 @@ LexerResult *result;
 static LexerResult *addWarning(result, warnings, tokens, byteIndex,
 			       codepointIndex, code)
 LexerResult *result;
-Vector **warnings;
-Vector *tokens;
+LexerWarningVector **warnings;
+TokenVector *tokens;
 unsigned long byteIndex;
 unsigned long codepointIndex;
 LexerWarningCode code;
 {
 	LexerWarning warning;
-	Vector *resizedWarnings;
+	LexerWarningVector *resizedWarnings;
 	warning.byteIndex = byteIndex;
 	warning.codepointIndex = codepointIndex;
 	warning.code = code;
-	resizedWarnings = Vector_append(*warnings, &warning);
+	resizedWarnings = LexerWarningVector_append(*warnings, &warning);
 	if (resizedWarnings != NULL) {
 		*warnings = resizedWarnings;
 		return NULL;
@@ -683,20 +696,20 @@ LexerResult *result;
 unsigned long byteIndex;
 unsigned long codepointIndex;
 LexerErrorCode code;
-Vector *warnings;
-Vector *tokens;
+LexerWarningVector *warnings;
+TokenVector *tokens;
 {
 	freeTokens(tokens);
 	result->type = LexerResultType_ERROR;
 	result->result.error.byteIndex = byteIndex;
 	result->result.error.codepointIndex = codepointIndex;
 	result->result.error.code = code;
-	result->warnings = (LexerWarningVector *) warnings;
+	result->warnings = warnings;
 	return result;
 }
 
 static void freeTokens(tokens)
-Vector *tokens;
+TokenVector *tokens;
 {
 	Token *token;
 	unsigned long i = 0;
@@ -708,5 +721,8 @@ Vector *tokens;
 	for (token = tokens->items; i < tokens->size.length; i++, token++) {
 		string_free(token->value);
 	}
-	Vector_free(tokens);
+	TokenVector_free(tokens);
 }
+
+Vector_ofTypeImplementation(Token)
+    Vector_ofTypeImplementation(LexerWarning)

@@ -2,6 +2,7 @@
 #define LEXER_HEADER_FILE 1
 
 #include "string.h"
+#include "typed_vector.h"
 #include "vector.h"
 
 /*
@@ -30,11 +31,7 @@ typedef struct Token {
 	string *value;
 } Token;
 
-typedef struct TokenVector {
-	VectorSize size;
-	Token *items;
-} TokenVector;
-
+Vector_ofType(Token)
 typedef enum LexerErrorCode {
 	LexerErrorCode_UNEXPECTED_COMMAND_START,
 	LexerErrorCode_UNTERMINATED_COMMAND,
@@ -60,11 +57,7 @@ typedef struct LexerWarning {
 	LexerWarningCode code;
 } LexerWarning;
 
-typedef struct LexerWarningVector {
-	VectorSize size;
-	LexerWarning *items;
-} LexerWarningVector;
-
+Vector_ofType(LexerWarning)
 typedef enum LexerResultType {
 	LexerResultType_SUCCESS,
 	LexerResultType_ERROR
