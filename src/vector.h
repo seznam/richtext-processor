@@ -48,6 +48,8 @@ Vector *Vector_append(Vector * vector, void *value);
 
 Vector *Vector_pop(Vector * vector, void *removedValue);
 
+Vector *Vector_concat(Vector * vector1, Vector * vector2);
+
 Vector *Vector_bigSlice(Vector * vector, unsigned long from, unsigned long to);
 
 Vector *Vector_slice(Vector * vector, long from, long to);

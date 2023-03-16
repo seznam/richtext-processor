@@ -21,6 +21,9 @@ type##PointerVector *type##PointerVector_append(type##PointerVector * vector,\
 type##PointerVector *type##PointerVector_pop(type##PointerVector * vector,\
 					     type ** removedValue);\
 \
+type##PointerVector *type##PointerVector_concat(type##PointerVector * vector1,\
+						type##PointerVector * vector2);\
+\
 type##PointerVector *type##PointerVector_bigSlice(type##PointerVector * vector,\
 						  unsigned long from,\
 						  unsigned long to);\
@@ -70,6 +73,14 @@ type **removedValue;\
 {\
 	return (type##PointerVector *) Vector_pop((Vector *) vector,\
 						  removedValue);\
+}\
+\
+type##PointerVector *type##PointerVector_concat(vector1, vector2)\
+type##PointerVector *vector1;\
+type##PointerVector *vector2;\
+{\
+	return (type##PointerVector *) Vector_concat((Vector *) vector1,\
+						     (Vector *) vector2);\
 }\
 \
 type##PointerVector *type##PointerVector_bigSlice(vector, from, to)\

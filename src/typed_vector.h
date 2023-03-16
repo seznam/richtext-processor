@@ -17,6 +17,9 @@ type##Vector *type##Vector_append(type##Vector * vector, type * value);\
 \
 type##Vector *type##Vector_pop(type##Vector * vector, type * removedValue);\
 \
+type##Vector *type##Vector_concat(type##Vector * vector1,\
+				  type##Vector * vector2);\
+\
 type##Vector *type##Vector_bigSlice(type##Vector * vector, unsigned long from,\
 				    unsigned long to);\
 \
@@ -59,6 +62,14 @@ type##Vector *vector;\
 type *removedValue;\
 {\
 	return (type##Vector *) Vector_pop((Vector *) vector, removedValue);\
+}\
+\
+type##Vector *type##Vector_concat(vector1, vector2)\
+type##Vector *vector1;\
+type##Vector *vector2;\
+{\
+	return (type##Vector *) Vector_concat((Vector *) vector1,\
+					      (Vector *) vector2);\
 }\
 \
 type##Vector *type##Vector_bigSlice(vector, from, to)\

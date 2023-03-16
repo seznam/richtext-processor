@@ -1,3 +1,4 @@
+#include <limits.h>
 #include "../src/vector.h"
 #include "unit.h"
 
@@ -214,6 +215,147 @@ START_TEST(Vector_pop_removesLastItemFromVector)
 	       "Expected to receive the last value from Vector_pop");
 	assert(vector->size.length == 0,
 	       "Expected the vector's length to be decreased after calling Vector_pop");
+END_TEST}
+
+START_TEST(Vector_concat_rejectsNullInput)
+{
+	Vector *vector = Vector_new(sizeof(int), 0, 0);
+	assert(Vector_concat(NULL, NULL) == NULL,
+	       "Expected NULL result for NULL used as both inputs");
+	assert(Vector_concat(vector, NULL) == NULL,
+	       "Expected NULL result for NULL 2nd vector");
+	assert(Vector_concat(NULL, vector) == NULL,
+	       "Expected NULL result for NULL 1st vector");
+END_TEST}
+
+START_TEST(Vector_concat_rejectsNonMatchingItemSizeVectors)
+{
+	Vector *vector1 = Vector_new(sizeof(int), 0, 0);
+	Vector *vector2 = Vector_new(sizeof(long), 0, 0);
+	assert(Vector_concat(vector1, vector2) == NULL,
+	       "Expected NULL for vectors of mismatched item size");
+END_TEST}
+
+START_TEST(Vector_concat_rejectsTooBigInput)
+{
+	Vector *vector1 = Vector_new(sizeof(int), 0, 0);
+	Vector *vector2 = Vector_new(sizeof(long), 0, 0);
+	vector1->size.length = ULONG_MAX / 2;
+	vector2->size.length = vector1->size.length + 1;
+	assert(Vector_concat(vector1, vector2) == NULL,
+	       "Expected NULL result if resulting vector would have more that ULONG_MAX items");
+END_TEST}
+
+START_TEST(Vector_concat_returnsVectorOfCapacityMatchingLength)
+{
+	Vector *vector1 = Vector_new(sizeof(int), 2, 2);
+	Vector *vector2 = Vector_new(sizeof(int), 3, 6);
+	assert(Vector_concat(vector1, vector2)->size.length == 5,
+	       "Expected the resulting vector to have length 5");
+	assert(Vector_concat(vector1, vector2)->size.capacity == 5,
+	       "Expected the resulting vector to have capacity 5");
+END_TEST}
+
+START_TEST(Vector_concat_returnsVectorOfInputItemsInOrder)
+{
+	Vector *vector1 = Vector_new(sizeof(int), 0, 3);
+	Vector *vector2 = Vector_new(sizeof(int), 0, 2);
+	Vector *concatenated = NULL;
+	int *value = malloc(sizeof(int));
+
+	*value = 1;
+	Vector_append(vector1, value);
+	*value = 2;
+	Vector_append(vector1, value);
+	*value = 3;
+	Vector_append(vector1, value);
+	*value = 4;
+	Vector_append(vector2, value);
+	*value = 5;
+	Vector_append(vector2, value);
+
+	concatenated = Vector_concat(vector1, vector2);
+
+	Vector_get(concatenated, 0, value);
+	assert(*value == 1, "Expected the 1st item from 1st vector on index 0");
+	Vector_get(concatenated, 1, value);
+	assert(*value == 2, "Expected the 2nd item from 1st vector on index 1");
+	Vector_get(concatenated, 2, value);
+	assert(*value == 3, "Expected the 3rd item from 1st vector on index 2");
+	Vector_get(concatenated, 3, value);
+	assert(*value == 4, "Expected the 1st item from 2nd vector on index 3");
+	Vector_get(concatenated, 4, value);
+	assert(*value == 5, "Expected the 2nd item from 2nd vector on index 4");
+END_TEST}
+
+START_TEST(Vector_concat_doesNotModifyInput)
+{
+	Vector *vector1 = Vector_new(sizeof(int), 0, 3);
+	Vector *vector2 = Vector_new(sizeof(int), 0, 2);
+	int *value = malloc(sizeof(int));
+
+	*value = 1;
+	Vector_append(vector1, value);
+	*value = 2;
+	Vector_append(vector1, value);
+	*value = 3;
+	Vector_append(vector1, value);
+	*value = 4;
+	Vector_append(vector2, value);
+	*value = 5;
+	Vector_append(vector2, value);
+
+	Vector_concat(vector1, vector2);
+
+	assert(vector1->size.itemSize == sizeof(int),
+	       "Expected the 1st vector to not be modified");
+	assert(vector1->size.length == 3,
+	       "Expected the 1st vector to not be modified");
+	assert(vector1->size.capacity == 3,
+	       "Expected the 1st vector to not be modified");
+	Vector_get(vector1, 0, value);
+	assert(*value == 1, "Expected the 1st vector to not be modified");
+	Vector_get(vector1, 1, value);
+	assert(*value == 2, "Expected the 1st vector to not be modified");
+	Vector_get(vector1, 2, value);
+	assert(*value == 3, "Expected the 1st vector to not be modified");
+	Vector_get(vector2, 0, value);
+	assert(*value == 4, "Expected the 2nd vector to not be modified");
+	Vector_get(vector2, 1, value);
+	assert(*value == 5, "Expected the 2nd vector to not be modified");
+END_TEST}
+
+START_TEST(Vector_concat_acceptsSameVectorAsBothInputs)
+{
+	Vector *vector = Vector_new(sizeof(int), 0, 2);
+	Vector *concatenated = NULL;
+	int *value = malloc(sizeof(int));
+
+	*value = 1;
+	Vector_append(vector, value);
+	*value = 2;
+	Vector_append(vector, value);
+
+	concatenated = Vector_concat(vector, vector);
+
+	assert(concatenated->size.itemSize == vector->size.itemSize,
+	       "Expected the itemSize to match");
+	assert(concatenated->size.length == 4, "Expected the length to be 4");
+	assert(concatenated->size.capacity == 4,
+	       "Expected the capacity to be 4");
+
+	Vector_get(concatenated, 0, value);
+	assert(*value == 1,
+	       "Expected the 1st item in concatenated vector to match the 1st input vector item");
+	Vector_get(concatenated, 1, value);
+	assert(*value == 2,
+	       "Expected the 1st item in concatenated vector to match the 2nd input vector item");
+	Vector_get(concatenated, 2, value);
+	assert(*value == 1,
+	       "Expected the 1st item in concatenated vector to match the 1st input vector item");
+	Vector_get(concatenated, 3, value);
+	assert(*value == 2,
+	       "Expected the 1st item in concatenated vector to match the 2nd input vector item");
 END_TEST}
 
 START_TEST(Vector_bigSlice_returnsNullForNullInputOrFromLargerThanTo)
@@ -564,6 +706,13 @@ static void all_tests()
 	runTest(Vector_pop_returnsNullForNullVectorOrValue);
 	runTest(Vector_pop_returnsNullForEmptyVector);
 	runTest(Vector_pop_removesLastItemFromVector);
+	runTest(Vector_concat_rejectsNullInput);
+	runTest(Vector_concat_rejectsNonMatchingItemSizeVectors);
+	runTest(Vector_concat_rejectsTooBigInput);
+	runTest(Vector_concat_returnsVectorOfCapacityMatchingLength);
+	runTest(Vector_concat_returnsVectorOfInputItemsInOrder);
+	runTest(Vector_concat_doesNotModifyInput);
+	runTest(Vector_concat_acceptsSameVectorAsBothInputs);
 	runTest(Vector_bigSlice_returnsNullForNullInputOrFromLargerThanTo);
 	runTest(Vector_bigSlice_returnsSliceWithDataCopyForValidInput);
 	runTest(Vector_bigSlice_capsToIndexToPreventOverflow);

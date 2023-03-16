@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -104,6 +105,50 @@ void *removedValue;
 	memcpy(removedValue, bucket, vector->size.itemSize);
 
 	return vector;
+}
+
+Vector *Vector_concat(vector1, vector2)
+Vector *vector1;
+Vector *vector2;
+{
+	Vector *result;
+	Vector *source;
+	unsigned long maxVector2Length;
+	char *bucket;
+	unsigned long i;
+	unsigned int sourceIndex;
+
+	if (vector1 == NULL || vector2 == NULL) {
+		return NULL;
+	}
+	if (vector1->size.itemSize != vector2->size.itemSize) {
+		return NULL;
+	}
+	maxVector2Length = ULONG_MAX - vector1->size.length;
+	if (vector2->size.length > maxVector2Length) {
+		/* Imagine having so much RAM this would happen */
+		return NULL;
+	}
+
+	result =
+	    Vector_new(vector1->size.itemSize, 0,
+		       vector1->size.length + vector2->size.length);
+	if (result == NULL) {
+		return NULL;
+	}
+
+	for (sourceIndex = 0; sourceIndex < 2; sourceIndex++) {
+		source = sourceIndex == 0 ? vector1 : vector2;
+		for (bucket = source->items, i = 0; i < source->size.length;
+		     i++, bucket += source->size.itemSize) {
+			if (Vector_append(result, bucket) == NULL) {
+				Vector_free(result);
+				return NULL;
+			}
+		}
+	}
+
+	return result;
 }
 
 Vector *Vector_bigSlice(vector, from, to)
