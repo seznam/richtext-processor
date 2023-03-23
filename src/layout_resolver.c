@@ -162,6 +162,9 @@ static LayoutResolverErrorCode updateSegmentOnCommandEnd(LayoutResolverState *
 							 state,
 							 ASTNode * commandNode);
 
+static bool nodeHasParentOfType(ASTNode * node, string * type,
+				bool caseInsensitive);
+
 static CommandLayoutInterpretation
 getCommandLayoutInterpretation(ASTNode * command,
 			       CustomCommandLayoutInterpretation
@@ -537,6 +540,8 @@ ASTNode *node;
 	    LayoutResolverErrorCode_INVALID_CUSTOM_COMMAND_INTERPRETATION;
 	LayoutResolverErrorCode UNTRANSLATED_CUSTOM_LAYOUT_ERROR =
 	    LayoutResolverErrorCode_UNTRANSLATED_CUSTOM_LAYOUT_INTERPRETATION;
+	LayoutResolverErrorCode OOM_FOR_WARNINGS =
+	    LayoutResolverErrorCode_OUT_OF_MEMORY_FOR_WARNINGS;
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
 
 	layout =
@@ -568,6 +573,42 @@ ASTNode *node;
 
 	case CommandLayoutInterpretation_NEW_PAGE:
 	case CommandLayoutInterpretation_SAME_PAGE:
+		if (layout == CommandLayoutInterpretation_NEW_PAGE
+		    && nodeHasParentOfType(node, COMMAND_SamePage,
+					   state->caseInsensitiveCommands)) {
+			LayoutResolverWarning warning;
+			LayoutResolverWarningVector *grownWarnings;
+			warning.cause = node;
+			warning.code =
+			    LayoutResolverWarningCode_NEW_PAGE_INSIDE_SAME_PAGE;
+			grownWarnings =
+			    LayoutResolverWarningVector_append(state->warnings,
+							       &warning);
+			if (grownWarnings == NULL) {
+				errorCode = OOM_FOR_WARNINGS;
+				break;
+			}
+			state->warnings = grownWarnings;
+		}
+
+		if (layout == CommandLayoutInterpretation_SAME_PAGE
+		    && nodeHasParentOfType(node, COMMAND_SamePage,
+					   state->caseInsensitiveCommands)) {
+			LayoutResolverWarning warning;
+			LayoutResolverWarningVector *grownWarnings;
+			warning.cause = node;
+			warning.code =
+			    LayoutResolverWarningCode_NESTED_SAME_PAGE;
+			grownWarnings =
+			    LayoutResolverWarningVector_append(state->warnings,
+							       &warning);
+			if (grownWarnings == NULL) {
+				errorCode = OOM_FOR_WARNINGS;
+				break;
+			}
+			state->warnings = grownWarnings;
+		}
+
 		errorCode = newBlock(state, node, layout, true);
 		if (errorCode != LayoutResolverErrorCode_OK) {
 			break;
@@ -1328,6 +1369,30 @@ ASTNode *commandNode;
 	}
 
 	return LayoutResolverErrorCode_OK;
+}
+
+static bool nodeHasParentOfType(node, type, caseInsensitive)
+ASTNode *node;
+string *type;
+bool caseInsensitive;
+{
+	if (node == NULL || node->parent == NULL) {
+		return false;
+	}
+
+	if (node->parent->type != ASTNodeType_COMMAND) {
+		return false;	/* This should not happen, but, just in case */
+	}
+
+	node = node->parent;
+	while (!string_equals(node->value, type, caseInsensitive)) {
+		node = node->parent;
+		if (node == NULL || node->type != ASTNodeType_COMMAND) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 static CommandLayoutInterpretation

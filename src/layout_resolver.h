@@ -167,7 +167,7 @@ typedef struct LayoutResolverError {
 } LayoutResolverError;
 
 typedef enum LayoutResolverWarningCode {
-	LayoutResolverWarningCode_NP_INSIDE_SAME_PAGE,
+	LayoutResolverWarningCode_NEW_PAGE_INSIDE_SAME_PAGE,
 	LayoutResolverWarningCode_NESTED_SAME_PAGE
 } LayoutResolverWarningCode;
 
