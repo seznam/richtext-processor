@@ -3,7 +3,7 @@
 #include "unit.h"
 
 /*
-   This file does not bother to free heap-allocated memory because it a suite
+   This file does not bother to free heap-allocated memory because it's a suite
 	 of unit tests, ergo it's not a big deal.
  */
 
