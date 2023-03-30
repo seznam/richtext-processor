@@ -130,11 +130,13 @@ static void freeLayoutBlocks(LayoutBlockVector * blocks);
 static LayoutResolverErrorCode processCommands(LayoutResolverState * state,
 					       ASTNodePointerVector * nodes);
 
-static LayoutResolverErrorCode processCommandStart(LayoutResolverState * state,
-						   ASTNode * node);
+static LayoutResolverErrorCode
+processCommandStart(LayoutResolverState * state, ASTNode * node,
+		    CommandLayoutInterpretation layout);
 
-static LayoutResolverErrorCode processCommandEnd(LayoutResolverState * state,
-						 ASTNode * node);
+static LayoutResolverErrorCode
+processCommandEnd(LayoutResolverState * state, ASTNode * node,
+		  CommandLayoutInterpretation layout);
 
 static LayoutResolverErrorCode addSegmentContent(LayoutResolverState * state,
 						 ASTNode * nodePointer);
@@ -170,6 +172,11 @@ getCommandLayoutInterpretation(ASTNode * command,
 			       CustomCommandLayoutInterpretation
 			       customCommandHook(ASTNode *, bool),
 			       bool caseInsensitive);
+
+static CommandLayoutInterpretation getLayoutInterpretation(LayoutResolverState *
+							   state,
+							   ASTNode *
+							   commandNode);
 
 static CommandLayoutInterpretation
 getStandardCommandLayoutInterpretation(string * command, bool caseInsensitive);
@@ -492,6 +499,7 @@ ASTNodePointerVector *nodes;
 	ASTNode **nodePointer;
 	ASTNode *node;
 	unsigned long index = 0;
+	CommandLayoutInterpretation layout;
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
 
 	if (nodes == NULL) {
@@ -503,7 +511,23 @@ ASTNodePointerVector *nodes;
 		node = *nodePointer;
 		switch (node->type) {
 		case ASTNodeType_COMMAND:
-			errorCode = processCommandStart(state, node);
+			layout = getLayoutInterpretation(state, node);
+
+			errorCode = processCommandStart(state, node, layout);
+			if (errorCode != LayoutResolverErrorCode_OK) {
+				break;
+			}
+
+			if (layout != CommandLayoutInterpretation_COMMENT
+			    && node->children != NULL) {
+				errorCode =
+				    processCommands(state, node->children);
+			}
+			if (errorCode != LayoutResolverErrorCode_OK) {
+				break;
+			}
+
+			errorCode = processCommandEnd(state, node, layout);
 			break;
 
 		case ASTNodeType_TEXT:
@@ -523,26 +547,16 @@ ASTNodePointerVector *nodes;
 			}
 			break;
 		}
-
-		if (node->type == ASTNodeType_COMMAND) {
-			errorCode = processCommandEnd(state, node);
-			if (errorCode != LayoutResolverErrorCode_OK) {
-				if (state->errorLocation == NULL) {
-					state->errorLocation = node;
-				}
-				break;
-			}
-		}
 	}
 
 	return errorCode;
 }
 
-static LayoutResolverErrorCode processCommandStart(state, node)
+static LayoutResolverErrorCode processCommandStart(state, node, layout)
 LayoutResolverState *state;
 ASTNode *node;
+CommandLayoutInterpretation layout;
 {
-	CommandLayoutInterpretation layout;
 	LayoutBlockTypeVector *grownBlockTypeStack;
 	LayoutBlockType currentBlockType = state->block->type;
 	LayoutResolverErrorCode INVALID_CUSTOM_INTERPRETATION_ERROR =
@@ -552,10 +566,6 @@ ASTNode *node;
 	LayoutResolverErrorCode OOM_FOR_WARNINGS =
 	    LayoutResolverErrorCode_OUT_OF_MEMORY_FOR_WARNINGS;
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
-
-	layout =
-	    getCommandLayoutInterpretation(node, state->customCommandHook,
-					   state->caseInsensitiveCommands);
 
 	switch (layout) {
 	case CommandLayoutInterpretation_HEADING_BLOCK:
@@ -570,14 +580,6 @@ ASTNode *node;
 		state->blockTypeStack = grownBlockTypeStack;
 
 		newBlock(state, node, layout, true);
-		if (errorCode != LayoutResolverErrorCode_OK) {
-			break;
-		}
-
-		if (node->children != NULL) {
-			errorCode = processCommands(state, node->children);
-		}
-
 		break;
 
 	case CommandLayoutInterpretation_NEW_PAGE:
@@ -629,37 +631,16 @@ ASTNode *node;
 		}
 
 		state->block->type = currentBlockType;
-
-		if (node->children != NULL) {
-			errorCode = processCommands(state, node->children);
-		}
-
 		break;
 
 	case CommandLayoutInterpretation_NEW_PARAGRAPH:
 	case CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH:
 		errorCode = newParagraph(state, node, layout);
-		if (errorCode != LayoutResolverErrorCode_OK) {
-			break;
-		}
-
-		if (node->children != NULL) {
-			errorCode = processCommands(state, node->children);
-		}
-
 		break;
 
 	case CommandLayoutInterpretation_NEW_LINE:
 	case CommandLayoutInterpretation_NEW_ISOLATED_LINE:
 		errorCode = newLine(state, node);
-		if (errorCode != LayoutResolverErrorCode_OK) {
-			break;
-		}
-
-		if (node->children != NULL) {
-			errorCode = processCommands(state, node->children);
-		}
-
 		break;
 
 	case CommandLayoutInterpretation_NEW_LINE_SEGMENT:
@@ -669,34 +650,14 @@ ASTNode *node;
 		}
 
 		errorCode = updateSegmentOnCommandStart(state, node);
-		if (errorCode != LayoutResolverErrorCode_OK) {
-			break;
-		}
-
-		if (node->children != NULL) {
-			errorCode = processCommands(state, node->children);
-		}
-
 		break;
 
 	case CommandLayoutInterpretation_INLINE_CONTENT:
 	case CommandLayoutInterpretation_COMMENT:
 		errorCode = addSegmentContent(state, node);
-		if (errorCode != LayoutResolverErrorCode_OK) {
-			break;
-		}
-
-		if (layout == CommandLayoutInterpretation_INLINE_CONTENT
-		    && node->children != NULL) {
-			errorCode = processCommands(state, node->children);
-		}
-
 		break;
 
 	case CommandLayoutInterpretation_NO_OP:
-		if (node->children != NULL) {
-			errorCode = processCommands(state, node->children);
-		}
 		break;
 
 	case CommandLayoutInterpretation_INVALID_CUSTOM_COMMAND:
@@ -717,11 +678,11 @@ ASTNode *node;
 	return errorCode;
 }
 
-static LayoutResolverErrorCode processCommandEnd(state, node)
+static LayoutResolverErrorCode processCommandEnd(state, node, layout)
 LayoutResolverState *state;
 ASTNode *node;
+CommandLayoutInterpretation layout;
 {
-	CommandLayoutInterpretation layout;
 	LayoutBlockType currentBlockType = state->block->type;
 	LayoutBlockTypeVector *reducedTypes = NULL;
 	LayoutBlockType poppedType;
@@ -730,10 +691,6 @@ ASTNode *node;
 	LayoutResolverErrorCode UNTRANSLATED_CUSTOM_LAYOUT_ERROR =
 	    LayoutResolverErrorCode_UNTRANSLATED_CUSTOM_LAYOUT_INTERPRETATION;
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
-
-	layout =
-	    getCommandLayoutInterpretation(node, state->customCommandHook,
-					   state->caseInsensitiveCommands);
 
 	switch (layout) {
 	case CommandLayoutInterpretation_HEADING_BLOCK:
@@ -1402,6 +1359,15 @@ bool caseInsensitive;
 	}
 
 	return true;
+}
+
+static CommandLayoutInterpretation getLayoutInterpretation(state, commandNode)
+LayoutResolverState *state;
+ASTNode *commandNode;
+{
+	return getCommandLayoutInterpretation(commandNode,
+					      state->customCommandHook,
+					      state->caseInsensitiveCommands);
 }
 
 static CommandLayoutInterpretation
