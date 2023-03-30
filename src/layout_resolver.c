@@ -376,8 +376,6 @@ bool caseInsensitiveCommands;
 	LayoutParagraphVector_free(paragraphs);
 	LayoutLineVector_free(lines);
 	LayoutLineSegmentVector_free(segments);
-	LayoutBlockTypeVector_free(blockTypeStack);
-	LayoutContentAlignmentVector_free(contentAlignmentStack);
 	LayoutParagraphVector_free(state.block->paragraphs);
 	LayoutLineVector_free(state.paragraph->lines);
 	LayoutLineSegmentVector_free(state.line->segments);
