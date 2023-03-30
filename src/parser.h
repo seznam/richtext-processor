@@ -13,19 +13,20 @@ typedef enum ASTNodeType {
 	ASTNodeType_WHITESPACE
 } ASTNodeType;
 
-struct ASTNodePointerVector;
+struct ASTNode;
+typedef struct ASTNode ASTNode;
 
-typedef struct ASTNode {
+Vector_ofPointer(ASTNode)
+struct ASTNode {
 	unsigned long byteIndex;
 	unsigned long codepointIndex;
 	unsigned long tokenIndex;
 	ASTNodeType type;
 	string *value;
-	struct ASTNode *parent;
-	struct ASTNodePointerVector *children;
-} ASTNode;
+	ASTNode *parent;
+	ASTNodePointerVector *children;
+};
 
-Vector_ofPointer(ASTNode)
 typedef enum ParserErrorCode {
 	ParserErrorCode_OK,
 	ParserErrorCode_NULL_TOKENS,
