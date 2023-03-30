@@ -204,6 +204,29 @@ bool caseInsensitiveCommands;
 	}
 	result->type = LayoutResolverResultType_SUCCESS;
 
+	block.causingCommand = NULL;
+	block.paragraphs = NULL;
+	block.type = LayoutBlockType_MAIN_CONTENT;
+
+	paragraph.causingCommand = NULL;
+	paragraph.lines = NULL;
+	paragraph.type = LayoutParagraphType_IMPLICIT;
+
+	line.causingCommand = NULL;
+	line.segments = NULL;
+
+	segment.causingCommand = NULL;
+	segment.contentAlignment = LayoutContentAlignment_DEFAULT;
+	segment.leftIndentationLevel = 0;
+	segment.rightIndentationLevel = 0;
+	segment.fontSizeChange = 0;
+	segment.fontBoldLevel = 0;
+	segment.fontItalicLevel = 0;
+	segment.fontUnderlinedLevel = 0;
+	segment.fontFixedLevel = 0;
+	segment.otherSegmentMarkers = NULL;
+	segment.content = NULL;
+
 	do {
 		warnings = LayoutResolverWarningVector_new(0, 0);
 		if (warnings == NULL) {
@@ -259,14 +282,6 @@ bool caseInsensitiveCommands;
 			break;
 		}
 
-		block.paragraphs = NULL;
-		paragraph.lines = NULL;
-		line.segments = NULL;
-		segment.otherSegmentMarkers = NULL;
-		segment.content = NULL;
-
-		block.type = LayoutBlockType_MAIN_CONTENT;
-		block.causingCommand = NULL;
 		block.paragraphs = LayoutParagraphVector_new(0, 0);
 		if (block.paragraphs == NULL) {
 			errorCode =
@@ -274,8 +289,6 @@ bool caseInsensitiveCommands;
 			break;
 		}
 
-		paragraph.causingCommand = NULL;
-		paragraph.type = LayoutParagraphType_IMPLICIT;
 		paragraph.lines = LayoutLineVector_new(0, 0);
 		errorCode =
 		    LayoutResolverErrorCode_OUT_OF_MEMORY_FOR_PARAGRAPHS;
@@ -284,7 +297,6 @@ bool caseInsensitiveCommands;
 		}
 		errorCode = LayoutResolverErrorCode_OK;
 
-		line.causingCommand = NULL;
 		line.segments = LayoutLineSegmentVector_new(0, 0);
 		if (line.segments == NULL) {
 			errorCode =
@@ -292,7 +304,6 @@ bool caseInsensitiveCommands;
 			break;
 		}
 
-		segment.causingCommand = NULL;
 		segment.contentAlignment = LayoutContentAlignment_DEFAULT;
 		segment.leftIndentationLevel = 0;
 		segment.rightIndentationLevel = 0;
