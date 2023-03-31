@@ -128,6 +128,7 @@ typedef struct LayoutResolverState {
 static void freeLayoutBlocks(LayoutBlockVector * blocks);
 
 static LayoutResolverErrorCode processCommands(LayoutResolverState * state,
+					       ASTNode * parent,
 					       ASTNodePointerVector * nodes);
 
 static LayoutResolverErrorCode
@@ -366,7 +367,7 @@ bool caseInsensitiveCommands;
 	state.segment = &segment;
 	state.errorLocation = NULL;
 
-	errorCode = processCommands(&state, nodes);
+	errorCode = processCommands(&state, NULL, nodes);
 
 	if (errorCode == LayoutResolverErrorCode_OK) {
 		result->result.blocks = state.blocks;
@@ -492,8 +493,9 @@ static string *COMMAND_Comment = NULL;
 static string *COMMAND_nl = NULL;
 static string *COMMAND_np = NULL;
 
-static LayoutResolverErrorCode processCommands(state, nodes)
+static LayoutResolverErrorCode processCommands(state, parent, nodes)
 LayoutResolverState *state;
+ASTNode *parent;
 ASTNodePointerVector *nodes;
 {
 	ASTNode **nodePointer;
@@ -509,6 +511,18 @@ ASTNodePointerVector *nodes;
 	nodePointer = nodes->items;
 	for (; index < nodes->size.length; nodePointer++, index++) {
 		node = *nodePointer;
+		if (node == NULL) {
+			errorCode = LayoutResolverErrorCode_NULL_NODES_PROVIDED;
+			if (state->errorLocation == NULL) {
+				/*
+				 * We set the location to the parentNode, since
+				 * NULL would not be very helpful
+				 */
+				state->errorLocation = parent;
+			}
+			break;
+		}
+
 		switch (node->type) {
 		case ASTNodeType_COMMAND:
 			layout = getLayoutInterpretation(state, node);
@@ -521,7 +535,8 @@ ASTNodePointerVector *nodes;
 			if (layout != CommandLayoutInterpretation_COMMENT
 			    && node->children != NULL) {
 				errorCode =
-				    processCommands(state, node->children);
+				    processCommands(state, node,
+						    node->children);
 			}
 			if (errorCode != LayoutResolverErrorCode_OK) {
 				break;
