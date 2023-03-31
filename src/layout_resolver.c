@@ -185,6 +185,8 @@ getStandardCommandLayoutInterpretation(string * command, bool caseInsensitive);
 static bool string_equals(string * string1, string * string2,
 			  bool caseInsensitive);
 
+static string *COMMAND_Comment = NULL;	/* The rest is declared bellow */
+
 LayoutResolverResult *resolveLayout(nodes, customCommandHook,
 				    caseInsensitiveCommands)
 ASTNodePointerVector *nodes;
@@ -370,6 +372,17 @@ bool caseInsensitiveCommands;
 	errorCode = processCommands(&state, NULL, nodes);
 
 	if (errorCode == LayoutResolverErrorCode_OK) {
+		/* Add the current remaining content to completed blocks */
+		ASTNode node;
+		node.byteIndex = 0;
+		node.codepointIndex = 0;
+		node.tokenIndex = 0;
+		node.parent = NULL;
+		node.type = ASTNodeType_COMMAND;
+		node.value = COMMAND_Comment;
+		node.children = NULL;
+		newBlock(&state, &node, CommandLayoutInterpretation_COMMENT,
+			 true);
 		result->result.blocks = state.blocks;
 	} else {
 		result->type = LayoutResolverResultType_ERROR;
@@ -489,7 +502,6 @@ static string *COMMAND_ISO_8859_8 = NULL;
 static string *COMMAND_ISO_8859_9 = NULL;
 static string *COMMAND_US_ASCII = NULL;
 static string *COMMAND_No_op = NULL;
-static string *COMMAND_Comment = NULL;
 static string *COMMAND_nl = NULL;
 static string *COMMAND_np = NULL;
 
