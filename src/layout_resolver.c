@@ -1504,11 +1504,7 @@ bool caseInsensitive;
 		COMMAND_np = string_from("np");
 	}
 
-	if (string_equals(command, COMMAND_lt, caseInsensitive)
-	    || string_equals(command, COMMAND_Subscript, caseInsensitive)
-	    || string_equals(command, COMMAND_Superscript, caseInsensitive)
-	    || string_equals(command, COMMAND_Excerpt, caseInsensitive)
-	    || string_equals(command, COMMAND_Signature, caseInsensitive)) {
+	if (string_equals(command, COMMAND_lt, caseInsensitive)) {
 		return CommandLayoutInterpretation_INLINE_CONTENT;
 	}
 
@@ -1524,7 +1520,11 @@ bool caseInsensitive;
 	    || string_equals(command, COMMAND_Indent, caseInsensitive)
 	    || string_equals(command, COMMAND_IndentRight, caseInsensitive)
 	    || string_equals(command, COMMAND_Outdent, caseInsensitive)
-	    || string_equals(command, COMMAND_OutdentRight, caseInsensitive)) {
+	    || string_equals(command, COMMAND_OutdentRight, caseInsensitive)
+	    || string_equals(command, COMMAND_Subscript, caseInsensitive)
+	    || string_equals(command, COMMAND_Superscript, caseInsensitive)
+	    || string_equals(command, COMMAND_Excerpt, caseInsensitive)
+	    || string_equals(command, COMMAND_Signature, caseInsensitive)) {
 		return CommandLayoutInterpretation_NEW_LINE_SEGMENT;
 	}
 

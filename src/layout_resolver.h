@@ -83,6 +83,10 @@ typedef struct LayoutLineSegment {
 	unsigned short fontItalicLevel;
 	unsigned short fontUnderlinedLevel;
 	unsigned short fontFixedLevel;
+	/*
+	 * Used for the <Subscript>, <Superscript>, <Excerpt>, <Signature> and
+	 * new line segment-causing custom commands.
+	 */
 	ASTNodePointerVector *otherSegmentMarkers;
 	ASTNodePointerVector *content;
 } LayoutLineSegment;
