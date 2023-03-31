@@ -149,7 +149,7 @@ static LayoutResolverErrorCode newBlock(LayoutResolverState * state,
 
 static LayoutResolverErrorCode newParagraph(LayoutResolverState * state,
 					    ASTNode * node,
-					    CommandLayoutInterpretation layout);
+					    bool isCommandStart);
 
 static LayoutResolverErrorCode newLine(LayoutResolverState * state,
 				       ASTNode * node);
@@ -662,7 +662,7 @@ CommandLayoutInterpretation layout;
 
 	case CommandLayoutInterpretation_NEW_PARAGRAPH:
 	case CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH:
-		errorCode = newParagraph(state, node, layout);
+		errorCode = newParagraph(state, node, true);
 		break;
 
 	case CommandLayoutInterpretation_NEW_LINE:
@@ -757,7 +757,7 @@ CommandLayoutInterpretation layout;
 		break;
 
 	case CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH:
-		errorCode = newParagraph(state, node, layout);
+		errorCode = newParagraph(state, node, false);
 		break;
 
 	case CommandLayoutInterpretation_NEW_ISOLATED_LINE:
@@ -813,7 +813,7 @@ bool isCommandStart;
 	LayoutBlockVector *grownBlocks = NULL;
 	LayoutResolverErrorCode OOM_FOR_PARAGRAPHS_ERROR =
 	    LayoutResolverErrorCode_OUT_OF_MEMORY_FOR_PARAGRAPHS;
-	errorCode = newParagraph(state, node, layout);
+	errorCode = newParagraph(state, node, isCommandStart);
 	if (errorCode != LayoutResolverErrorCode_OK) {
 		return errorCode;
 	}
@@ -890,10 +890,10 @@ bool isCommandStart;
 	return LayoutResolverErrorCode_OK;
 }
 
-static LayoutResolverErrorCode newParagraph(state, node, layout)
+static LayoutResolverErrorCode newParagraph(state, node, isCommandStart)
 LayoutResolverState *state;
 ASTNode *node;
-CommandLayoutInterpretation layout;
+bool isCommandStart;
 {
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
 	LayoutLineVector *grownLines = NULL;
@@ -938,9 +938,16 @@ CommandLayoutInterpretation layout;
 	}
 
 	state->paragraph->causingCommand = node;
-	state->paragraph->type =
-	    layout == CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH ?
-	    LayoutParagraphType_EXPLICIT : LayoutParagraphType_IMPLICIT;
+
+	state->paragraph->type = LayoutParagraphType_IMPLICIT;
+	if (string_equals
+	    (node->value, COMMAND_Paragraph, state->caseInsensitiveCommands)) {
+		if (isCommandStart
+		    || nodeHasParentOfType(node, COMMAND_Paragraph,
+					   state->caseInsensitiveCommands)) {
+			state->paragraph->type = LayoutParagraphType_EXPLICIT;
+		}
+	}
 
 	return LayoutResolverErrorCode_OK;
 }
