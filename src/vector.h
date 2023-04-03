@@ -42,6 +42,30 @@ static const unsigned long VECTOR_AUTO_GROW_LIMIT = 64;
 Vector *Vector_new(size_t itemSize,
 		   unsigned long length, unsigned long capacity);
 
+Vector *Vector_from(size_t itemSize, unsigned long length, void *values[]);
+
+Vector *Vector_of1(size_t itemSize, void *value1);
+
+Vector *Vector_of2(size_t itemSize, void *value1, void *value2);
+
+Vector *Vector_of3(size_t itemSize, void *value1, void *value2, void *value3);
+
+Vector *Vector_of4(size_t itemSize, void *value1, void *value2, void *value3,
+		   void *value4);
+
+Vector *Vector_of5(size_t itemSize, void *value1, void *value2, void *value3,
+		   void *value4, void *value5);
+
+Vector *Vector_of6(size_t itemSize, void *value1, void *value2, void *value3,
+		   void *value4, void *value5, void *value6);
+
+Vector *Vector_of7(size_t itemSize, void *value1, void *value2, void *value3,
+		   void *value4, void *value5, void *value6, void *value7);
+
+Vector *Vector_of8(size_t itemSize, void *value1, void *value2, void *value3,
+		   void *value4, void *value5, void *value6, void *value7,
+		   void *value8);
+
 Vector *Vector_grow(Vector * vector, unsigned long capacity);
 
 Vector *Vector_append(Vector * vector, void *value);

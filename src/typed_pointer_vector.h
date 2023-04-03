@@ -12,6 +12,37 @@ typedef struct type##PointerVector {\
 type##PointerVector *type##PointerVector_new(unsigned long length,\
 					     unsigned long capacity);\
 \
+type##PointerVector *type##PointerVector_from(unsigned long length,\
+					      type **values[]);\
+\
+type##PointerVector *type##PointerVector_of1(type * value1);\
+\
+type##PointerVector *type##PointerVector_of2(type * value1, type * value2);\
+\
+type##PointerVector *type##PointerVector_of3(type * value1, type * value2,\
+					     type * value3);\
+\
+type##PointerVector *type##PointerVector_of4(type * value1, type * value2,\
+					     type * value3, type * value4);\
+\
+type##PointerVector *type##PointerVector_of5(type * value1, type * value2,\
+					     type * value3, type * value4,\
+					     type * value5);\
+\
+type##PointerVector *type##PointerVector_of6(type * value1, type * value2,\
+					     type * value3, type * value4,\
+					     type * value5, type * value6);\
+\
+type##PointerVector *type##PointerVector_of7(type * value1, type * value2,\
+					     type * value3, type * value4,\
+					     type * value5, type * value6,\
+					     type * value7);\
+\
+type##PointerVector *type##PointerVector_of8(type * value1, type * value2,\
+					     type * value3, type * value4,\
+					     type * value5, type * value6,\
+					     type * value7, type * value8);\
+\
 type##PointerVector *type##PointerVector_grow(type##PointerVector * vector,\
 					      unsigned long capacity);\
 \
@@ -50,6 +81,105 @@ unsigned long capacity;\
 {\
 	return (type##PointerVector *) Vector_new(sizeof(type *), length,\
 						  capacity);\
+}\
+\
+type##PointerVector *type##PointerVector_from(length, values)\
+unsigned long length;\
+type **values[];\
+{\
+	return (type##PointerVector *) Vector_from(sizeof(type *), length,\
+						   (void **) values);\
+}\
+\
+type##PointerVector *type##PointerVector_of1(value1)\
+type * value1;\
+{\
+	return (type##PointerVector *) Vector_of1(sizeof(type *), &value1);\
+}\
+\
+type##PointerVector *type##PointerVector_of2(value1, value2)\
+type * value1;\
+type * value2;\
+{\
+	return (type##PointerVector *)\
+	       Vector_of2(sizeof(type *), &value1, &value2);\
+}\
+\
+type##PointerVector *type##PointerVector_of3(value1, value2, value3)\
+type * value1;\
+type * value2;\
+type * value3;\
+{\
+	return (type##PointerVector *)\
+	       Vector_of3(sizeof(type *), &value1, &value2, &value3);\
+}\
+\
+type##PointerVector *type##PointerVector_of4(value1, value2, value3, value4) \
+type * value1;\
+type * value2;\
+type * value3;\
+type * value4;\
+{\
+	return (type##PointerVector *)\
+	       Vector_of4(sizeof(type *), &value1, &value2, &value3, &value4);\
+}\
+\
+type##PointerVector *type##PointerVector_of5(value1, value2, value3, value4,\
+					     value5)\
+type * value1;\
+type * value2;\
+type * value3;\
+type * value4;\
+type * value5;\
+{\
+	return (type##PointerVector *)\
+	       Vector_of5(sizeof(type *), &value1, &value2, &value3, &value4,\
+			  &value5);\
+}\
+\
+type##PointerVector *type##PointerVector_of6(value1, value2, value3, value4,\
+					     value5, value6)\
+type * value1;\
+type * value2;\
+type * value3;\
+type * value4;\
+type * value5;\
+type * value6;\
+{\
+	return (type##PointerVector *)\
+	       Vector_of6(sizeof(type *), &value1, &value2, &value3, &value4,\
+			  &value5, &value6);\
+}\
+\
+type##PointerVector *type##PointerVector_of7(value1, value2, value3, value4,\
+					     value5, value6, value7)\
+type * value1;\
+type * value2;\
+type * value3;\
+type * value4;\
+type * value5;\
+type * value6;\
+type * value7;\
+{\
+	return (type##PointerVector *)\
+	       Vector_of7(sizeof(type *), &value1, &value2, &value3, &value4,\
+			  &value5, &value6, &value7);\
+}\
+\
+type##PointerVector *type##PointerVector_of8(value1, value2, value3, value4,\
+					     value5, value6, value7, value8)\
+type * value1;\
+type * value2;\
+type * value3;\
+type * value4;\
+type * value5;\
+type * value6;\
+type * value7;\
+type * value8;\
+{\
+	return (type##PointerVector *)\
+	       Vector_of8(sizeof(type *), &value1, &value2, &value3, &value4,\
+			  &value5, &value6, &value7, &value8);\
 }\
 \
 type##PointerVector *type##PointerVector_grow(vector, capacity)\

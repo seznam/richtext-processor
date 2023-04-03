@@ -38,6 +38,257 @@ START_TEST(Vector_new_createsAVectorOfRequestedProperties)
 	assert(vector->size.capacity == 5, "Expected size.capacity to be 5");
 END_TEST}
 
+START_TEST(Vector_from_rejectsZeroItemSize)
+{
+	void *values[1];
+	int value = 11;
+	Vector *vector;
+	values[0] = &value;
+	vector = Vector_from(0, 1, values);
+	assert(vector == NULL, "Expected the returned vector to be NULL");
+END_TEST}
+
+START_TEST(Vector_from_rejectsNullValues)
+{
+	Vector *vector = Vector_from(sizeof(int), 0, NULL);
+	assert(vector == NULL, "Expected the returned vector to be NULL");
+END_TEST}
+
+START_TEST(Vector_from_canCreateEmptyVector)
+{
+	void *values[1];
+	Vector *vector = Vector_from(sizeof(int), 0, values);
+	assert(vector != NULL, "Expected a non-null vector");
+	assert(vector->size.itemSize == sizeof(int),
+	       "Expected size.itemSize to be size of int");
+	assert(vector->size.length == 0, "Expected size.length to be 0");
+	assert(vector->size.capacity == 0, "Expected size.capacity to be 0");
+END_TEST}
+
+START_TEST(Vector_from_createsVectorOfProvidedValues)
+{
+	void *values[3];
+	int value1 = 11;
+	int value2 = 17;
+	int value3 = 21;
+	Vector *vector;
+	int *vectorValue;
+	values[0] = &value1;
+	values[1] = &value2;
+	values[2] = &value3;
+	vector = Vector_from(sizeof(int), 3, values);
+	assert(vector != NULL, "Expected a non-null vector");
+	assert(vector->size.itemSize == sizeof(int),
+	       "Expected size.itemSize to be size of int");
+	assert(vector->size.length == 3, "Expected size.length to be 3");
+	assert(vector->size.capacity == 3, "Expected size.capacity to be 3");
+	vectorValue = vector->items;
+	assert(*vectorValue == 11, "Expected the 1st item to be 11");
+	assert(*(vectorValue + 1) == 17, "Expected the 1st item to be 17");
+	assert(*(vectorValue + 2) == 21, "Expected the 1st item to be 21");
+END_TEST}
+
+START_TEST(Vector_of1_createsVectorOf1Value)
+{
+	int value1 = 15;
+	int *vectorValue;
+	Vector *vector = Vector_of1(sizeof(value1), &value1);
+	assert(vector != NULL, "Expected a non-null vector");
+	assert(vector->size.itemSize == sizeof(int),
+	       "Expected size.itemSize to be size of int");
+	assert(vector->size.length == 1, "Expected size.length to be 1");
+	assert(vector->size.capacity == 1, "Expected size.capacity to be 1");
+	vectorValue = vector->items;
+	assert(*vectorValue == value1, "Expected the 1st item to be 15");
+	value1 = 0;
+	assert(*vectorValue == 15,
+	       "Expected the 1st item to retain its value after later modification of input");
+END_TEST}
+
+START_TEST(Vector_of2_createsVectorOf2Values)
+{
+	int value1 = 15;
+	int value2 = 22;
+	int *vectorValue;
+	Vector *vector = Vector_of2(sizeof(value1), &value1, &value2);
+	assert(vector != NULL, "Expected a non-null vector");
+	assert(vector->size.itemSize == sizeof(int),
+	       "Expected size.itemSize to be size of int");
+	assert(vector->size.length == 2, "Expected size.length to be 2");
+	assert(vector->size.capacity == 2, "Expected size.capacity to be 2");
+	vectorValue = vector->items;
+	assert(*vectorValue == value1, "Expected the 1st item to be 15");
+	value1 = 0;
+	assert(*vectorValue == 15,
+	       "Expected the 1st item to retain its value after later modification of input");
+	assert(*(vectorValue + 1) == value2, "Expected the 2nd item to be 22");
+END_TEST}
+
+START_TEST(Vector_of3_createsVectorOf3Values)
+{
+	int value1 = 15;
+	int value2 = 22;
+	int value3 = 7;
+	int *vectorValue;
+	Vector *vector = Vector_of3(sizeof(value1), &value1, &value2, &value3);
+	assert(vector != NULL, "Expected a non-null vector");
+	assert(vector->size.itemSize == sizeof(int),
+	       "Expected size.itemSize to be size of int");
+	assert(vector->size.length == 3, "Expected size.length to be 3");
+	assert(vector->size.capacity == 3, "Expected size.capacity to be 3");
+	vectorValue = vector->items;
+	assert(*vectorValue == value1, "Expected the 1st item to be 15");
+	value1 = 0;
+	assert(*vectorValue == 15,
+	       "Expected the 1st item to retain its value after later modification of input");
+	assert(*(vectorValue + 1) == value2, "Expected the 2nd item to be 22");
+	assert(*(vectorValue + 2) == value3, "Expected the 3rd item to be 7");
+END_TEST}
+
+START_TEST(Vector_of4_createsVectorOf4Values)
+{
+	int value1 = 15;
+	int value2 = 22;
+	int value3 = 7;
+	int value4 = -11;
+	int *vectorValue;
+	Vector *vector =
+	    Vector_of4(sizeof(value1), &value1, &value2, &value3, &value4);
+	assert(vector != NULL, "Expected a non-null vector");
+	assert(vector->size.itemSize == sizeof(int),
+	       "Expected size.itemSize to be size of int");
+	assert(vector->size.length == 4, "Expected size.length to be 4");
+	assert(vector->size.capacity == 4, "Expected size.capacity to be 4");
+	vectorValue = vector->items;
+	assert(*vectorValue == value1, "Expected the 1st item to be 15");
+	value1 = 0;
+	assert(*vectorValue == 15,
+	       "Expected the 1st item to retain its value after later modification of input");
+	assert(*(vectorValue + 1) == value2, "Expected the 2nd item to be 22");
+	assert(*(vectorValue + 2) == value3, "Expected the 3rd item to be 7");
+	assert(*(vectorValue + 3) == value4, "Expected the 4th item to be -11");
+END_TEST}
+
+START_TEST(Vector_of5_createsVectorOf5Values)
+{
+	int value1 = 15;
+	int value2 = 22;
+	int value3 = 7;
+	int value4 = -11;
+	int value5 = 33;
+	int *vectorValue;
+	Vector *vector =
+	    Vector_of5(sizeof(value1), &value1, &value2, &value3, &value4,
+		       &value5);
+	assert(vector != NULL, "Expected a non-null vector");
+	assert(vector->size.itemSize == sizeof(int),
+	       "Expected size.itemSize to be size of int");
+	assert(vector->size.length == 5, "Expected size.length to be 5");
+	assert(vector->size.capacity == 5, "Expected size.capacity to be 5");
+	vectorValue = vector->items;
+	assert(*vectorValue == value1, "Expected the 1st item to be 15");
+	value1 = 0;
+	assert(*vectorValue == 15,
+	       "Expected the 1st item to retain its value after later modification of input");
+	assert(*(vectorValue + 1) == value2, "Expected the 2nd item to be 22");
+	assert(*(vectorValue + 2) == value3, "Expected the 3rd item to be 7");
+	assert(*(vectorValue + 3) == value4, "Expected the 4th item to be -11");
+	assert(*(vectorValue + 4) == value5, "Expected the 5th item to be 33");
+END_TEST}
+
+START_TEST(Vector_of6_createsVectorOf6Values)
+{
+	int value1 = 15;
+	int value2 = 22;
+	int value3 = 7;
+	int value4 = -11;
+	int value5 = 33;
+	int value6 = 5;
+	int *vectorValue;
+	Vector *vector =
+	    Vector_of6(sizeof(value1), &value1, &value2, &value3, &value4,
+		       &value5, &value6);
+	assert(vector != NULL, "Expected a non-null vector");
+	assert(vector->size.itemSize == sizeof(int),
+	       "Expected size.itemSize to be size of int");
+	assert(vector->size.length == 6, "Expected size.length to be 6");
+	assert(vector->size.capacity == 6, "Expected size.capacity to be 6");
+	vectorValue = vector->items;
+	assert(*vectorValue == value1, "Expected the 1st item to be 15");
+	value1 = 0;
+	assert(*vectorValue == 15,
+	       "Expected the 1st item to retain its value after later modification of input");
+	assert(*(vectorValue + 1) == value2, "Expected the 2nd item to be 22");
+	assert(*(vectorValue + 2) == value3, "Expected the 3rd item to be 7");
+	assert(*(vectorValue + 3) == value4, "Expected the 4th item to be -11");
+	assert(*(vectorValue + 4) == value5, "Expected the 5th item to be 33");
+	assert(*(vectorValue + 5) == value6, "Expected the 6th item to be 5");
+END_TEST}
+
+START_TEST(Vector_of7_createsVectorOf7Values)
+{
+	int value1 = 15;
+	int value2 = 22;
+	int value3 = 7;
+	int value4 = -11;
+	int value5 = 33;
+	int value6 = 5;
+	int value7 = 41;
+	int *vectorValue;
+	Vector *vector =
+	    Vector_of7(sizeof(value1), &value1, &value2, &value3, &value4,
+		       &value5, &value6, &value7);
+	assert(vector != NULL, "Expected a non-null vector");
+	assert(vector->size.itemSize == sizeof(int),
+	       "Expected size.itemSize to be size of int");
+	assert(vector->size.length == 7, "Expected size.length to be 7");
+	assert(vector->size.capacity == 7, "Expected size.capacity to be 7");
+	vectorValue = vector->items;
+	assert(*vectorValue == value1, "Expected the 1st item to be 15");
+	value1 = 0;
+	assert(*vectorValue == 15,
+	       "Expected the 1st item to retain its value after later modification of input");
+	assert(*(vectorValue + 1) == value2, "Expected the 2nd item to be 22");
+	assert(*(vectorValue + 2) == value3, "Expected the 3rd item to be 7");
+	assert(*(vectorValue + 3) == value4, "Expected the 4th item to be -11");
+	assert(*(vectorValue + 4) == value5, "Expected the 5th item to be 33");
+	assert(*(vectorValue + 5) == value6, "Expected the 6th item to be 5");
+	assert(*(vectorValue + 6) == value7, "Expected the 7th item to be 41");
+END_TEST}
+
+START_TEST(Vector_of8_createsVectorOf8Values)
+{
+	int value1 = 15;
+	int value2 = 22;
+	int value3 = 7;
+	int value4 = -11;
+	int value5 = 33;
+	int value6 = 5;
+	int value7 = 41;
+	int value8 = 29;
+	int *vectorValue;
+	Vector *vector =
+	    Vector_of8(sizeof(value1), &value1, &value2, &value3, &value4,
+		       &value5, &value6, &value7, &value8);
+	assert(vector != NULL, "Expected a non-null vector");
+	assert(vector->size.itemSize == sizeof(int),
+	       "Expected size.itemSize to be size of int");
+	assert(vector->size.length == 8, "Expected size.length to be 8");
+	assert(vector->size.capacity == 8, "Expected size.capacity to be 8");
+	vectorValue = vector->items;
+	assert(*vectorValue == value1, "Expected the 1st item to be 15");
+	value1 = 0;
+	assert(*vectorValue == 15,
+	       "Expected the 1st item to retain its value after later modification of input");
+	assert(*(vectorValue + 1) == value2, "Expected the 2nd item to be 22");
+	assert(*(vectorValue + 2) == value3, "Expected the 3rd item to be 7");
+	assert(*(vectorValue + 3) == value4, "Expected the 4th item to be -11");
+	assert(*(vectorValue + 4) == value5, "Expected the 5th item to be 33");
+	assert(*(vectorValue + 5) == value6, "Expected the 6th item to be 5");
+	assert(*(vectorValue + 6) == value7, "Expected the 7th item to be 41");
+	assert(*(vectorValue + 7) == value8, "Expected the 8th item to be 29");
+END_TEST}
+
 START_TEST(Vector_grow_returnsNullForNullVector)
 {
 	assert(Vector_grow(NULL, 8) == NULL,
@@ -693,6 +944,18 @@ static void all_tests()
 	runTest(Vector_new_returnsNULLIfCapacityIsLessThanLength);
 	runTest(Vector_new_createsAVectorIfLengthMatchesCapacity);
 	runTest(Vector_new_createsAVectorOfRequestedProperties);
+	runTest(Vector_from_rejectsZeroItemSize);
+	runTest(Vector_from_rejectsNullValues);
+	runTest(Vector_from_canCreateEmptyVector);
+	runTest(Vector_from_createsVectorOfProvidedValues);
+	runTest(Vector_of1_createsVectorOf1Value);
+	runTest(Vector_of2_createsVectorOf2Values);
+	runTest(Vector_of3_createsVectorOf3Values);
+	runTest(Vector_of4_createsVectorOf4Values);
+	runTest(Vector_of5_createsVectorOf5Values);
+	runTest(Vector_of6_createsVectorOf6Values);
+	runTest(Vector_of7_createsVectorOf7Values);
+	runTest(Vector_of8_createsVectorOf8Values);
 	runTest(Vector_grow_returnsNullForNullVector);
 	runTest(Vector_grow_doesNotModifyVectorIfNotNeeded);
 	runTest(Vector_grow_increasesCapacityWhilePreservingData);

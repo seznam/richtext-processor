@@ -11,6 +11,31 @@ typedef struct type##Vector {\
 \
 type##Vector *type##Vector_new(unsigned long length, unsigned long capacity);\
 \
+type##Vector *type##Vector_from(unsigned long length, type *values[]);\
+\
+type##Vector *type##Vector_of1(type value1);\
+\
+type##Vector *type##Vector_of2(type value1, type value2);\
+\
+type##Vector *type##Vector_of3(type value1, type value2, type value3);\
+\
+type##Vector *type##Vector_of4(type value1, type value2, type value3,\
+			       type value4);\
+\
+type##Vector *type##Vector_of5(type value1, type value2, type value3,\
+			       type value4, type value5);\
+\
+type##Vector *type##Vector_of6(type value1, type value2, type value3,\
+			       type value4, type value5, type value6);\
+\
+type##Vector *type##Vector_of7(type value1, type value2, type value3,\
+			       type value4, type value5, type value6,\
+			       type value7);\
+\
+type##Vector *type##Vector_of8(type value1, type value2, type value3,\
+			       type value4, type value5, type value6,\
+			       type value7, type value8);\
+\
 type##Vector *type##Vector_grow(type##Vector * vector, unsigned long capacity);\
 \
 type##Vector *type##Vector_append(type##Vector * vector, type * value);\
@@ -41,6 +66,100 @@ unsigned long length;\
 unsigned long capacity;\
 {\
 	return (type##Vector *) Vector_new(sizeof(type), length, capacity);\
+}\
+\
+type##Vector *type##Vector_from(length, values)\
+unsigned long length;\
+type *values[];\
+{\
+	return (type##Vector *) Vector_from(sizeof(type), length,\
+					    (void**) values);\
+}\
+\
+type##Vector *type##Vector_of1(value1)\
+type value1;\
+{\
+	return (type##Vector *) Vector_of1(sizeof(type), &value1);\
+}\
+\
+type##Vector *type##Vector_of2(value1, value2)\
+type value1;\
+type value2;\
+{\
+	return (type##Vector *) Vector_of2(sizeof(type), &value1, &value2);\
+}\
+\
+type##Vector *type##Vector_of3(value1, value2, value3)\
+type value1;\
+type value2;\
+type value3;\
+{\
+	return (type##Vector *) Vector_of3(sizeof(type), &value1, &value2,\
+					   &value3);\
+}\
+\
+type##Vector *type##Vector_of4(value1, value2, value3, value4)\
+type value1;\
+type value2;\
+type value3;\
+type value4;\
+{\
+	return (type##Vector *) Vector_of4(sizeof(type), &value1, &value2,\
+					   &value3, &value4);\
+}\
+\
+type##Vector *type##Vector_of5(value1, value2, value3, value4, value5)\
+type value1;\
+type value2;\
+type value3;\
+type value4;\
+type value5;\
+{\
+	return (type##Vector *) Vector_of5(sizeof(type), &value1, &value2,\
+					   &value3, &value4, &value5);\
+}\
+\
+type##Vector *type##Vector_of6(value1, value2, value3, value4, value5, value6)\
+type value1;\
+type value2;\
+type value3;\
+type value4;\
+type value5;\
+type value6;\
+{\
+	return (type##Vector *) Vector_of6(sizeof(type), &value1, &value2,\
+					   &value3, &value4, &value5, &value6);\
+}\
+\
+type##Vector *type##Vector_of7(value1, value2, value3, value4, value5, value6,\
+			       value7)\
+type value1;\
+type value2;\
+type value3;\
+type value4;\
+type value5;\
+type value6;\
+type value7;\
+{\
+	return (type##Vector *) Vector_of7(sizeof(type), &value1, &value2,\
+					   &value3, &value4, &value5, &value6,\
+					   &value7);\
+}\
+\
+type##Vector *type##Vector_of8(value1, value2, value3, value4, value5, value6,\
+			       value7, value8)\
+type value1;\
+type value2;\
+type value3;\
+type value4;\
+type value5;\
+type value6;\
+type value7;\
+type value8;\
+{\
+	return (type##Vector *) Vector_of8(sizeof(type), &value1, &value2,\
+					   &value3, &value4, &value5, &value6,\
+					   &value7, &value8);\
 }\
 \
 type##Vector *type##Vector_grow(vector, capacity)\

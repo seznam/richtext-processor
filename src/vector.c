@@ -32,6 +32,162 @@ unsigned long capacity;
 	return vector;
 }
 
+Vector *Vector_from(itemSize, length, values)
+size_t itemSize;
+unsigned long length;
+void *values[];
+{
+	Vector *vector;
+	unsigned long i;
+	char *bucket;
+
+	if (itemSize == 0 || values == NULL) {
+		return NULL;
+	}
+
+	vector = Vector_new(itemSize, length, length);
+	if (vector == NULL) {
+		return NULL;
+	}
+
+	bucket = (char *)vector->items;
+	for (i = 0; i < length; i++, bucket += itemSize) {
+		memcpy(bucket, values[i], itemSize);
+	}
+
+	return vector;
+}
+
+Vector *Vector_of1(itemSize, value1)
+size_t itemSize;
+void *value1;
+{
+	void *values[1];
+	values[0] = value1;
+	return Vector_from(itemSize, 1, values);
+}
+
+Vector *Vector_of2(itemSize, value1, value2)
+size_t itemSize;
+void *value1;
+void *value2;
+{
+	void *values[2];
+	values[0] = value1;
+	values[1] = value2;
+	return Vector_from(itemSize, 2, values);
+}
+
+Vector *Vector_of3(itemSize, value1, value2, value3)
+size_t itemSize;
+void *value1;
+void *value2;
+void *value3;
+{
+	void *values[3];
+	values[0] = value1;
+	values[1] = value2;
+	values[2] = value3;
+	return Vector_from(itemSize, 3, values);
+}
+
+Vector *Vector_of4(itemSize, value1, value2, value3, value4)
+size_t itemSize;
+void *value1;
+void *value2;
+void *value3;
+void *value4;
+{
+	void *values[4];
+	values[0] = value1;
+	values[1] = value2;
+	values[2] = value3;
+	values[3] = value4;
+	return Vector_from(itemSize, 4, values);
+}
+
+Vector *Vector_of5(itemSize, value1, value2, value3, value4, value5)
+size_t itemSize;
+void *value1;
+void *value2;
+void *value3;
+void *value4;
+void *value5;
+{
+	void *values[5];
+	values[0] = value1;
+	values[1] = value2;
+	values[2] = value3;
+	values[3] = value4;
+	values[4] = value5;
+	return Vector_from(itemSize, 5, values);
+}
+
+Vector *Vector_of6(itemSize, value1, value2, value3, value4, value5, value6)
+size_t itemSize;
+void *value1;
+void *value2;
+void *value3;
+void *value4;
+void *value5;
+void *value6;
+{
+	void *values[6];
+	values[0] = value1;
+	values[1] = value2;
+	values[2] = value3;
+	values[3] = value4;
+	values[4] = value5;
+	values[5] = value6;
+	return Vector_from(itemSize, 6, values);
+}
+
+Vector *Vector_of7(itemSize, value1, value2, value3, value4, value5, value6,
+		   value7)
+size_t itemSize;
+void *value1;
+void *value2;
+void *value3;
+void *value4;
+void *value5;
+void *value6;
+void *value7;
+{
+	void *values[7];
+	values[0] = value1;
+	values[1] = value2;
+	values[2] = value3;
+	values[3] = value4;
+	values[4] = value5;
+	values[5] = value6;
+	values[6] = value7;
+	return Vector_from(itemSize, 7, values);
+}
+
+Vector *Vector_of8(itemSize, value1, value2, value3, value4, value5, value6,
+		   value7, value8)
+size_t itemSize;
+void *value1;
+void *value2;
+void *value3;
+void *value4;
+void *value5;
+void *value6;
+void *value7;
+void *value8;
+{
+	void *values[8];
+	values[0] = value1;
+	values[1] = value2;
+	values[2] = value3;
+	values[3] = value4;
+	values[4] = value5;
+	values[5] = value6;
+	values[6] = value7;
+	values[7] = value8;
+	return Vector_from(itemSize, 8, values);
+}
+
 Vector *Vector_grow(vector, capacity)
 Vector *vector;
 unsigned long capacity;
