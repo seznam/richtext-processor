@@ -39,6 +39,10 @@ char *errorMessage;
 {
 	char *formattedMessage;
 	if (!test) {
+		if (fileName == NULL) {
+			return errorMessage;
+		}
+
 		formattedMessage =
 		    malloc(sizeof(char) *
 			   (strlen(errorMessage) + strlen(fileName) + 10 + 4 +
