@@ -734,7 +734,7 @@ CommandLayoutInterpretation layout;
 		state->blockTypeStack = reducedTypes;
 
 		errorCode = newBlock(state, node, layout, false);
-		if (errorCode == LayoutResolverErrorCode_OK) {
+		if (errorCode != LayoutResolverErrorCode_OK) {
 			break;
 		}
 
