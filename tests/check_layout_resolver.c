@@ -602,6 +602,7 @@ ASTNode *node;
 {
 	char *format;
 	char *stringifiedType;
+	char *stringifiedValue;
 	char *stringifiedParent;
 	char *stringifiedChildrenFormat;
 	char *stringifiedChildren;
@@ -634,8 +635,10 @@ ASTNode *node;
 		   (strlen(format) + 20 + 20 + 20 + strlen(stringifiedType) +
 		    node->value->length + strlen(stringifiedParent) +
 		    strlen(stringifiedChildren) + 1));
+	stringifiedValue = calloc(sizeof(char), node->value->length + 1);
+	memcpy(stringifiedValue, node->value->content, node->value->length);
 	sprintf(result, format, node->byteIndex, node->codepointIndex,
-		node->tokenIndex, stringifiedType, node->value->content,
+		node->tokenIndex, stringifiedType, stringifiedValue,
 		stringifiedParent, stringifiedChildren);
 	return result;
 }
