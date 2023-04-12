@@ -111,6 +111,7 @@ Vector_ofType(LayoutContentAlignment)
 typedef struct LayoutResolverState {
 	CustomCommandLayoutInterpretation(*customCommandHook) (ASTNode *, bool);
 	bool caseInsensitiveCommands;
+	ASTNodePointerVector *rootNodes;
 	LayoutBlockTypeVector *blockTypeStack;
 	LayoutContentAlignmentVector *contentAlignmentStack;
 	LayoutBlockVector *blocks;
@@ -181,6 +182,11 @@ static CommandLayoutInterpretation getLayoutInterpretation(LayoutResolverState *
 
 static CommandLayoutInterpretation
 getStandardCommandLayoutInterpretation(string * command, bool caseInsensitive);
+
+static ASTNode *nextDFSNode(ASTNodePointerVector * rootNodes, ASTNode * node,
+			    bool leaveCurrentNode);
+
+static ASTNode *nextSibling(ASTNodePointerVector * rootNodes, ASTNode * node);
 
 static bool string_equals(string * string1, string * string2,
 			  bool caseInsensitive);
@@ -356,6 +362,7 @@ bool caseInsensitiveCommands;
 
 	state.customCommandHook = customCommandHook;
 	state.caseInsensitiveCommands = caseInsensitiveCommands;
+	state.rootNodes = nodes;
 	state.blockTypeStack = blockTypeStack;
 	state.contentAlignmentStack = contentAlignmentStack;
 	state.blocks = blocks;
@@ -711,6 +718,7 @@ ASTNode *node;
 CommandLayoutInterpretation layout;
 {
 	LayoutBlockType currentBlockType = state->block->type;
+	ASTNode *upcomingNode;
 	LayoutBlockTypeVector *reducedTypes = NULL;
 	LayoutBlockType poppedType;
 	LayoutResolverErrorCode INVALID_CUSTOM_INTERPRETATION_ERROR =
@@ -718,6 +726,8 @@ CommandLayoutInterpretation layout;
 	LayoutResolverErrorCode UNTRANSLATED_CUSTOM_LAYOUT_ERROR =
 	    LayoutResolverErrorCode_UNTRANSLATED_CUSTOM_LAYOUT_INTERPRETATION;
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
+
+	upcomingNode = nextDFSNode(state->rootNodes, node, true);
 
 	switch (layout) {
 	case CommandLayoutInterpretation_HEADING_BLOCK:
@@ -733,7 +743,7 @@ CommandLayoutInterpretation layout;
 		}
 		state->blockTypeStack = reducedTypes;
 
-		errorCode = newBlock(state, node, layout, false);
+		errorCode = newBlock(state, upcomingNode, layout, false);
 		if (errorCode != LayoutResolverErrorCode_OK) {
 			break;
 		}
@@ -748,7 +758,7 @@ CommandLayoutInterpretation layout;
 			break;
 		}
 
-		errorCode = newBlock(state, node, layout, false);
+		errorCode = newBlock(state, upcomingNode, layout, false);
 		if (errorCode != LayoutResolverErrorCode_OK) {
 			break;
 		}
@@ -757,15 +767,15 @@ CommandLayoutInterpretation layout;
 		break;
 
 	case CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH:
-		errorCode = newParagraph(state, node, false);
+		errorCode = newParagraph(state, upcomingNode, false);
 		break;
 
 	case CommandLayoutInterpretation_NEW_ISOLATED_LINE:
-		errorCode = newLine(state, node);
+		errorCode = newLine(state, upcomingNode);
 		break;
 
 	case CommandLayoutInterpretation_NEW_LINE_SEGMENT:
-		errorCode = newSegment(state, node);
+		errorCode = newSegment(state, upcomingNode);
 		if (errorCode != LayoutResolverErrorCode_OK) {
 			break;
 		}
@@ -1572,6 +1582,58 @@ bool caseInsensitive;
 	}
 
 	return CommandLayoutInterpretation_CUSTOM;
+}
+
+static ASTNode *nextDFSNode(rootNodes, node, leaveCurrentNode)
+ASTNodePointerVector *rootNodes;
+ASTNode *node;
+bool leaveCurrentNode;
+{
+	ASTNode *sibling;
+
+	if (node == NULL) {
+		return NULL;
+	}
+
+	if (!leaveCurrentNode && node->children != NULL
+	    && node->children->size.length > 0) {
+		return *node->children->items;
+	}
+
+	sibling = nextSibling(rootNodes, node);
+	if (sibling != NULL) {
+		return sibling;
+	}
+
+	return nextDFSNode(rootNodes, node->parent, true);
+}
+
+static ASTNode *nextSibling(rootNodes, node)
+ASTNodePointerVector *rootNodes;
+ASTNode *node;
+{
+	ASTNodePointerVector *siblings;
+	ASTNode **sibling;
+	unsigned long i;
+
+	if (node == NULL) {
+		return NULL;
+	}
+
+	siblings = node->parent != NULL ? node->parent->children : rootNodes;
+	if (siblings == NULL) {
+		return NULL;
+	}
+
+	for (i = 0, sibling = siblings->items; i < siblings->size.length;
+	     i++, sibling++) {
+		if (*sibling == node) {
+			return i <
+			    siblings->size.length - 1 ? *(sibling + 1) : NULL;
+		}
+	}
+
+	return NULL;
 }
 
 static bool string_equals(string1, string2, caseInsensitive)
