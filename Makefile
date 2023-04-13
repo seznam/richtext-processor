@@ -34,6 +34,11 @@ TESTS = $(patsubst $(TESTDIR)/%,%,\
         )
 check_PROGRAMS = $(TESTS)
 check_CFLAGS = $(CFLAGS)
+check_layout_resolver_SOURCES = $(SRCDIR)/layout_resolver.c $(SRCDIR)/string.c \
+				$(SRCDIR)/vector.c $(SRCDIR)/parser.c \
+				$(SRCDIR)/lexer.c $(TESTDIR)/unit.c \
+				$(TESTDIR)/check_layout_resolver.c
+check_layout_resolver_CFLAGS  = $(check_CFLAGS)
 check_lexer_SOURCES  = $(SRCDIR)/lexer.c $(SRCDIR)/string.c $(SRCDIR)/vector.c \
                        $(TESTDIR)/unit.c $(TESTDIR)/check_lexer.c
 check_lexer_CFLAGS   = $(check_CFLAGS)
