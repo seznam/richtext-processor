@@ -781,6 +781,38 @@ START_TEST(resolveLayout_processesCombinedFormattingMarkers)
 			    result->result.blocks);
 END_TEST}
 
+START_TEST(resolveLayout_processesNestedBoldCommands)
+{
+	char *input = "<Bold><Bold><Bold>text</Bold></Bold></Bold>";
+	LayoutResolverResult *result = process(input, NULL, false);
+	ASTNode nodes[4];
+	LayoutLineSegment segments[1];
+	LayoutLine lines[1];
+	LayoutParagraph paragraphs[1];
+	LayoutBlock blocks[1];
+
+	nodes[0] = make_node(0, 0, 0, COMMAND, "Bold");
+	nodes[1] = make_node(6, 6, 1, COMMAND, "Bold");
+	nodes[2] = make_node(12, 12, 2, COMMAND, "Bold");
+	nodes[3] = make_node(18, 18, 3, TEXT, "text");
+
+	segments[0] =
+	    make_segment(nodes[2], DEFAULT, 0, 0, 0, 3, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[3]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
+
+	blocks[0] =
+	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
 #undef assert_blocks_match
 #undef make_block
 #undef make_paragraphs1
@@ -818,6 +850,7 @@ static void all_tests()
 	runTest(resolveLayout_parsesSingleTextToSingleSegmentResult);
 	runTest(resolveLayout_processesMainContentAndFootingInsideHeading);
 	runTest(resolveLayout_processesCombinedFormattingMarkers);
+	runTest(resolveLayout_processesNestedBoldCommands);
 }
 
 int main()
