@@ -638,6 +638,18 @@ LayoutLineSegment_make(&causingCommand,\
 #define make_segments1(segment1)\
 LayoutLineSegmentVector_of1(segment1)
 
+#define make_segments2(segment1, segment2)\
+LayoutLineSegmentVector_of2(segment1, segment2)
+
+#define make_segments3(segment1, segment2, segment3)\
+LayoutLineSegmentVector_of3(segment1, segment2, segment3)
+
+#define make_segments4(segment1, segment2, segment3, segment4)\
+LayoutLineSegmentVector_of4(segment1, segment2, segment3, segment4)
+
+#define make_segments5(segment1, segment2, segment3, segment4, segment5)\
+LayoutLineSegmentVector_of5(segment1, segment2, segment3, segment4, segment5)
+
 #define make_line(causingCommand, segments)\
 LayoutLine_make(&causingCommand, segments)
 
@@ -715,12 +727,70 @@ START_TEST(resolveLayout_processesMainContentAndFootingInsideHeading)
 	assert_blocks_match(expectedResult, result->result.blocks);
 END_TEST}
 
+START_TEST(resolveLayout_processesCombinedFormattingMarkers)
+{
+	LayoutResolverResult *result =
+	    process
+	    ("<Bold>foo<Italic>bar<Underline>baz</Underline></Italic></Bold>goo<Fixed>hoo</Fixed>",
+	     NULL, false);
+	ASTNode nodes[9];
+	LayoutLineSegment segments[5];
+	LayoutLine lines[1];
+	LayoutParagraph paragraphs[1];
+	LayoutBlock blocks[1];
+
+	nodes[0] = make_node(0, 0, 0, COMMAND, "Bold");
+	nodes[1] = make_node(6, 6, 1, TEXT, "foo");
+	nodes[2] = make_node(9, 9, 2, COMMAND, "Italic");
+	nodes[3] = make_node(17, 17, 3, TEXT, "bar");
+	nodes[4] = make_node(20, 20, 4, COMMAND, "Underline");
+	nodes[5] = make_node(31, 31, 5, TEXT, "baz");
+	nodes[6] = make_node(62, 62, 9, TEXT, "goo");
+	nodes[7] = make_node(65, 65, 10, COMMAND, "Fixed");
+	nodes[8] = make_node(72, 72, 11, TEXT, "hoo");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 0, 1, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[1]));
+	segments[1] =
+	    make_segment(nodes[2], DEFAULT, 0, 0, 0, 1, 1, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[3]));
+	segments[2] =
+	    make_segment(nodes[4], DEFAULT, 0, 0, 0, 1, 1, 1, 0, make_nodes0(),
+			 make_nodes1(nodes[5]));
+	segments[3] =
+	    make_segment(nodes[6], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[6]));
+	segments[4] =
+	    make_segment(nodes[7], DEFAULT, 0, 0, 0, 0, 0, 0, 1, make_nodes0(),
+			 make_nodes1(nodes[8]));
+
+	lines[0] =
+	    make_line(nodes[0],
+		      make_segments5(segments[0], segments[1], segments[2],
+				     segments[3], segments[4]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
+
+	blocks[0] =
+	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
 #undef assert_blocks_match
 #undef make_block
 #undef make_paragraphs1
 #undef make_paragraph
 #undef make_lines1
 #undef make_line
+#undef make_segments5
+#undef make_segments4
+#undef make_segments3
+#undef make_segments2
 #undef make_segments1
 #undef make_segment
 #undef make_nodes1
@@ -747,6 +817,7 @@ static void all_tests()
 	runTest(resolveLayout_returnsErrorForNodeChildrenContainingNULL);
 	runTest(resolveLayout_parsesSingleTextToSingleSegmentResult);
 	runTest(resolveLayout_processesMainContentAndFootingInsideHeading);
+	runTest(resolveLayout_processesCombinedFormattingMarkers);
 }
 
 int main()

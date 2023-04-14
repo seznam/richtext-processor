@@ -360,6 +360,13 @@ bool caseInsensitiveCommands;
 		return result;
 	}
 
+	if (nodes->size.length > 0) {
+		block.causingCommand = *nodes->items;
+		paragraph.causingCommand = *nodes->items;
+		line.causingCommand = *nodes->items;
+		segment.causingCommand = *nodes->items;
+	}
+
 	state.customCommandHook = customCommandHook;
 	state.caseInsensitiveCommands = caseInsensitiveCommands;
 	state.rootNodes = nodes;
