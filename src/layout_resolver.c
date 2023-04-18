@@ -913,6 +913,8 @@ ASTNode *node;
 bool isCommandStart;
 {
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
+	string *command;
+	bool caseInsensitive = state->caseInsensitiveCommands;
 	LayoutLineVector *grownLines = NULL;
 	LayoutParagraphVector *grownParagraphs = NULL;
 	LayoutResolverErrorCode OOM_FOR_PARAGRAPHS_ERROR =
@@ -957,11 +959,11 @@ bool isCommandStart;
 	state->paragraph->causingCommand = node;
 
 	state->paragraph->type = LayoutParagraphType_IMPLICIT;
-	if (string_equals
-	    (node->value, COMMAND_Paragraph, state->caseInsensitiveCommands)) {
+	command = node != NULL ? node->value : NULL;
+	if (string_equals(command, COMMAND_Paragraph, caseInsensitive)) {
 		if (isCommandStart
 		    || nodeHasParentOfType(node, COMMAND_Paragraph,
-					   state->caseInsensitiveCommands)) {
+					   caseInsensitive)) {
 			state->paragraph->type = LayoutParagraphType_EXPLICIT;
 		}
 	}
