@@ -662,6 +662,9 @@ LayoutParagraph_make(&causingCommand, LayoutParagraphType_##type, lines)
 #define make_paragraphs1(paragraph1)\
 LayoutParagraphVector_of1(paragraph1)
 
+#define make_paragraphs2(paragraph1, paragraph2)\
+LayoutParagraphVector_of2(paragraph1, paragraph2)
+
 #define make_block(type, causingCommand, paragraphs)\
 LayoutBlock_make(LayoutBlockType_##type, &causingCommand, paragraphs)
 
@@ -813,8 +816,192 @@ START_TEST(resolveLayout_processesNestedBoldCommands)
 			    result->result.blocks);
 END_TEST}
 
+START_TEST(resolveLayout_processesTextAlignment)
+{
+	char *input =
+	    "text1<FlushLeft>text2<FlushRight>text3<Center>text4</Center>text5</FlushRight></FlushLeft>";
+	LayoutResolverResult *result = process(input, NULL, false);
+	ASTNode nodes[8];
+	LayoutLineSegment segments[5];
+	LayoutLine lines[1];
+	LayoutParagraph paragraphs[1];
+	LayoutBlock blocks[1];
+
+	nodes[0] = make_node(0, 0, 0, TEXT, "text1");
+	nodes[1] = make_node(5, 5, 1, COMMAND, "FlushLeft");
+	nodes[2] = make_node(16, 16, 2, TEXT, "text2");
+	nodes[3] = make_node(21, 21, 3, COMMAND, "FlushRight");
+	nodes[4] = make_node(33, 33, 4, TEXT, "text3");
+	nodes[5] = make_node(38, 38, 5, COMMAND, "Center");
+	nodes[6] = make_node(46, 46, 6, TEXT, "text4");
+	nodes[7] = make_node(60, 60, 8, TEXT, "text5");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[0]));
+	segments[1] =
+	    make_segment(nodes[1], JUSTIFY_LEFT, 0, 0, 0, 0, 0, 0, 0,
+			 make_nodes0(), make_nodes1(nodes[2]));
+	segments[2] =
+	    make_segment(nodes[3], JUSTIFY_RIGHT, 0, 0, 0, 0, 0, 0, 0,
+			 make_nodes0(), make_nodes1(nodes[4]));
+	segments[3] =
+	    make_segment(nodes[5], CENTER, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[6]));
+	segments[4] =
+	    make_segment(nodes[7], JUSTIFY_RIGHT, 0, 0, 0, 0, 0, 0, 0,
+			 make_nodes0(), make_nodes1(nodes[7]));
+
+	lines[0] =
+	    make_line(nodes[0],
+		      make_segments5(segments[0], segments[1], segments[2],
+				     segments[3], segments[4]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
+
+	blocks[0] =
+	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
+START_TEST(resolveLayout_resolvesIndentAndOutdentAtLeftMargin)
+{
+	char *input =
+	    "<Indent>text1</Indent><Paragraph><Outdent>text2</Outdent></Paragraph>";
+	LayoutResolverResult *result = process(input, NULL, false);
+	ASTNode nodes[5];
+	LayoutLineSegment segments[2];
+	LayoutLine lines[2];
+	LayoutParagraph paragraphs[2];
+	LayoutBlock blocks[1];
+
+	nodes[0] = make_node(0, 0, 0, COMMAND, "Indent");
+	nodes[1] = make_node(8, 8, 1, TEXT, "text1");
+	nodes[2] = make_node(22, 22, 3, COMMAND, "Paragraph");
+	nodes[3] = make_node(33, 33, 4, COMMAND, "Outdent");
+	nodes[4] = make_node(42, 42, 5, TEXT, "text2");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 1, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[1]));
+	segments[1] =
+	    make_segment(nodes[3], DEFAULT, -1, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[4]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+	lines[1] = make_line(nodes[2], make_segments1(segments[1]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
+	paragraphs[1] =
+	    make_paragraph(nodes[2], EXPLICIT, make_lines1(lines[1]));
+
+	blocks[0] =
+	    make_block(MAIN_CONTENT, nodes[0],
+		       make_paragraphs2(paragraphs[0], paragraphs[1]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
+START_TEST(resolveLayout_resolvesIndentAndOutdentAtRightMargin)
+{
+	char *input =
+	    "<IndentRight>text1</IndentRight><Paragraph><OutdentRight>text2</OutdentRight></Paragraph>";
+	LayoutResolverResult *result = process(input, NULL, false);
+	ASTNode nodes[5];
+	LayoutLineSegment segments[2];
+	LayoutLine lines[2];
+	LayoutParagraph paragraphs[2];
+	LayoutBlock blocks[1];
+
+	nodes[0] = make_node(0, 0, 0, COMMAND, "IndentRight");
+	nodes[1] = make_node(13, 13, 1, TEXT, "text1");
+	nodes[2] = make_node(32, 32, 3, COMMAND, "Paragraph");
+	nodes[3] = make_node(43, 43, 4, COMMAND, "OutdentRight");
+	nodes[4] = make_node(57, 57, 5, TEXT, "text2");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 1, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[1]));
+	segments[1] =
+	    make_segment(nodes[3], DEFAULT, 0, -1, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[4]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+	lines[1] = make_line(nodes[2], make_segments1(segments[1]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
+	paragraphs[1] =
+	    make_paragraph(nodes[2], EXPLICIT, make_lines1(lines[1]));
+
+	blocks[0] =
+	    make_block(MAIN_CONTENT, nodes[0],
+		       make_paragraphs2(paragraphs[0], paragraphs[1]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
+START_TEST(resolveLayout_processesFontSizeChanges)
+{
+	char *input =
+	    "<Bigger>text1<Bigger>text2<Smaller>text3</Smaller></Bigger></Bigger><Smaller>text4</Smaller>";
+	LayoutResolverResult *result = process(input, NULL, false);
+	ASTNode nodes[8];
+	LayoutLineSegment segments[4];
+	LayoutLine lines[1];
+	LayoutParagraph paragraphs[1];
+	LayoutBlock blocks[1];
+
+	nodes[0] = make_node(0, 0, 0, COMMAND, "Bigger");
+	nodes[1] = make_node(8, 8, 1, TEXT, "text1");
+	nodes[2] = make_node(13, 13, 2, COMMAND, "Bigger");
+	nodes[3] = make_node(21, 21, 3, TEXT, "text2");
+	nodes[4] = make_node(26, 26, 4, COMMAND, "Smaller");
+	nodes[5] = make_node(35, 35, 5, TEXT, "text3");
+	nodes[6] = make_node(68, 68, 9, COMMAND, "Smaller");
+	nodes[7] = make_node(77, 77, 10, TEXT, "text4");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 1, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[1]));
+	segments[1] =
+	    make_segment(nodes[2], DEFAULT, 0, 0, 2, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[3]));
+	segments[2] =
+	    make_segment(nodes[4], DEFAULT, 0, 0, 1, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[5]));
+	segments[3] =
+	    make_segment(nodes[6], DEFAULT, 0, 0, -1, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[7]));
+
+	lines[0] =
+	    make_line(nodes[0],
+		      make_segments4(segments[0], segments[1], segments[2],
+				     segments[3]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
+
+	blocks[0] =
+	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
 #undef assert_blocks_match
 #undef make_block
+#undef make_paragraphs2
 #undef make_paragraphs1
 #undef make_paragraph
 #undef make_lines1
@@ -851,6 +1038,10 @@ static void all_tests()
 	runTest(resolveLayout_processesMainContentAndFootingInsideHeading);
 	runTest(resolveLayout_processesCombinedFormattingMarkers);
 	runTest(resolveLayout_processesNestedBoldCommands);
+	runTest(resolveLayout_processesTextAlignment);
+	runTest(resolveLayout_resolvesIndentAndOutdentAtLeftMargin);
+	runTest(resolveLayout_resolvesIndentAndOutdentAtRightMargin);
+	runTest(resolveLayout_processesFontSizeChanges);
 }
 
 int main()
