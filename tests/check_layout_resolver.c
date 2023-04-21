@@ -680,6 +680,9 @@ LayoutParagraphVector_of1(paragraph1)
 #define make_paragraphs2(paragraph1, paragraph2)\
 LayoutParagraphVector_of2(paragraph1, paragraph2)
 
+#define make_paragraphs3(paragraph1, paragraph2, paragraph3)\
+LayoutParagraphVector_of3(paragraph1, paragraph2, paragraph3)
+
 #define make_block(type, causingCommand, paragraphs)\
 LayoutBlock_make(LayoutBlockType_##type, &causingCommand, paragraphs)
 
@@ -1263,8 +1266,111 @@ START_TEST(resolveLayout_skipsOverNoOpCommands)
 			    result->result.blocks);
 END_TEST}
 
+START_TEST(resolveLayout_returnsEmptyVectorForEmptyInput)
+{
+	LayoutResolverResult *result = process("", NULL, false);
+	assert_success(result, 0, 0);
+END_TEST}
+
+START_TEST(resolveLayout_processesNestedParagraphsCorrectly)
+{
+	char *input =
+	    "<Paragraph>text1<Paragraph>text2</Paragraph>text3</Paragraph>";
+	LayoutResolverResult *result = process(input, NULL, false);
+	ASTNode nodes[5];
+	LayoutLineSegment segments[3];
+	LayoutLine lines[3];
+	LayoutParagraph paragraphs[3];
+	LayoutBlock blocks[1];
+
+	nodes[0] = make_node(0, 0, 0, COMMAND, "Paragraph");
+	nodes[1] = make_node(11, 11, 1, TEXT, "text1");
+	nodes[2] = make_node(16, 16, 2, COMMAND, "Paragraph");
+	nodes[3] = make_node(27, 27, 3, TEXT, "text2");
+	nodes[4] = make_node(44, 44, 5, TEXT, "text3");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[1]));
+	segments[1] =
+	    make_segment(nodes[2], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[3]));
+	segments[2] =
+	    make_segment(nodes[4], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[4]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+	lines[1] = make_line(nodes[2], make_segments1(segments[1]));
+	lines[2] = make_line(nodes[4], make_segments1(segments[2]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], EXPLICIT, make_lines1(lines[0]));
+	paragraphs[1] =
+	    make_paragraph(nodes[2], EXPLICIT, make_lines1(lines[1]));
+	paragraphs[2] =
+	    make_paragraph(nodes[4], EXPLICIT, make_lines1(lines[2]));
+
+	blocks[0] =
+	    make_block(MAIN_CONTENT, nodes[0],
+		       make_paragraphs3(paragraphs[0], paragraphs[1],
+					paragraphs[2]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
+START_TEST(resolveLayout_marksContentAfterTopLevelParagraphAsImplicitParagraph)
+{
+	char *input =
+	    "<Paragraph>text1<Paragraph>text2</Paragraph></Paragraph>text3";
+	LayoutResolverResult *result = process(input, NULL, false);
+	ASTNode nodes[5];
+	LayoutLineSegment segments[3];
+	LayoutLine lines[3];
+	LayoutParagraph paragraphs[3];
+	LayoutBlock blocks[1];
+
+	nodes[0] = make_node(0, 0, 0, COMMAND, "Paragraph");
+	nodes[1] = make_node(11, 11, 1, TEXT, "text1");
+	nodes[2] = make_node(16, 16, 2, COMMAND, "Paragraph");
+	nodes[3] = make_node(27, 27, 3, TEXT, "text2");
+	nodes[4] = make_node(56, 56, 6, TEXT, "text3");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[1]));
+	segments[1] =
+	    make_segment(nodes[2], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[3]));
+	segments[2] =
+	    make_segment(nodes[4], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[4]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+	lines[1] = make_line(nodes[2], make_segments1(segments[1]));
+	lines[2] = make_line(nodes[4], make_segments1(segments[2]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], EXPLICIT, make_lines1(lines[0]));
+	paragraphs[1] =
+	    make_paragraph(nodes[2], EXPLICIT, make_lines1(lines[1]));
+	paragraphs[2] =
+	    make_paragraph(nodes[4], IMPLICIT, make_lines1(lines[2]));
+
+	blocks[0] =
+	    make_block(MAIN_CONTENT, nodes[0],
+		       make_paragraphs3(paragraphs[0], paragraphs[1],
+					paragraphs[2]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
 #undef assert_blocks_match
 #undef make_block
+#undef make_paragraphs3
 #undef make_paragraphs2
 #undef make_paragraphs1
 #undef make_paragraphs0
@@ -1317,6 +1423,10 @@ static void all_tests()
 	runTest(resolveLayout_processesMultilineMultiNodeTextInParagraph);
 	runTest(resolveLayout_handlesNestedSamePageCorrectly);
 	runTest(resolveLayout_skipsOverNoOpCommands);
+	runTest(resolveLayout_returnsEmptyVectorForEmptyInput);
+	runTest(resolveLayout_processesNestedParagraphsCorrectly);
+	runTest
+	    (resolveLayout_marksContentAfterTopLevelParagraphAsImplicitParagraph);
 }
 
 int main()
