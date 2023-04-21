@@ -630,6 +630,9 @@ ASTNodePointerVector_of2(&node1, &node2)
 #define make_nodes3(node1, node2, node3)\
 ASTNodePointerVector_of3(&node1, &node2, &node3)
 
+#define make_nodes4(node1, node2, node3, node4)\
+ASTNodePointerVector_of4(&node1, &node2, &node3, &node4)
+
 #define make_nodes5(node1, node2, node3, node4, node5)\
 ASTNodePointerVector_of5(&node1, &node2, &node3, &node4, &node5)
 
@@ -1368,6 +1371,101 @@ START_TEST(resolveLayout_marksContentAfterTopLevelParagraphAsImplicitParagraph)
 			    result->result.blocks);
 END_TEST}
 
+START_TEST(resolveLayout_processesIncorrectlyCasedCommandsAsNoOps)
+{
+	char *input =
+	    "<hEadIng>text1<fOOtiNG>text2</fOOtiNG></hEadIng>text3<BOLD><italic>text4</italic></BOLD>";
+	LayoutResolverResult *result = process(input, NULL, false);
+	ASTNode nodes[8];
+	LayoutLineSegment segments[1];
+	LayoutLine lines[1];
+	LayoutParagraph paragraphs[1];
+	LayoutBlock blocks[1];
+
+	nodes[0] = make_node(0, 0, 0, COMMAND, "hEadIng");
+	nodes[1] = make_node(9, 9, 1, TEXT, "text1");
+	nodes[2] = make_node(14, 14, 2, COMMAND, "fOOtiNG");
+	nodes[3] = make_node(23, 23, 3, TEXT, "text2");
+	nodes[4] = make_node(48, 48, 6, TEXT, "text3");
+	nodes[5] = make_node(53, 53, 7, COMMAND, "BOLD");
+	nodes[6] = make_node(59, 59, 8, COMMAND, "italic");
+	nodes[7] = make_node(67, 67, 9, TEXT, "text4");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes4(nodes[1], nodes[3], nodes[4], nodes[7]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
+
+	blocks[0] =
+	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
+START_TEST(resolveLayout_supportsProcessingCommandsInCaseInsensitiveWay)
+{
+	char *input =
+	    "<hEadIng>text1<fOOtiNG>text2</footIng></heAdinG>text3<BOLD><italic>text4</ITALIC></bold>";
+	LayoutResolverResult *result = process(input, NULL, true);
+	ASTNode nodes[8];
+	LayoutLineSegment segments[4];
+	LayoutLine lines[3];
+	LayoutParagraph paragraphs[3];
+	LayoutBlock blocks[3];
+
+	nodes[0] = make_node(0, 0, 0, COMMAND, "hEadIng");
+	nodes[1] = make_node(9, 9, 1, TEXT, "text1");
+	nodes[2] = make_node(14, 14, 2, COMMAND, "fOOtiNG");
+	nodes[3] = make_node(23, 23, 3, TEXT, "text2");
+	nodes[4] = make_node(48, 48, 6, TEXT, "text3");
+	nodes[5] = make_node(53, 53, 7, COMMAND, "BOLD");
+	nodes[6] = make_node(59, 59, 8, COMMAND, "italic");
+	nodes[7] = make_node(67, 67, 9, TEXT, "text4");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[1]));
+	segments[1] =
+	    make_segment(nodes[2], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[3]));
+	segments[2] =
+	    make_segment(nodes[4], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[4]));
+	segments[3] =
+	    make_segment(nodes[6], DEFAULT, 0, 0, 0, 1, 1, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[7]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+	lines[1] = make_line(nodes[2], make_segments1(segments[1]));
+	lines[2] =
+	    make_line(nodes[4], make_segments2(segments[2], segments[3]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
+	paragraphs[1] =
+	    make_paragraph(nodes[2], IMPLICIT, make_lines1(lines[1]));
+	paragraphs[2] =
+	    make_paragraph(nodes[4], IMPLICIT, make_lines1(lines[2]));
+
+	blocks[0] =
+	    make_block(HEADING, nodes[0], make_paragraphs1(paragraphs[0]));
+	blocks[1] =
+	    make_block(FOOTING, nodes[2], make_paragraphs1(paragraphs[1]));
+	blocks[2] =
+	    make_block(MAIN_CONTENT, nodes[4], make_paragraphs1(paragraphs[2]));
+
+	assert_success(result, 0, 3);
+	assert_blocks_match(LayoutBlockVector_of3
+			    (blocks[0], blocks[1], blocks[2]),
+			    result->result.blocks);
+END_TEST}
+
 #undef assert_blocks_match
 #undef make_block
 #undef make_paragraphs3
@@ -1385,6 +1483,7 @@ END_TEST}
 #undef make_segments1
 #undef make_segment
 #undef make_nodes5
+#undef make_nodes4
 #undef make_nodes3
 #undef make_nodes2
 #undef make_nodes1
@@ -1427,6 +1526,8 @@ static void all_tests()
 	runTest(resolveLayout_processesNestedParagraphsCorrectly);
 	runTest
 	    (resolveLayout_marksContentAfterTopLevelParagraphAsImplicitParagraph);
+	runTest(resolveLayout_processesIncorrectlyCasedCommandsAsNoOps);
+	runTest(resolveLayout_supportsProcessingCommandsInCaseInsensitiveWay);
 }
 
 int main()
