@@ -48,8 +48,8 @@ static char *_assert_error(char *fileName,
 			   LayoutResolverErrorCode errorCode,
 			   ASTNode * errorLocation);
 
-static LayoutBlock LayoutBlock_make(LayoutBlockType type,
-				    ASTNode * causingCommand,
+static LayoutBlock LayoutBlock_make(ASTNode * causingCommand,
+				    LayoutBlockType type,
 				    LayoutParagraphVector * paragraphs);
 
 static char *LayoutBlockVector_assertEqual(char *fileName,
@@ -686,8 +686,8 @@ LayoutParagraphVector_of2(paragraph1, paragraph2)
 #define make_paragraphs3(paragraph1, paragraph2, paragraph3)\
 LayoutParagraphVector_of3(paragraph1, paragraph2, paragraph3)
 
-#define make_block(type, causingCommand, paragraphs)\
-LayoutBlock_make(LayoutBlockType_##type, &causingCommand, paragraphs)
+#define make_block(causingCommand, type, paragraphs)\
+LayoutBlock_make(&causingCommand, LayoutBlockType_##type, paragraphs)
 
 #define assert_blocks_match(blocks1, blocks2)\
 do {\
@@ -739,11 +739,11 @@ START_TEST(resolveLayout_processesMainContentAndFootingInsideHeading)
 	    make_paragraph(nodes[4], IMPLICIT, make_lines1(lines[2]));
 
 	blocks[0] =
-	    make_block(HEADING, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], HEADING, make_paragraphs1(paragraphs[0]));
 	blocks[1] =
-	    make_block(FOOTING, nodes[2], make_paragraphs1(paragraphs[1]));
+	    make_block(nodes[2], FOOTING, make_paragraphs1(paragraphs[1]));
 	blocks[2] =
-	    make_block(MAIN_CONTENT, nodes[4], make_paragraphs1(paragraphs[2]));
+	    make_block(nodes[4], MAIN_CONTENT, make_paragraphs1(paragraphs[2]));
 
 	expectedResult = LayoutBlockVector_of3(blocks[0], blocks[1], blocks[2]);
 
@@ -798,7 +798,7 @@ START_TEST(resolveLayout_processesCombinedFormattingMarkers)
 	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
 
 	assert_success(result, 0, 1);
 	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
@@ -830,7 +830,7 @@ START_TEST(resolveLayout_processesNestedBoldCommands)
 	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
 
 	assert_success(result, 0, 1);
 	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
@@ -882,7 +882,7 @@ START_TEST(resolveLayout_processesTextAlignment)
 	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
 
 	assert_success(result, 0, 1);
 	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
@@ -922,7 +922,7 @@ START_TEST(resolveLayout_resolvesIndentAndOutdentAtLeftMargin)
 	    make_paragraph(nodes[2], EXPLICIT, make_lines1(lines[1]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0],
+	    make_block(nodes[0], MAIN_CONTENT,
 		       make_paragraphs2(paragraphs[0], paragraphs[1]));
 
 	assert_success(result, 0, 1);
@@ -963,7 +963,7 @@ START_TEST(resolveLayout_resolvesIndentAndOutdentAtRightMargin)
 	    make_paragraph(nodes[2], EXPLICIT, make_lines1(lines[1]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0],
+	    make_block(nodes[0], MAIN_CONTENT,
 		       make_paragraphs2(paragraphs[0], paragraphs[1]));
 
 	assert_success(result, 0, 1);
@@ -1013,7 +1013,7 @@ START_TEST(resolveLayout_processesFontSizeChanges)
 	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
 
 	assert_success(result, 0, 1);
 	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
@@ -1065,7 +1065,7 @@ START_TEST(resolveLayout_processesNestedSubscriptAndSuperscript)
 	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
 
 	assert_success(result, 0, 1);
 	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
@@ -1102,7 +1102,7 @@ START_TEST(resolveLayout_processesExcerptAndSignatureAsSegmentMarkers)
 	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
 
 	assert_success(result, 0, 1);
 	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
@@ -1140,9 +1140,9 @@ START_TEST(resolveLayout_resolvesImplicitAndExplicitParagraphs)
 	    make_paragraph(nodes[2], IMPLICIT, make_lines1(lines[1]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
 	blocks[1] =
-	    make_block(FOOTING, nodes[2], make_paragraphs1(paragraphs[1]));
+	    make_block(nodes[2], FOOTING, make_paragraphs1(paragraphs[1]));
 
 	assert_success(result, 0, 2);
 	assert_blocks_match(LayoutBlockVector_of2(blocks[0], blocks[1]),
@@ -1182,7 +1182,7 @@ START_TEST(resolveLayout_processesMultilineMultiNodeTextInParagraph)
 	    make_paragraph(nodes[0], IMPLICIT, make_lines2(lines[0], lines[1]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
 
 	assert_success(result, 0, 1);
 	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
@@ -1221,13 +1221,13 @@ START_TEST(resolveLayout_handlesNestedSamePageCorrectly)
 	paragraphs[1] =
 	    make_paragraph(nodes[3], EXPLICIT, make_lines1(lines[1]));
 
-	blocks[0] = make_block(SAME_PAGE_START, nodes[0], make_paragraphs0());
-	blocks[1] = make_block(SAME_PAGE_START, nodes[1], make_paragraphs0());
+	blocks[0] = make_block(nodes[0], SAME_PAGE_START, make_paragraphs0());
+	blocks[1] = make_block(nodes[1], SAME_PAGE_START, make_paragraphs0());
 	blocks[2] =
-	    make_block(MAIN_CONTENT, nodes[1],
+	    make_block(nodes[1], MAIN_CONTENT,
 		       make_paragraphs2(paragraphs[0], paragraphs[1]));
-	blocks[3] = make_block(SAME_PAGE_END, nodes[1], make_paragraphs0());
-	blocks[4] = make_block(SAME_PAGE_END, nodes[0], make_paragraphs0());
+	blocks[3] = make_block(nodes[1], SAME_PAGE_END, make_paragraphs0());
+	blocks[4] = make_block(nodes[0], SAME_PAGE_END, make_paragraphs0());
 
 	assert_success(result, 1, 5);
 	assert_blocks_match(LayoutBlockVector_of5
@@ -1262,7 +1262,7 @@ START_TEST(resolveLayout_skipsOverNoOpCommands)
 	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
 
 	assert_success(result, 0, 1);
 	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
@@ -1314,7 +1314,7 @@ START_TEST(resolveLayout_processesNestedParagraphsCorrectly)
 	    make_paragraph(nodes[4], EXPLICIT, make_lines1(lines[2]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0],
+	    make_block(nodes[0], MAIN_CONTENT,
 		       make_paragraphs3(paragraphs[0], paragraphs[1],
 					paragraphs[2]));
 
@@ -1362,7 +1362,7 @@ START_TEST(resolveLayout_marksContentAfterTopLevelParagraphAsImplicitParagraph)
 	    make_paragraph(nodes[4], IMPLICIT, make_lines1(lines[2]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0],
+	    make_block(nodes[0], MAIN_CONTENT,
 		       make_paragraphs3(paragraphs[0], paragraphs[1],
 					paragraphs[2]));
 
@@ -1401,7 +1401,7 @@ START_TEST(resolveLayout_processesIncorrectlyCasedCommandsAsNoOps)
 	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
 
 	blocks[0] =
-	    make_block(MAIN_CONTENT, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
 
 	assert_success(result, 0, 1);
 	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
@@ -1454,11 +1454,11 @@ START_TEST(resolveLayout_supportsProcessingCommandsInCaseInsensitiveWay)
 	    make_paragraph(nodes[4], IMPLICIT, make_lines1(lines[2]));
 
 	blocks[0] =
-	    make_block(HEADING, nodes[0], make_paragraphs1(paragraphs[0]));
+	    make_block(nodes[0], HEADING, make_paragraphs1(paragraphs[0]));
 	blocks[1] =
-	    make_block(FOOTING, nodes[2], make_paragraphs1(paragraphs[1]));
+	    make_block(nodes[2], FOOTING, make_paragraphs1(paragraphs[1]));
 	blocks[2] =
-	    make_block(MAIN_CONTENT, nodes[4], make_paragraphs1(paragraphs[2]));
+	    make_block(nodes[4], MAIN_CONTENT, make_paragraphs1(paragraphs[2]));
 
 	assert_success(result, 0, 3);
 	assert_blocks_match(LayoutBlockVector_of3
@@ -1697,9 +1697,9 @@ ASTNode *errorLocation;
 	return NULL;
 }
 
-static LayoutBlock LayoutBlock_make(type, causingCommand, paragraphs)
-LayoutBlockType type;
+static LayoutBlock LayoutBlock_make(causingCommand, type, paragraphs)
 ASTNode *causingCommand;
+LayoutBlockType type;
 LayoutParagraphVector *paragraphs;
 {
 	LayoutBlock block;

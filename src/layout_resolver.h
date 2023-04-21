@@ -126,8 +126,8 @@ typedef enum LayoutBlockType {
 } LayoutBlockType;
 
 typedef struct LayoutBlock {
-	LayoutBlockType type;
 	ASTNode *causingCommand;
+	LayoutBlockType type;
 	LayoutParagraphVector *paragraphs;
 } LayoutBlock;
 
