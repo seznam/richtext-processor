@@ -146,11 +146,11 @@ static LayoutResolverErrorCode addSegmentContent(LayoutResolverState * state,
 static LayoutResolverErrorCode newBlock(LayoutResolverState * state,
 					ASTNode * node,
 					CommandLayoutInterpretation layout,
-					bool isCommandStart);
+					ASTNode * exitedNode);
 
 static LayoutResolverErrorCode newParagraph(LayoutResolverState * state,
 					    ASTNode * node,
-					    bool isCommandStart);
+					    ASTNode * exitedNode);
 
 static LayoutResolverErrorCode newLine(LayoutResolverState * state,
 				       ASTNode * node);
@@ -396,7 +396,7 @@ bool caseInsensitiveCommands;
 		node.value = COMMAND_Comment;
 		node.children = NULL;
 		newBlock(&state, &node, CommandLayoutInterpretation_COMMENT,
-			 true);
+			 NULL);
 		result->result.blocks = state.blocks;
 	} else {
 		result->type = LayoutResolverResultType_ERROR;
@@ -620,7 +620,7 @@ CommandLayoutInterpretation layout;
 		}
 		state->blockTypeStack = grownBlockTypeStack;
 
-		newBlock(state, node, layout, true);
+		newBlock(state, node, layout, NULL);
 		break;
 
 	case CommandLayoutInterpretation_NEW_PAGE:
@@ -661,12 +661,12 @@ CommandLayoutInterpretation layout;
 			state->warnings = grownWarnings;
 		}
 
-		errorCode = newBlock(state, node, layout, true);
+		errorCode = newBlock(state, node, layout, NULL);
 		if (errorCode != LayoutResolverErrorCode_OK) {
 			break;
 		}
 
-		errorCode = newBlock(state, node, layout, true);
+		errorCode = newBlock(state, node, layout, NULL);
 		if (errorCode != LayoutResolverErrorCode_OK) {
 			break;
 		}
@@ -676,7 +676,7 @@ CommandLayoutInterpretation layout;
 
 	case CommandLayoutInterpretation_NEW_PARAGRAPH:
 	case CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH:
-		errorCode = newParagraph(state, node, true);
+		errorCode = newParagraph(state, node, NULL);
 		break;
 
 	case CommandLayoutInterpretation_NEW_LINE:
@@ -750,7 +750,7 @@ CommandLayoutInterpretation layout;
 		}
 		state->blockTypeStack = reducedTypes;
 
-		errorCode = newBlock(state, upcomingNode, layout, false);
+		errorCode = newBlock(state, upcomingNode, layout, node);
 		if (errorCode != LayoutResolverErrorCode_OK) {
 			break;
 		}
@@ -760,12 +760,12 @@ CommandLayoutInterpretation layout;
 		break;
 
 	case CommandLayoutInterpretation_SAME_PAGE:
-		errorCode = newBlock(state, node, layout, false);
+		errorCode = newBlock(state, node, layout, node);
 		if (errorCode != LayoutResolverErrorCode_OK) {
 			break;
 		}
 
-		errorCode = newBlock(state, upcomingNode, layout, false);
+		errorCode = newBlock(state, upcomingNode, layout, node);
 		if (errorCode != LayoutResolverErrorCode_OK) {
 			break;
 		}
@@ -774,7 +774,7 @@ CommandLayoutInterpretation layout;
 		break;
 
 	case CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH:
-		errorCode = newParagraph(state, upcomingNode, false);
+		errorCode = newParagraph(state, upcomingNode, node);
 		break;
 
 	case CommandLayoutInterpretation_NEW_ISOLATED_LINE:
@@ -819,18 +819,18 @@ CommandLayoutInterpretation layout;
 	return errorCode;
 }
 
-static LayoutResolverErrorCode newBlock(state, node, layout, isCommandStart)
+static LayoutResolverErrorCode newBlock(state, node, layout, exitedNode)
 LayoutResolverState *state;
 ASTNode *node;
 CommandLayoutInterpretation layout;
-bool isCommandStart;
+ASTNode *exitedNode;
 {
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
 	LayoutParagraphVector *grownParagraphs = NULL;
 	LayoutBlockVector *grownBlocks = NULL;
 	LayoutResolverErrorCode OOM_FOR_PARAGRAPHS_ERROR =
 	    LayoutResolverErrorCode_OUT_OF_MEMORY_FOR_PARAGRAPHS;
-	errorCode = newParagraph(state, node, isCommandStart);
+	errorCode = newParagraph(state, node, exitedNode);
 	if (errorCode != LayoutResolverErrorCode_OK) {
 		return errorCode;
 	}
@@ -889,7 +889,7 @@ bool isCommandStart;
 		break;
 
 	case CommandLayoutInterpretation_SAME_PAGE:
-		if (isCommandStart) {
+		if (exitedNode == NULL) {
 			state->block->type = LayoutBlockType_SAME_PAGE_START;
 		} else {
 			state->block->type = LayoutBlockType_SAME_PAGE_END;
@@ -907,10 +907,10 @@ bool isCommandStart;
 	return LayoutResolverErrorCode_OK;
 }
 
-static LayoutResolverErrorCode newParagraph(state, node, isCommandStart)
+static LayoutResolverErrorCode newParagraph(state, node, exitedNode)
 LayoutResolverState *state;
 ASTNode *node;
-bool isCommandStart;
+ASTNode *exitedNode;
 {
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
 	string *command;
@@ -959,10 +959,10 @@ bool isCommandStart;
 	state->paragraph->causingCommand = node;
 
 	state->paragraph->type = LayoutParagraphType_IMPLICIT;
-	command = node != NULL ? node->value : NULL;
+	command = exitedNode != NULL ? exitedNode->value : node->value;
 	if (string_equals(command, COMMAND_Paragraph, caseInsensitive)) {
-		if (isCommandStart
-		    || nodeHasParentOfType(node, COMMAND_Paragraph,
+		if (exitedNode == NULL
+		    || nodeHasParentOfType(exitedNode, COMMAND_Paragraph,
 					   caseInsensitive)) {
 			state->paragraph->type = LayoutParagraphType_EXPLICIT;
 		}
