@@ -142,6 +142,7 @@ Vector_ofType(LayoutBlock)
 typedef enum LayoutResolverErrorCode {
 	LayoutResolverErrorCode_OK,
 	LayoutResolverErrorCode_NULL_NODES_PROVIDED,
+	LayoutResolverErrorCode_NON_ROOT_NODES_PROVIDED,
 	LayoutResolverErrorCode_UNSUPPORTED_NODE_TYPE,
 	LayoutResolverErrorCode_INVALID_CUSTOM_COMMAND,
 	LayoutResolverErrorCode_INVALID_CUSTOM_COMMAND_INTERPRETATION,

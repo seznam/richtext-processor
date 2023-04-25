@@ -224,6 +224,7 @@ bool caseInsensitiveCommands;
 	LayoutLine line;
 	LayoutLineSegment segment;
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
+	ASTNode *errorLocation = NULL;
 
 	result = malloc(sizeof(LayoutResolverResult));
 	if (result == NULL) {
@@ -255,6 +256,9 @@ bool caseInsensitiveCommands;
 	segment.content = NULL;
 
 	do {
+		ASTNode **nodePointer;
+		unsigned long i;
+
 		warnings = LayoutResolverWarningVector_new(0, 0);
 		if (warnings == NULL) {
 			errorCode =
@@ -264,6 +268,25 @@ bool caseInsensitiveCommands;
 
 		if (nodes == NULL) {
 			errorCode = LayoutResolverErrorCode_NULL_NODES_PROVIDED;
+			break;
+		}
+
+		for (i = 0, nodePointer = nodes->items; i < nodes->size.length;
+		     i++, nodePointer++) {
+			if (*nodePointer == NULL) {
+				errorCode =
+				    LayoutResolverErrorCode_NULL_NODES_PROVIDED;
+				break;
+			}
+			if ((*nodePointer)->parent == NULL) {
+				continue;
+			}
+			errorCode =
+			    LayoutResolverErrorCode_NON_ROOT_NODES_PROVIDED;
+			errorLocation = *nodePointer;
+			break;
+		}
+		if (errorCode != LayoutResolverErrorCode_OK) {
 			break;
 		}
 
@@ -355,7 +378,7 @@ bool caseInsensitiveCommands;
 	if (errorCode != LayoutResolverErrorCode_OK) {
 		result->type = LayoutResolverResultType_ERROR;
 		result->result.error.code = errorCode;
-		result->result.error.location = NULL;
+		result->result.error.location = errorLocation;
 		result->warnings = warnings;
 		LayoutBlockTypeVector_free(blockTypeStack);
 		LayoutContentAlignmentVector_free(contentAlignmentStack);
