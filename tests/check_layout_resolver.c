@@ -139,6 +139,12 @@ static ASTNode *newNode(unsigned long byteIndex, unsigned long codepointIndex,
 			string * value, ASTNode * parent,
 			ASTNodePointerVector * children);
 
+static CustomCommandLayoutInterpretation
+_testingCommandInterpreter(ASTNode * node, bool caseInsensitive);
+
+static bool string_equals(string * string1, string * string2,
+			  bool caseInsensitive);
+
 #define assert_result(nodes, customCommandHook, caseInsensitiveCommands,\
 		      resultPointer)\
 do {\
@@ -671,6 +677,12 @@ LayoutLineVector_of1(line1)
 #define make_lines2(line1, line2)\
 LayoutLineVector_of2(line1, line2)
 
+#define make_lines3(line1, line2, line3)\
+LayoutLineVector_of3(line1, line2, line3)
+
+#define make_lines4(line1, line2, line3, line4)\
+LayoutLineVector_of4(line1, line2, line3, line4)
+
 #define make_paragraph(causingCommand, type, lines)\
 LayoutParagraph_make(&causingCommand, LayoutParagraphType_##type, lines)
 
@@ -685,6 +697,9 @@ LayoutParagraphVector_of2(paragraph1, paragraph2)
 
 #define make_paragraphs3(paragraph1, paragraph2, paragraph3)\
 LayoutParagraphVector_of3(paragraph1, paragraph2, paragraph3)
+
+#define make_paragraphs4(paragraph1, paragraph2, paragraph3, paragraph4)\
+LayoutParagraphVector_of4(paragraph1, paragraph2, paragraph3, paragraph4)
 
 #define make_block(causingCommand, type, paragraphs)\
 LayoutBlock_make(&causingCommand, LayoutBlockType_##type, paragraphs)
@@ -1466,13 +1481,152 @@ START_TEST(resolveLayout_supportsProcessingCommandsInCaseInsensitiveWay)
 			    result->result.blocks);
 END_TEST}
 
+START_TEST(resolveLayout_supportsCustomCommandHooks)
+{
+	char *input =
+	    "text1<x-block>text2</x-block>text3<x-paragraph>text4</x-paragraph>text5<x-isolated-paragraph>text6</x-isolated-paragraph>text7";
+	LayoutResolverResult *result =
+	    process(input, _testingCommandInterpreter, true);
+	ASTNode nodes[12];
+	LayoutLineSegment segments[7];
+	LayoutLine lines[6];
+	LayoutParagraph paragraphs[6];
+	LayoutBlock blocks[3];
+
+	nodes[0] = make_node(0, 0, 0, TEXT, "text1");
+	nodes[1] = make_node(5, 5, 1, COMMAND, "x-block");
+	nodes[2] = make_node(14, 14, 2, TEXT, "text2");
+	nodes[3] = make_node(29, 29, 4, TEXT, "text3");
+	nodes[4] = make_node(34, 34, 5, COMMAND, "x-paragraph");
+	nodes[5] = make_node(47, 47, 6, TEXT, "text4");
+	nodes[6] = make_node(66, 66, 8, TEXT, "text5");
+	nodes[7] = make_node(71, 71, 9, COMMAND, "x-isolated-paragraph");
+	nodes[8] = make_node(93, 93, 10, TEXT, "text6");
+	nodes[9] = make_node(121, 121, 12, TEXT, "text7");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[0]));
+	segments[1] =
+	    make_segment(nodes[1], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[2]));
+	segments[2] =
+	    make_segment(nodes[3], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[3]));
+	segments[3] =
+	    make_segment(nodes[4], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[5]));
+	segments[4] =
+	    make_segment(nodes[6], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[6]));
+	segments[5] =
+	    make_segment(nodes[7], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[8]));
+	segments[6] =
+	    make_segment(nodes[9], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[9]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+	lines[1] = make_line(nodes[1], make_segments1(segments[1]));
+	lines[2] = make_line(nodes[3], make_segments1(segments[2]));
+	lines[3] =
+	    make_line(nodes[4], make_segments2(segments[3], segments[4]));
+	lines[4] = make_line(nodes[7], make_segments1(segments[5]));
+	lines[5] = make_line(nodes[9], make_segments1(segments[6]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
+	paragraphs[1] =
+	    make_paragraph(nodes[1], IMPLICIT, make_lines1(lines[1]));
+	paragraphs[2] =
+	    make_paragraph(nodes[3], IMPLICIT, make_lines1(lines[2]));
+	paragraphs[3] =
+	    make_paragraph(nodes[4], IMPLICIT, make_lines1(lines[3]));
+	paragraphs[4] =
+	    make_paragraph(nodes[7], IMPLICIT, make_lines1(lines[4]));
+	paragraphs[5] =
+	    make_paragraph(nodes[9], IMPLICIT, make_lines1(lines[5]));
+
+	blocks[0] =
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
+	blocks[1] =
+	    make_block(nodes[1], CUSTOM, make_paragraphs1(paragraphs[1]));
+	blocks[2] =
+	    make_block(nodes[3], MAIN_CONTENT,
+		       make_paragraphs4(paragraphs[2], paragraphs[3],
+					paragraphs[4], paragraphs[5]));
+
+	assert_success(result, 0, 3);
+	assert_blocks_match(LayoutBlockVector_of3
+			    (blocks[0], blocks[1], blocks[2]),
+			    result->result.blocks);
+
+	input =
+	    "text1<x-line>text2</x-line>text3<x-isolated-line>text4</x-isolated-line>text5<x-segment>text6<x-no-op><x-content>text7</x-content></x-no-op></x-segment>";
+	result = process(input, _testingCommandInterpreter, true);
+
+	nodes[0] = make_node(0, 0, 0, TEXT, "text1");
+	nodes[1] = make_node(5, 5, 1, COMMAND, "x-line");
+	nodes[2] = make_node(13, 13, 2, TEXT, "text2");
+	nodes[3] = make_node(27, 27, 4, TEXT, "text3");
+	nodes[4] = make_node(32, 32, 5, COMMAND, "x-isolated-line");
+	nodes[5] = make_node(49, 49, 6, TEXT, "text4");
+	nodes[6] = make_node(72, 72, 8, TEXT, "text5");
+	nodes[7] = make_node(77, 77, 9, COMMAND, "x-segment");
+	nodes[8] = make_node(88, 88, 10, TEXT, "text6");
+	nodes[9] = make_node(93, 93, 11, COMMAND, "x-no-op");
+	nodes[10] = make_node(102, 102, 12, COMMAND, "x-content");
+	nodes[11] = make_node(113, 113, 13, TEXT, "text7");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[0]));
+	segments[1] =
+	    make_segment(nodes[1], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[2]));
+	segments[2] =
+	    make_segment(nodes[3], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[3]));
+	segments[3] =
+	    make_segment(nodes[4], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[5]));
+	segments[4] =
+	    make_segment(nodes[6], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[6]));
+	segments[5] =
+	    make_segment(nodes[7], DEFAULT, 0, 0, 0, 0, 0, 0, 0,
+			 make_nodes1(nodes[7]), make_nodes3(nodes[8], nodes[10],
+							    nodes[11]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+	lines[1] =
+	    make_line(nodes[1], make_segments2(segments[1], segments[2]));
+	lines[2] = make_line(nodes[4], make_segments1(segments[3]));
+	lines[3] =
+	    make_line(nodes[6], make_segments2(segments[4], segments[5]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT,
+			   make_lines4(lines[0], lines[1], lines[2], lines[3]));
+
+	blocks[0] =
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
 #undef assert_blocks_match
 #undef make_block
+#undef make_paragraphs4
 #undef make_paragraphs3
 #undef make_paragraphs2
 #undef make_paragraphs1
 #undef make_paragraphs0
 #undef make_paragraph
+#undef make_lines4
+#undef make_lines3
 #undef make_lines2
 #undef make_lines1
 #undef make_line
@@ -1528,6 +1682,7 @@ static void all_tests()
 	    (resolveLayout_marksContentAfterTopLevelParagraphAsImplicitParagraph);
 	runTest(resolveLayout_processesIncorrectlyCasedCommandsAsNoOps);
 	runTest(resolveLayout_supportsProcessingCommandsInCaseInsensitiveWay);
+	runTest(resolveLayout_supportsCustomCommandHooks);
 }
 
 int main()
@@ -2577,4 +2732,51 @@ bool caseInsensitive;
 {
 	/* silence the warnings about unused parameters */
 	return node || caseInsensitive ? 65000 : 65000;
+}
+
+static CustomCommandLayoutInterpretation
+_testingCommandInterpreter(node, caseInsensitive)
+ASTNode *node;
+bool caseInsensitive;
+{
+	string *command = node->value;
+	if (string_equals(command, string_from("X-Block"), caseInsensitive)) {
+		return CustomCommandLayoutInterpretation_NEW_BLOCK;
+	}
+	if (string_equals(command, string_from("X-Paragraph"), caseInsensitive)) {
+		return CustomCommandLayoutInterpretation_NEW_PARAGRAPH;
+	}
+	if (string_equals
+	    (command, string_from("X-Isolated-Paragraph"), caseInsensitive)) {
+		return CustomCommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH;
+	}
+	if (string_equals(command, string_from("X-Line"), caseInsensitive)) {
+		return CustomCommandLayoutInterpretation_NEW_LINE;
+	}
+	if (string_equals
+	    (command, string_from("X-Isolated-Line"), caseInsensitive)) {
+		return CustomCommandLayoutInterpretation_NEW_ISOLATED_LINE;
+	}
+	if (string_equals(command, string_from("X-Segment"), caseInsensitive)) {
+		return CustomCommandLayoutInterpretation_NEW_LINE_SEGMENT;
+	}
+	if (string_equals(command, string_from("X-Content"), caseInsensitive)) {
+		return CustomCommandLayoutInterpretation_INLINE_CONTENT;
+	}
+	if (string_equals(command, string_from("X-No-op"), caseInsensitive)) {
+		return CustomCommandLayoutInterpretation_NO_OP;
+	}
+	return CustomCommandLayoutInterpretation_INVALID_COMMAND;
+}
+
+static bool string_equals(string1, string2, caseInsensitive)
+string *string1;
+string *string2;
+bool caseInsensitive;
+{
+	if (caseInsensitive) {
+		return string_caseInsensitiveCompare(string1, string2) == 0;
+	} else {
+		return string_compare(string1, string2) == 0;
+	}
 }
