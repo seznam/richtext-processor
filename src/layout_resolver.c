@@ -38,7 +38,9 @@ typedef enum CommandLayoutInterpretation {
 
 	/*
 	 * Starts a new implicit paragraph that continues after the causing
-	 * command's end.
+	 * command's end. The command's end will not terminate the current line
+	 * either (use the <nl> command if desired), but will start a new line
+	 * segment.
 	 */
 	CommandLayoutInterpretation_NEW_PARAGRAPH,
 
@@ -49,9 +51,18 @@ typedef enum CommandLayoutInterpretation {
 	CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH,
 
 	/*
-	 * Starts a new line of content.
+	 * Starts a new line of content. Reversed for the <nl> command only.
 	 */
 	CommandLayoutInterpretation_NEW_LINE,
+
+	/*
+	 * Starts a new line that continues after the causing command's end.
+	 * The command's end will start a new line segment.
+	 *
+	 * This is used for custom commands for which the custom command layout
+	 * interpreter returns CustomCommandLayoutInterpretation_NEW_LINE.
+	 */
+	CommandLayoutInterpretation_NEW_CUSTOM_LINE,
 
 	/*
 	 * Start a new line that ends afters the causing command's end.
@@ -680,6 +691,7 @@ CommandLayoutInterpretation layout;
 		break;
 
 	case CommandLayoutInterpretation_NEW_LINE:
+	case CommandLayoutInterpretation_NEW_CUSTOM_LINE:
 	case CommandLayoutInterpretation_NEW_ISOLATED_LINE:
 		errorCode = newLine(state, node);
 		break;
@@ -793,8 +805,23 @@ CommandLayoutInterpretation layout;
 		}
 		break;
 
-	case CommandLayoutInterpretation_NEW_PAGE:
 	case CommandLayoutInterpretation_NEW_PARAGRAPH:
+	case CommandLayoutInterpretation_NEW_CUSTOM_LINE:
+		errorCode = newSegment(state, upcomingNode);
+		if (errorCode != LayoutResolverErrorCode_OK) {
+			break;
+		}
+
+		/*
+		 * We won't call the updateSegmentOnCommandEnd function here,
+		 * because the command's end does not affect segment properties,
+		 * and calling it would result in custom segment markers
+		 * underflow or mismatch.
+		 */
+
+		break;
+
+	case CommandLayoutInterpretation_NEW_PAGE:
 	case CommandLayoutInterpretation_NEW_LINE:
 	case CommandLayoutInterpretation_INLINE_CONTENT:
 	case CommandLayoutInterpretation_COMMENT:
@@ -1455,7 +1482,7 @@ bool caseInsensitive;
 		return CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH;
 
 	case CustomCommandLayoutInterpretation_NEW_LINE:
-		return CommandLayoutInterpretation_NEW_LINE;
+		return CommandLayoutInterpretation_NEW_CUSTOM_LINE;
 
 	case CustomCommandLayoutInterpretation_NEW_ISOLATED_LINE:
 		return CommandLayoutInterpretation_NEW_ISOLATED_LINE;
