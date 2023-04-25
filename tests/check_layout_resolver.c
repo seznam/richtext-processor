@@ -183,6 +183,33 @@ START_TEST(resolveLayout_returnsErrorForNullNodes)
 		     LayoutResolverErrorCode_NULL_NODES_PROVIDED, NULL);
 END_TEST}
 
+START_TEST(resolveLayout_returnsErrorForNonRootNodes)
+{
+	char *input = "<Bold>text</Bold>";
+	ASTNode rootNode;
+	LexerResult *tokens;
+	ParserResult *nodeTree;
+	ASTNodePointerVector *nodes;
+
+	rootNode.byteIndex = 0;
+	rootNode.codepointIndex = 0;
+	rootNode.tokenIndex = 0;
+	rootNode.type = ASTNodeType_COMMAND;
+	rootNode.value = string_from("root");
+	rootNode.parent = NULL;
+	rootNode.children = ASTNodePointerVector_new(0, 1);
+
+	tokens = tokenize(string_from(input));
+	nodeTree = parse(tokens->result.tokens, false);
+	nodes = nodeTree->result.nodes;
+	(*nodes->items)->parent = &rootNode;
+	rootNode.children =
+	    ASTNodePointerVector_append(rootNode.children, nodes->items);
+	assert_error(nodes, NULL, false,
+		     LayoutResolverErrorCode_NON_ROOT_NODES_PROVIDED,
+		     *nodes->items);
+END_TEST}
+
 START_TEST(resolveLayout_returnsErrorForUnsupportedNodeType)
 {
 	ASTNode *children[1];
@@ -1690,6 +1717,7 @@ END_TEST}
 static void all_tests()
 {
 	runTest(resolveLayout_returnsErrorForNullNodes);
+	runTest(resolveLayout_returnsErrorForNonRootNodes);
 	runTest(resolveLayout_returnsErrorForUnsupportedNodeType);
 	runTest(resolveLayout_returnsErrorIfCustomCommandHookRejectsCommand);
 	runTest
