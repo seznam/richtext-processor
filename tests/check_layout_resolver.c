@@ -1617,6 +1617,49 @@ START_TEST(resolveLayout_supportsCustomCommandHooks)
 			    result->result.blocks);
 END_TEST}
 
+START_TEST(resolveLayout_preservesCommandsAsSegmentContent)
+{
+	char *input = "<Bold><Comment><Bold>foo</Bold></Comment>bar</Bold>";
+	LayoutResolverResult *result = process(input, NULL, false);
+	ASTNode nodes[5];
+	LayoutLineSegment segments[1];
+	LayoutLine lines[1];
+	LayoutParagraph paragraphs[1];
+	LayoutBlock blocks[1];
+	LayoutLine *line;
+	ASTNode *comment;
+
+	nodes[0] = make_node(0, 0, 0, COMMAND, "Bold");
+	nodes[1] = make_node(6, 6, 1, COMMAND, "Comment");
+	nodes[2] = make_node(15, 15, 2, COMMAND, "Bold");
+	nodes[3] = make_node(21, 21, 3, TEXT, "foo");
+	nodes[4] = make_node(41, 41, 6, TEXT, "bar");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 0, 1, 0, 0, 0, make_nodes0(),
+			 make_nodes2(nodes[1], nodes[4]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
+
+	blocks[0] =
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+
+	line = result->result.blocks->items->paragraphs->items->lines->items;
+	comment = *line->segments->items->content->items;
+	assert(ASTNode_equalsShallow(**comment->children->items, nodes[2]),
+	       "Expected the comment to contain a text node 'foo' inside <Bold>");
+	assert(ASTNode_equalsShallow
+	       (**(*comment->children->items)->children->items, nodes[3]),
+	       "Expected the comment to contain a text node 'foo' inside <Bold>");
+END_TEST}
+
 #undef assert_blocks_match
 #undef make_block
 #undef make_paragraphs4
@@ -1683,6 +1726,7 @@ static void all_tests()
 	runTest(resolveLayout_processesIncorrectlyCasedCommandsAsNoOps);
 	runTest(resolveLayout_supportsProcessingCommandsInCaseInsensitiveWay);
 	runTest(resolveLayout_supportsCustomCommandHooks);
+	runTest(resolveLayout_preservesCommandsAsSegmentContent);
 }
 
 int main()
