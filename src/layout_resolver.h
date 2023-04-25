@@ -15,7 +15,9 @@ typedef enum CustomCommandLayoutInterpretation {
 
 	/*
 	 * Starts a new implicit paragraph that continues after the causing
-	 * command's end.
+	 * command's end. The command's end will not terminate the current line
+	 * either (use the <nl> command if desired), but will start a new line
+	 * segment.
 	 */
 	CustomCommandLayoutInterpretation_NEW_PARAGRAPH,
 
@@ -27,6 +29,7 @@ typedef enum CustomCommandLayoutInterpretation {
 
 	/*
 	 * Starts a new line that continues after the causing command's end.
+	 * The command's end will start a new line segment.
 	 */
 	CustomCommandLayoutInterpretation_NEW_LINE,
 
@@ -42,6 +45,10 @@ typedef enum CustomCommandLayoutInterpretation {
 
 	/*
 	 * The command will be appended to the current line segment's content.
+	 * Note that the content of the command will be processed too, with its
+	 * inline content appended to the current line segment's content - this
+	 * is to enable processing of line segments' content in a linear
+	 * fashion instead of having to traverse more tree structures.
 	 */
 	CustomCommandLayoutInterpretation_INLINE_CONTENT,
 
