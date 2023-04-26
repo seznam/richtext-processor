@@ -39,6 +39,14 @@ static char *_assert_success(char *fileName, unsigned int lineOfCode,
 			     unsigned long expectedWarnings,
 			     unsigned long expectedBlocks);
 
+static char *_assert_warning(char *fileName, unsigned int lineOfCode,
+			     ASTNodePointerVector * nodes,
+			     CustomCommandLayoutInterpretation
+			     customCommandHook(ASTNode *, bool),
+			     bool caseInsensitiveCommands,
+			     LayoutResolverWarningCode warningCode,
+			     ASTNode * warningCause);
+
 static char *_assert_error(char *fileName,
 			   unsigned int lineOfCode,
 			   ASTNodePointerVector * nodes,
@@ -161,6 +169,18 @@ do {\
 	char *_assert_failure =\
 	    _assert_success(__FILE__, __LINE__, result, expectedWarnings,\
 			    expectedBlocks);\
+	if (_assert_failure != NULL) {\
+		return _assert_failure;\
+	}\
+} while (false)
+
+#define assert_warning(nodes, customCommandHook, caseInsensitiveCommands,\
+		       warningCode, warningCause)\
+do {\
+	char *_assert_failure =\
+	    _assert_warning(__FILE__, __LINE__, nodes, customCommandHook,\
+			    caseInsensitiveCommands, warningCode,\
+			    warningCause);\
 	if (_assert_failure != NULL) {\
 		return _assert_failure;\
 	}\
@@ -1714,6 +1734,58 @@ END_TEST}
 #undef make_nodes0
 #undef make_node
 
+START_TEST(resolveLayout_warnsAboutNewPageInsideSamePage)
+{
+	char *input = "<SamePage><np></SamePage>";
+	ParserResult *parsedInput =
+	    parse(tokenize(string_from(input))->result.tokens, false);
+	ASTNodePointerVector *nodes = parsedInput->result.nodes;
+	ASTNode *warningCause;
+
+	warningCause = *(*nodes->items)->children->items;
+	assert_success(process(input, NULL, false), 1, 3);
+	assert_warning(nodes, NULL, false,
+		       LayoutResolverWarningCode_NEW_PAGE_INSIDE_SAME_PAGE,
+		       warningCause);
+END_TEST}
+
+START_TEST(resolveLayout_warnsAboutNestedSamePageInsideSamePage)
+{
+	char *input = "<SamePage><SamePage>text</SamePage></SamePage>";
+	ParserResult *parsedInput =
+	    parse(tokenize(string_from(input))->result.tokens, false);
+	ASTNodePointerVector *nodes = parsedInput->result.nodes;
+	ASTNode *warningCause;
+
+	warningCause = *(*nodes->items)->children->items;
+	assert_success(process(input, NULL, false), 1, 5);
+	assert_warning(nodes, NULL, false,
+		       LayoutResolverWarningCode_NESTED_SAME_PAGE,
+		       warningCause);
+END_TEST}
+
+START_TEST(resolveLayout_emitsWarningsOnErrorsAsWell)
+{
+	char *input = "<SamePage><np></SamePage>";
+	ParserResult *parsedInput =
+	    parse(tokenize(string_from(input))->result.tokens, false);
+	ASTNodePointerVector *nodes = parsedInput->result.nodes;
+	ASTNode *children[1];
+	ASTNode *nodeOfInvalidType, *warningCause;
+
+	children[0] = NULL;
+	nodeOfInvalidType = makeNode(0, 0, 0, 65000, "", NULL, children);
+	nodes = ASTNodePointerVector_append(nodes, &nodeOfInvalidType);
+
+	warningCause = *(*nodes->items)->children->items;
+	assert_error(nodes, NULL, false,
+		     LayoutResolverErrorCode_UNSUPPORTED_NODE_TYPE,
+		     nodeOfInvalidType);
+	assert_warning(nodes, NULL, false,
+		       LayoutResolverWarningCode_NEW_PAGE_INSIDE_SAME_PAGE,
+		       warningCause);
+END_TEST}
+
 static void all_tests()
 {
 	runTest(resolveLayout_returnsErrorForNullNodes);
@@ -1755,6 +1827,9 @@ static void all_tests()
 	runTest(resolveLayout_supportsProcessingCommandsInCaseInsensitiveWay);
 	runTest(resolveLayout_supportsCustomCommandHooks);
 	runTest(resolveLayout_preservesCommandsAsSegmentContent);
+	runTest(resolveLayout_warnsAboutNewPageInsideSamePage);
+	runTest(resolveLayout_warnsAboutNestedSamePageInsideSamePage);
+	runTest(resolveLayout_emitsWarningsOnErrorsAsWell);
 }
 
 int main()
@@ -1844,6 +1919,79 @@ unsigned long expectedBlocks;
 	return unit_assert(fileName, lineOfCode,
 			   result->result.blocks->size.length == expectedBlocks,
 			   blocksError);
+}
+
+static char *_assert_warning(fileName, lineOfCode, nodes, customCommandHook,
+			     caseInsensitiveCommands, warningCode, warningCause)
+char *fileName;
+unsigned int lineOfCode;
+ASTNodePointerVector *nodes;
+CustomCommandLayoutInterpretation customCommandHook(ASTNode *, bool);
+bool caseInsensitiveCommands;
+LayoutResolverWarningCode warningCode;
+ASTNode *warningCause;
+{
+	LayoutResolverResult *result;
+	LayoutResolverWarning *warning;
+	char *stringifiedExpectedWarningCode =
+	    warningCode <
+	    2 ? STRINGIFIED_WARNING_CODES[warningCode] : "<UNKNOWN>";
+	char *stringifiedObtainedWarningCode = NULL;
+	char *stringifiedExpectedWarningCause = stringifyASTNode(warningCause);
+	char *stringifiedObtainedWarningCause = NULL;
+	char *failureFormat = NULL;
+	char *failureMessage = NULL;
+	char *failure = NULL;
+
+	failure =
+	    _assert_result(fileName, lineOfCode, nodes, customCommandHook,
+			   caseInsensitiveCommands, &result);
+	if (failure != NULL) {
+		return failure;
+	}
+
+	failure =
+	    unit_assert(fileName, lineOfCode, result->warnings->size.length > 0,
+			"Expected warnings vector containing at least one warning");
+	if (failure != NULL) {
+		return failure;
+	}
+
+	warning = result->warnings->items;
+	stringifiedObtainedWarningCode = warning->code < 2 ?
+	    STRINGIFIED_WARNING_CODES[warning->code] : "<UNKNOWN>";
+	failureFormat = "Expected the warning code to be %s, but was %s";
+	failureMessage =
+	    malloc(sizeof(char) *
+		   (strlen(failureFormat) +
+		    strlen(stringifiedExpectedWarningCode) +
+		    strlen(stringifiedObtainedWarningCode) + 1));
+	sprintf(failureMessage, failureFormat, stringifiedExpectedWarningCode,
+		stringifiedObtainedWarningCode);
+	failure =
+	    unit_assert(fileName, lineOfCode, warning->code == warningCode,
+			failureMessage);
+	if (failure != NULL) {
+		return failure;
+	}
+
+	stringifiedObtainedWarningCause = stringifyASTNode(warning->cause);
+	failureFormat = "Expected the warning's cause to be %s, but was %s";
+	failureMessage =
+	    malloc(sizeof(char) *
+		   (strlen(failureFormat) +
+		    strlen(stringifiedExpectedWarningCause) +
+		    strlen(stringifiedObtainedWarningCause) + 1));
+	sprintf(failureMessage, failureFormat, stringifiedExpectedWarningCause,
+		stringifiedObtainedWarningCause);
+	failure =
+	    unit_assert(fileName, lineOfCode, warning->cause == warningCause,
+			failureMessage);
+	if (failure != NULL) {
+		return failure;
+	}
+
+	return NULL;
 }
 
 static char *_assert_error(fileName, lineOfCode, nodes, customCommandHook,
