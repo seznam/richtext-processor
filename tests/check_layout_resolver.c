@@ -131,6 +131,8 @@ static ASTNode ASTNode_make(unsigned long byteIndex,
 
 static bool ASTNode_equalsShallow(ASTNode node1, ASTNode node2);
 
+static bool ASTNode_equalsTree(ASTNode node1, ASTNode node2);
+
 static char *stringifyASTNode(ASTNode * node);
 
 static LayoutResolverResult *process(const char *richtext,
@@ -1786,6 +1788,66 @@ START_TEST(resolveLayout_emitsWarningsOnErrorsAsWell)
 		       warningCause);
 END_TEST}
 
+START_TEST(resolveLayout_doesNotModifyItsInput)
+{
+	char *input =
+	    "<Bold><Italic>text</Italic></Bold><np><Paragraph>text2</Paragraph>";
+	LexerResult *tokens1 = tokenize(string_from(input));
+	LexerResult *tokens2 = tokenize(string_from(input));
+	ParserResult *nodes1 = parse(tokens1->result.tokens, false);
+	ParserResult *nodes2 = parse(tokens2->result.tokens, false);
+	LayoutResolverResult *blocks =
+	    resolveLayout(nodes1->result.nodes, NULL, false);
+	unsigned long i;
+
+	assert(blocks->type == LayoutResolverResultType_SUCCESS,
+	       "Expected successful result");
+	assert(blocks->result.blocks != NULL,
+	       "Expected non-NULL vector of blocks");
+
+	for (i = 0; i < nodes1->result.nodes->size.length; i++) {
+		ASTNode *node1, *node2;
+		ASTNodePointerVector_get(nodes1->result.nodes, i, &node1);
+		ASTNodePointerVector_get(nodes2->result.nodes, i, &node2);
+		assert(ASTNode_equalsTree(*node1, *node2),
+		       "Expected the input nodes to remain unmodified");
+	}
+END_TEST}
+
+START_TEST(LayoutResolverResult_free_handlesNullInput)
+{
+	LayoutResolverResult_free(NULL);
+END_TEST}
+
+START_TEST(LayoutResolverResult_free_freesSuccessfulResults)
+{
+	char *input =
+	    "<Bold><Italic>text</Italic></Bold><np><Paragraph>text2</Paragraph>";
+	LayoutResolverResult *result = process(input, NULL, false);
+	assert(result != NULL
+	       && result->type == LayoutResolverResultType_SUCCESS,
+	       "Expected successful result");
+	LayoutResolverResult_free(result);
+END_TEST}
+
+START_TEST(LayoutResolverResult_free_freesErrorResults)
+{
+	ASTNode *children[1];
+	ASTNode *node;
+	ASTNodePointerVector *nodes = ASTNodePointerVector_new(0, 1);
+	LayoutResolverResult *result;
+	children[0] = NULL;
+	node = makeNode(0, 0, 0, 65000, "", NULL, children);
+	ASTNodePointerVector_append(nodes, &node);
+
+	result = resolveLayout(nodes, NULL, false);
+	assert(result != NULL
+	       && result->type == LayoutResolverResultType_ERROR,
+	       "Expected error result");
+
+	LayoutResolverResult_free(result);
+END_TEST}
+
 static void all_tests()
 {
 	runTest(resolveLayout_returnsErrorForNullNodes);
@@ -1830,6 +1892,10 @@ static void all_tests()
 	runTest(resolveLayout_warnsAboutNewPageInsideSamePage);
 	runTest(resolveLayout_warnsAboutNestedSamePageInsideSamePage);
 	runTest(resolveLayout_emitsWarningsOnErrorsAsWell);
+	runTest(resolveLayout_doesNotModifyItsInput);
+	runTest(LayoutResolverResult_free_handlesNullInput);
+	runTest(LayoutResolverResult_free_freesSuccessfulResults);
+	runTest(LayoutResolverResult_free_freesErrorResults);
 }
 
 int main()
@@ -2751,6 +2817,48 @@ ASTNode node2;
 	}
 	if (string_compare(node1.value, node2.value) != 0) {
 		return false;
+	}
+
+	return true;
+}
+
+static bool ASTNode_equalsTree(node1, node2)
+ASTNode node1;
+ASTNode node2;
+{
+	unsigned long i;
+
+	if (!ASTNode_equalsShallow(node1, node2)) {
+		return false;
+	}
+
+	if (node1.children == NULL && node2.children == NULL) {
+		return true;
+	}
+	if (node1.children != NULL && node2.children == NULL) {
+		return false;
+	}
+	if (node1.children == NULL && node2.children != NULL) {
+		return false;
+	}
+
+	if (node1.children->size.length != node2.children->size.length) {
+		return false;
+	}
+
+	for (i = 0; i < node1.children->size.length; i++) {
+		ASTNode *child1, *child2;
+		ASTNodePointerVector_get(node1.children, i, &child1);
+		ASTNodePointerVector_get(node2.children, i, &child2);
+		if (child1 == NULL && child2 == NULL) {
+			continue;
+		}
+		if (child1 == NULL || child2 == NULL) {
+			return false;
+		}
+		if (!ASTNode_equalsTree(*child1, *child2)) {
+			return false;
+		}
 	}
 
 	return true;
