@@ -174,165 +174,6 @@ string *richtext;
 				codepointIndex++;
 			}
 			break;
-		case ' ':
-		case '\t':	/* horizontal tab */
-		case '\n':	/* newline */
-		case '\v':	/* vertical tab */
-		case '\f':	/* form feed, richtext documents should use <np> instead */
-			if (isInsideCommand) {
-				codepointIndex++;
-				break;
-			}
-
-			if (currentByteIndex > token.byteIndex) {
-				token.value =
-				    string_substring(richtext, token.byteIndex,
-						     currentByteIndex);
-				if (token.value == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-							       warnings,
-							       tokens);
-				}
-				resizedTokens =
-				    TokenVector_append(tokens, &token);
-				if (resizedTokens == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-							       warnings,
-							       tokens);
-				}
-				tokens = resizedTokens;
-				token.codepointIndex = codepointIndex;
-			}
-
-			token.byteIndex = currentByteIndex;
-			token.type = TokenType_WHITESPACE;
-			token.value =
-			    string_substring(richtext, currentByteIndex,
-					     currentByteIndex + 1);
-			if (token.value == NULL) {
-				return finalizeToError(result, currentByteIndex,
-						       codepointIndex,
-						       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-						       warnings, tokens);
-			}
-			resizedTokens = TokenVector_append(tokens, &token);
-			if (resizedTokens == NULL) {
-				return finalizeToError(result, currentByteIndex,
-						       codepointIndex,
-						       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-						       warnings, tokens);
-			}
-			tokens = resizedTokens;
-
-			token.byteIndex = currentByteIndex + 1;
-			token.codepointIndex = ++codepointIndex;
-			token.type = TokenType_TEXT;
-			break;
-		case '\r':	/* carriage return */
-			if (isInsideCommand) {
-				codepointIndex++;
-				break;
-			}
-
-			if (currentByteIndex > token.byteIndex) {
-				token.value =
-				    string_substring(richtext, token.byteIndex,
-						     currentByteIndex);
-				if (token.value == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-							       warnings,
-							       tokens);
-				}
-				resizedTokens =
-				    TokenVector_append(tokens, &token);
-				if (resizedTokens == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-							       warnings,
-							       tokens);
-				}
-				tokens = resizedTokens;
-
-				token.codepointIndex = codepointIndex;
-			}
-
-			token.byteIndex = currentByteIndex;
-			token.type = TokenType_WHITESPACE;
-
-			/*
-			   Treat for CRLF as a single whitespace token because
-			   it is meant to be formatted as a single space
-			   character.
-			 */
-			if (currentByteIndex + 1 < richtext->length &&
-			    *(currentByte + 1) == '\n') {
-				token.value = string_substring(richtext,
-							       currentByteIndex,
-							       currentByteIndex
-							       + 2);
-				if (token.value == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-							       warnings,
-							       tokens);
-				}
-				resizedTokens =
-				    TokenVector_append(tokens, &token);
-				if (resizedTokens == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-							       warnings,
-							       tokens);
-				}
-				tokens = resizedTokens;
-				currentByte++;
-				currentByteIndex++;
-				token.codepointIndex = ++codepointIndex;
-			} else {
-				token.value = string_substring(richtext,
-							       currentByteIndex,
-							       currentByteIndex
-							       + 1);
-				if (token.value == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-							       warnings,
-							       tokens);
-				}
-				resizedTokens =
-				    TokenVector_append(tokens, &token);
-				if (resizedTokens == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-							       warnings,
-							       tokens);
-				}
-				tokens = resizedTokens;
-			}
-
-			token.byteIndex = currentByteIndex + 1;
-			token.codepointIndex = ++codepointIndex;
-			token.type = TokenType_TEXT;
-			break;
 		default:
 			/*
 			   Since we are operating on a UTF-8 input, we need to
@@ -412,11 +253,24 @@ string *richtext;
 				token.byteIndex =
 				    currentByteIndex + whitespaceLength;
 				token.codepointIndex = codepointIndex + 1;
+				if (*currentByte < 128) {
+					if (whitespaceLength > 1) {
+						/* CRLF */
+						token.codepointIndex +=
+						    whitespaceLength - 1;
+					}
+				}
 				token.type = TokenType_TEXT;
 			}
 
 			if (*currentByte < 128) {
 				/* single-byte UTF-8 codepoints */
+				if (whitespaceLength > 1) {	/* CRLF */
+					currentByteIndex +=
+					    whitespaceLength - 1;
+					currentByte += whitespaceLength - 1;
+					codepointIndex += whitespaceLength - 1;
+				}
 			} else if (*currentByte <= 192) {
 				/* unexpected continuation byte */
 				errorResult =
