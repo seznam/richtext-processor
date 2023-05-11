@@ -29,6 +29,9 @@ static LexerResult *finalizeToError(LexerResult * result,
 
 static void freeTokens(TokenVector * tokens);
 
+static unsigned long getWhitespaceLength(string * input, unsigned long index,
+					 bool isUtf8);
+
 LexerResult *tokenize(richtext)
 string *richtext;
 {
@@ -40,10 +43,11 @@ string *richtext;
 	LexerWarningVector *warnings = LexerWarningVector_new(0, 0);
 	Token token;
 	unsigned char *currentByte;
-	unsigned char nextByte, nextNextByte;
+	unsigned char nextByte;
 	unsigned long currentByteIndex;
 	unsigned long tokenByteIndex = 0;
 	unsigned long codepointIndex = 0;
+	unsigned long whitespaceLength;
 	bool isInsideCommand;
 
 	if (richtext == NULL) {
@@ -330,16 +334,11 @@ string *richtext;
 			token.type = TokenType_TEXT;
 			break;
 		default:
-			if (isInsideCommand) {
-				codepointIndex++;
-				break;
-			}
-
 			/*
 			   Since we are operating on a UTF-8 input, we need to
 			   correctly count the codepoints and correctly
 			   interpret Unicode whitespace (see
-			   https://en.wikipedia.org/wiki/Whitespace_character#Unicode).
+			   getWhitespaceLength's implementation).
 			 */
 
 			/*
@@ -347,9 +346,77 @@ string *richtext;
 			   because they are not valid UTF-8 representations of a
 			   code point.
 			 */
+
+			whitespaceLength =
+			    getWhitespaceLength(richtext, currentByteIndex,
+						true);
+
+			if (!isInsideCommand && whitespaceLength > 0) {
+				if (currentByteIndex > token.byteIndex) {
+					tokenByteIndex = token.byteIndex;
+					token.value =
+					    string_substring(richtext,
+							     tokenByteIndex,
+							     currentByteIndex);
+					if (token.value == NULL) {
+						return
+						    finalizeToError(result,
+								    currentByteIndex,
+								    codepointIndex,
+								    LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
+								    warnings,
+								    tokens);
+					}
+					resizedTokens =
+					    TokenVector_append(tokens, &token);
+					if (resizedTokens == NULL) {
+						return
+						    finalizeToError(result,
+								    currentByteIndex,
+								    codepointIndex,
+								    LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
+								    warnings,
+								    tokens);
+					}
+					tokens = resizedTokens;
+					token.codepointIndex = codepointIndex;
+				}
+
+				token.byteIndex = currentByteIndex;
+				token.type = TokenType_WHITESPACE;
+				token.value =
+				    string_substring(richtext,
+						     currentByteIndex,
+						     currentByteIndex +
+						     whitespaceLength);
+				if (token.value == NULL) {
+					return
+					    finalizeToError(result,
+							    currentByteIndex,
+							    codepointIndex,
+							    LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
+							    warnings, tokens);
+				}
+				resizedTokens =
+				    TokenVector_append(tokens, &token);
+				if (resizedTokens == NULL) {
+					return
+					    finalizeToError(result,
+							    currentByteIndex,
+							    codepointIndex,
+							    LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
+							    warnings, tokens);
+				}
+				tokens = resizedTokens;
+
+				token.byteIndex =
+				    currentByteIndex + whitespaceLength;
+				token.codepointIndex = codepointIndex + 1;
+				token.type = TokenType_TEXT;
+			}
+
 			if (*currentByte < 128) {
 				/* single-byte UTF-8 codepoints */
-				codepointIndex++;
 			} else if (*currentByte <= 192) {
 				/* unexpected continuation byte */
 				errorResult =
@@ -360,252 +427,18 @@ string *richtext;
 				if (errorResult != NULL) {
 					return errorResult;
 				}
-				codepointIndex++;
 			} else if (*currentByte <= 223) {
 				/* Two-byte UTF-8 codepoints */
-				nextByte =
-				    currentByteIndex + 1 <
-				    richtext->length ? *(currentByte + 1) : 0;
-				/* Two-byte whitespace characters */
-				/* next line */
-				if ((*currentByte == 194 && nextByte == 133) ||
-				    /* no-break space */
-				    (*currentByte == 194 && nextByte == 160)
-				    ) {
-					if (currentByteIndex > token.byteIndex) {
-						tokenByteIndex =
-						    token.byteIndex;
-						token.value =
-						    string_substring(richtext,
-								     tokenByteIndex,
-								     currentByteIndex);
-						if (token.value == NULL) {
-							return
-							    finalizeToError
-							    (result,
-							     currentByteIndex,
-							     codepointIndex,
-							     LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-							     warnings, tokens);
-						}
-						resizedTokens =
-						    TokenVector_append(tokens,
-								       &token);
-						if (resizedTokens == NULL) {
-							return
-							    finalizeToError
-							    (result,
-							     currentByteIndex,
-							     codepointIndex,
-							     LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-							     warnings, tokens);
-						}
-						tokens = resizedTokens;
-						token.codepointIndex =
-						    codepointIndex;
-					}
-
-					token.byteIndex = currentByteIndex;
-					token.type = TokenType_WHITESPACE;
-					token.value =
-					    string_substring(richtext,
-							     currentByteIndex,
-							     currentByteIndex +
-							     2);
-					if (token.value == NULL) {
-						return
-						    finalizeToError(result,
-								    currentByteIndex,
-								    codepointIndex,
-								    LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-								    warnings,
-								    tokens);
-					}
-					resizedTokens =
-					    TokenVector_append(tokens, &token);
-					if (resizedTokens == NULL) {
-						return
-						    finalizeToError(result,
-								    currentByteIndex,
-								    codepointIndex,
-								    LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-								    warnings,
-								    tokens);
-					}
-					tokens = resizedTokens;
-
-					token.byteIndex = currentByteIndex + 2;
-					token.codepointIndex = ++codepointIndex;
-					token.type = TokenType_TEXT;
-				} else {	/* Other two-byte codepoints */
-					codepointIndex++;
-				}
-
 				/* Skip over the continuation byte */
 				currentByteIndex++;
 				currentByte++;
 			} else if (*currentByte <= 239) {
 				/* Three-byte UTF-8 codepoints */
-				nextByte =
-				    currentByteIndex + 1 <
-				    richtext->length ? *(currentByte + 1) : 0;
-				nextNextByte =
-				    currentByteIndex + 2 <
-				    richtext->length ? *(currentByte + 2) : 0;
-				/* Three-byte whitespace characters */
-				if (
-					   /* ogham space mark */
-					   (*currentByte == 225
-					    && nextByte == 154
-					    && nextNextByte == 128) ||
-					   /* en quad */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 128) ||
-					   /* em quad */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 129) ||
-					   /* en space */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 130) ||
-					   /* em space */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 131) ||
-					   /* three-per-em space */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 132) ||
-					   /* four-per-em space */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 133) ||
-					   /* six-per-em space */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 134) ||
-					   /* figure space */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 135) ||
-					   /* punctuation space */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 136) ||
-					   /* thin space */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 137) ||
-					   /* hair space */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 138) ||
-					   /*
-					      line separator, richtext documents
-					      should use <nl> instead
-					    */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 168) ||
-					   /*
-					      paragraph separator, richtext
-					      documents should use <Paragraph>
-					      instead
-					    */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 169) ||
-					   /* narrow no-break space */
-					   (*currentByte == 226
-					    && nextByte == 128
-					    && nextNextByte == 175) ||
-					   /* medium mathematical space */
-					   (*currentByte == 226
-					    && nextByte == 129
-					    && nextNextByte == 159) ||
-					   /* ideographic space */
-					   (*currentByte == 227
-					    && nextByte == 128
-					    && nextNextByte == 128)
-				    ) {
-					if (currentByteIndex > token.byteIndex) {
-						tokenByteIndex =
-						    token.byteIndex;
-						token.value =
-						    string_substring(richtext,
-								     tokenByteIndex,
-								     currentByteIndex);
-						if (token.value == NULL) {
-							return
-							    finalizeToError
-							    (result,
-							     currentByteIndex,
-							     codepointIndex,
-							     LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-							     warnings, tokens);
-						}
-						resizedTokens =
-						    TokenVector_append(tokens,
-								       &token);
-						if (resizedTokens == NULL) {
-							return
-							    finalizeToError
-							    (result,
-							     currentByteIndex,
-							     codepointIndex,
-							     LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-							     warnings, tokens);
-						}
-						tokens = resizedTokens;
-						token.codepointIndex =
-						    codepointIndex;
-					}
-
-					token.byteIndex = currentByteIndex;
-					token.type = TokenType_WHITESPACE;
-					token.value =
-					    string_substring(richtext,
-							     currentByteIndex,
-							     currentByteIndex +
-							     3);
-					if (token.value == NULL) {
-						return
-						    finalizeToError(result,
-								    currentByteIndex,
-								    codepointIndex,
-								    LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-								    warnings,
-								    tokens);
-					}
-					resizedTokens =
-					    TokenVector_append(tokens, &token);
-					if (resizedTokens == NULL) {
-						return
-						    finalizeToError(result,
-								    currentByteIndex,
-								    codepointIndex,
-								    LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-								    warnings,
-								    tokens);
-					}
-					tokens = resizedTokens;
-
-					token.byteIndex = currentByteIndex + 3;
-					token.codepointIndex = ++codepointIndex;
-					token.type = TokenType_TEXT;
-				} else {
-					/* Other three-byte codepoints */
-					codepointIndex++;
-				}
-
 				/* Skip over the continuation bytes */
 				currentByteIndex += 2;
 				currentByte += 2;
 			} else if (*currentByte <= 247) {
-				/* four-byte UTF-8 codepoints */
-				codepointIndex++;
+				/* Four-byte UTF-8 codepoints */
 				/* Skip over the continuation bytes */
 				currentByteIndex += 3;
 				currentByte += 3;
@@ -619,8 +452,10 @@ string *richtext;
 				if (errorResult != NULL) {
 					return errorResult;
 				}
-				codepointIndex++;
 			}
+
+			codepointIndex++;
+
 			break;
 		}
 	}
@@ -722,6 +557,116 @@ TokenVector *tokens;
 		string_free(token->value);
 	}
 	TokenVector_free(tokens);
+}
+
+static unsigned long getWhitespaceLength(input, index, isUtf8)
+string *input;
+unsigned long index;
+bool isUtf8;
+{
+	unsigned char *start;
+	unsigned char byte1, byte2, byte3;
+
+	if (index >= input->length) {
+		return 0;
+	}
+
+	start = (input->content + index);
+	byte1 = *start;
+	byte2 = index < input->length - 1 ? *(start + 1) : 0;
+	byte3 = index < input->length - 2 ? *(start + 2) : 0;
+
+	switch (byte1) {
+	case ' ':
+	case '\t':		/* horizontal tab */
+	case '\n':		/* newline */
+	case '\v':		/* vertical tab */
+	case '\f':		/* form feed, use <np> instead in richtext */
+		return 1;
+	case '\r':		/* carriage return */
+		/*
+		 * Treat for CRLF as a single whitespace token because it is
+		 * meant to be formatted as a single space character.
+		 */
+		return byte2 == '\n' ? 2 : 1;
+	}
+
+	if (!isUtf8) {
+		return 0;
+	}
+
+	/* See https://en.wikipedia.org/wiki/Whitespace_character#Unicode */
+
+	if (byte1 < 128) {
+		/* single-byte UTF-8 codepoints */
+		return 0;
+	} else if (byte1 <= 192) {
+		/* unexpected continuation byte */
+		return 0;
+	} else if (byte1 <= 223) {
+		/* Two-byte UTF-8 codepoints */
+		if (byte1 == 194) {
+			switch (byte2) {
+			case 133:	/* next line */
+			case 160:	/* no-break space */
+				return 2;
+			}
+		}
+	} else if (byte1 <= 239) {
+		/* Three-byte UTF-8 codepoints */
+		switch (byte1) {
+		case 225:
+			switch (byte2) {
+			case 154:
+				/* ogham space mark */
+				return byte3 == 128 ? 3 : 0;
+			}
+			break;
+		case 226:
+			switch (byte2) {
+			case 128:
+				switch (byte3) {
+				case 128:	/* en quad */
+				case 129:	/* em quad */
+				case 130:	/* en space */
+				case 131:	/* em space */
+				case 132:	/* three-per-em space */
+				case 133:	/* four-per-em space */
+				case 134:	/* six-per-em space */
+				case 135:	/* figure space */
+				case 136:	/* punctuation space */
+				case 137:	/* thin space */
+				case 138:	/* hair space */
+				case 168:	/* line separator, use <nl> instead in richtext */
+				case 169:	/* paragraph separator,use <Paragraph> instead in richtext */
+				case 175:	/* narrow no-break space */
+					return 3;
+				}
+				break;
+			case 129:
+				switch (byte3) {
+				case 159:	/* medium mathematical space */
+					return 3;
+				}
+				break;
+			}
+			break;
+		case 227:
+			switch (byte2) {
+			case 128:
+				switch (byte3) {
+				case 128:	/* ideographic space */
+					return 3;
+				}
+				break;
+			}
+			break;
+		}
+	}
+	/* There are no four-byte UTF-8 codepoints for whitespace */
+	/* We also ignore invalid UTF-8 characters (byte1 > 247) here */
+
+	return 0;
 }
 
 Vector_ofTypeImplementation(Token)
