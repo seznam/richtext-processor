@@ -1,6 +1,6 @@
 #include <string.h>
 #include "../src/lexer.h"
-#include "../string.h"
+#include "../src/string.h"
 #include "unit.h"
 
 /*
