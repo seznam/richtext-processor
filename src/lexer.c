@@ -44,6 +44,10 @@ string *richtext;
 	unsigned long codepointIndex = 0;
 	unsigned long whitespaceLength;
 	bool isInsideCommand;
+	LexerWarningCode WARN_UNEXPECTED_CONT_BYTE =
+	    LexerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE;
+	LexerWarningCode WARN_INVALID_CHARACTER =
+	    LexerWarningCode_INVALID_UTF8_CHARACTER;
 
 	if (richtext == NULL) {
 		LexerWarningVector_free(warnings);
@@ -272,7 +276,7 @@ string *richtext;
 				    addWarning(result, &warnings, tokens,
 					       currentByteIndex,
 					       codepointIndex,
-					       LexerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE);
+					       WARN_UNEXPECTED_CONT_BYTE);
 				if (errorResult != NULL) {
 					return errorResult;
 				}
@@ -297,7 +301,7 @@ string *richtext;
 				    addWarning(result, &warnings, tokens,
 					       currentByteIndex,
 					       codepointIndex,
-					       LexerWarningCode_INVALID_UTF8_CHARACTER);
+					       WARN_INVALID_CHARACTER);
 				if (errorResult != NULL) {
 					return errorResult;
 				}
