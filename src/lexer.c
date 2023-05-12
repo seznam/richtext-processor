@@ -3,12 +3,6 @@
 #include "bool.h"
 #include "string.h"
 
-/*
-   Note: this code was mostly written before applying the code style, that is
-   why its design does not match the code style perfectly. Still, it works, and
-   that matters the most.
- */
-
 static LexerResult *addWarning(LexerResult * result,
 			       LexerWarningVector ** warnings,
 			       TokenVector * tokens, unsigned long byteIndex,
@@ -22,6 +16,10 @@ static LexerResult *finalizeToError(LexerResult * result,
 				    LexerWarningVector * warnings,
 				    TokenVector * tokens);
 
+static LexerErrorCode addToken(TokenVector ** tokens, Token token,
+			       string * input, unsigned long valueStartIndex,
+			       unsigned long valueEndIndex);
+
 static void freeTokens(TokenVector * tokens);
 
 static unsigned long getWhitespaceLength(string * input, unsigned long index,
@@ -34,20 +32,20 @@ string *richtext;
 	LexerResult *result = malloc(sizeof(LexerResult));
 	LexerResult *errorResult;
 	TokenVector *tokens;
-	TokenVector *resizedTokens;
 	LexerWarningVector *warnings = LexerWarningVector_new(0, 0);
 	Token token;
 	unsigned char *currentByte;
 	unsigned char nextByte;
 	unsigned long currentByteIndex;
-	unsigned long tokenByteIndex = 0;
 	unsigned long codepointIndex = 0;
+	unsigned long valueStartIndex = 0;
 	unsigned long whitespaceLength;
 	bool isInsideCommand;
 	LexerWarningCode WARN_UNEXPECTED_CONT_BYTE =
 	    LexerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE;
 	LexerWarningCode WARN_INVALID_CHARACTER =
 	    LexerWarningCode_INVALID_UTF8_CHARACTER;
+	LexerErrorCode errorCode = LexerErrorCode_OK;
 
 	if (richtext == NULL) {
 		LexerWarningVector_free(warnings);
@@ -96,36 +94,19 @@ string *richtext;
 		switch (*currentByte) {
 		case '<':
 			if (isInsideCommand) {
-				return finalizeToError(result, currentByteIndex,
-						       codepointIndex,
-						       LexerErrorCode_UNEXPECTED_COMMAND_START,
-						       warnings, tokens);
+				errorCode =
+				    LexerErrorCode_UNEXPECTED_COMMAND_START;
+				break;
 			}
 			isInsideCommand = true;
 
 			if (currentByteIndex > token.byteIndex) {
-				token.value =
-				    string_substring(richtext, token.byteIndex,
-						     currentByteIndex);
-				if (token.value == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-							       warnings,
-							       tokens);
+				errorCode =
+				    addToken(&tokens, token, richtext,
+					     token.byteIndex, currentByteIndex);
+				if (errorCode != LexerErrorCode_OK) {
+					break;
 				}
-				resizedTokens =
-				    TokenVector_append(tokens, &token);
-				if (resizedTokens == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-							       warnings,
-							       tokens);
-				}
-				tokens = resizedTokens;
 				token.codepointIndex = codepointIndex;
 			}
 
@@ -140,38 +121,21 @@ string *richtext;
 		case '>':
 			if (isInsideCommand) {
 				isInsideCommand = false;
-				token.value = string_substring(richtext,
-							       token.byteIndex +
-							       (token.type ==
-								TokenType_COMMAND_END
-								? 2 : 1),
-							       currentByteIndex);
-				if (token.value == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-							       warnings,
-							       tokens);
+				valueStartIndex = token.byteIndex +
+				    (token.type ==
+				     TokenType_COMMAND_END ? 2 : 1);
+				errorCode =
+				    addToken(&tokens, token, richtext,
+					     valueStartIndex, currentByteIndex);
+				if (errorCode != LexerErrorCode_OK) {
+					break;
 				}
-				resizedTokens =
-				    TokenVector_append(tokens, &token);
-				if (resizedTokens == NULL) {
-					return finalizeToError(result,
-							       currentByteIndex,
-							       codepointIndex,
-							       LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-							       warnings,
-							       tokens);
-				}
-				tokens = resizedTokens;
 
 				token.byteIndex = currentByteIndex + 1;
-				token.codepointIndex = ++codepointIndex;
+				token.codepointIndex = codepointIndex + 1;
 				token.type = TokenType_TEXT;
-			} else {
-				codepointIndex++;
 			}
+			codepointIndex++;
 			break;
 		default:
 			/*
@@ -193,61 +157,26 @@ string *richtext;
 
 			if (!isInsideCommand && whitespaceLength > 0) {
 				if (currentByteIndex > token.byteIndex) {
-					tokenByteIndex = token.byteIndex;
-					token.value =
-					    string_substring(richtext,
-							     tokenByteIndex,
-							     currentByteIndex);
-					if (token.value == NULL) {
-						return
-						    finalizeToError(result,
-								    currentByteIndex,
-								    codepointIndex,
-								    LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-								    warnings,
-								    tokens);
+					errorCode =
+					    addToken(&tokens, token, richtext,
+						     token.byteIndex,
+						     currentByteIndex);
+					if (errorCode != LexerErrorCode_OK) {
+						break;
 					}
-					resizedTokens =
-					    TokenVector_append(tokens, &token);
-					if (resizedTokens == NULL) {
-						return
-						    finalizeToError(result,
-								    currentByteIndex,
-								    codepointIndex,
-								    LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-								    warnings,
-								    tokens);
-					}
-					tokens = resizedTokens;
 					token.codepointIndex = codepointIndex;
 				}
 
 				token.byteIndex = currentByteIndex;
 				token.type = TokenType_WHITESPACE;
-				token.value =
-				    string_substring(richtext,
-						     currentByteIndex,
-						     currentByteIndex +
-						     whitespaceLength);
-				if (token.value == NULL) {
-					return
-					    finalizeToError(result,
-							    currentByteIndex,
-							    codepointIndex,
-							    LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
-							    warnings, tokens);
+				errorCode =
+				    addToken(&tokens, token, richtext,
+					     token.byteIndex,
+					     currentByteIndex +
+					     whitespaceLength);
+				if (errorCode != LexerErrorCode_OK) {
+					break;
 				}
-				resizedTokens =
-				    TokenVector_append(tokens, &token);
-				if (resizedTokens == NULL) {
-					return
-					    finalizeToError(result,
-							    currentByteIndex,
-							    codepointIndex,
-							    LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-							    warnings, tokens);
-				}
-				tokens = resizedTokens;
 
 				token.byteIndex =
 				    currentByteIndex + whitespaceLength;
@@ -311,20 +240,27 @@ string *richtext;
 
 			break;
 		}
+
+		if (errorCode != LexerErrorCode_OK) {
+			break;
+		}
 	}
 
-	if (token.byteIndex < richtext->length) {
+	if (errorCode == LexerErrorCode_OK
+	    && token.byteIndex < richtext->length) {
 		if (isInsideCommand) {
-			return finalizeToError(result, richtext->length,
-					       codepointIndex,
-					       LexerErrorCode_UNTERMINATED_COMMAND,
-					       warnings, tokens);
+			errorCode = LexerErrorCode_UNTERMINATED_COMMAND;
+		} else {
+			token.value =
+			    string_substring(richtext, token.byteIndex,
+					     richtext->length);
+			tokens = TokenVector_append(tokens, &token);
 		}
+	}
 
-		token.value =
-		    string_substring(richtext, token.byteIndex,
-				     richtext->length);
-		tokens = TokenVector_append(tokens, &token);
+	if (errorCode != LexerErrorCode_OK) {
+		return finalizeToError(result, currentByteIndex, codepointIndex,
+				       errorCode, warnings, tokens);
 	}
 
 	result->result.tokens = (TokenVector *) tokens;
@@ -394,6 +330,29 @@ TokenVector *tokens;
 	result->result.error.code = code;
 	result->warnings = warnings;
 	return result;
+}
+
+static LexerErrorCode addToken(tokens, token, input, valueStartIndex,
+			       valueEndIndex)
+TokenVector **tokens;
+Token token;
+string *input;
+unsigned long valueStartIndex;
+unsigned long valueEndIndex;
+{
+	TokenVector *resizedTokens;
+
+	token.value = string_substring(input, valueStartIndex, valueEndIndex);
+	if (token.value == NULL) {
+		return LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING;
+	}
+	resizedTokens = TokenVector_append(*tokens, &token);
+	if (resizedTokens == NULL) {
+		return LexerErrorCode_OUT_OF_MEMORY_FOR_TOKENS;
+	}
+	*tokens = resizedTokens;
+
+	return LexerErrorCode_OK;
 }
 
 static void freeTokens(tokens)

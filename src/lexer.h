@@ -33,6 +33,7 @@ typedef struct Token {
 
 Vector_ofType(Token)
 typedef enum LexerErrorCode {
+	LexerErrorCode_OK,
 	LexerErrorCode_UNEXPECTED_COMMAND_START,
 	LexerErrorCode_UNTERMINATED_COMMAND,
 	LexerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
