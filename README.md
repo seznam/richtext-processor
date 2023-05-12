@@ -7,8 +7,8 @@ defined in [RFC 1341](https://www.rfc-editor.org/rfc/rfc1341), section
 ## Differences from the format specification
 
 This implementation, while compatible with the specification, is slightly more
-lenient as for what kind of input it tolerates, but also supports a more strict
-behavior.
+lenient as for what kind of input it tolerates (as recommended by the
+specification itself), but also supports a more strict behavior.
 
 ### Supported (optional) extensions to text/richtext syntax
 
