@@ -52,3 +52,23 @@ specification itself), but also supports a more strict behavior.
   bail-out and backtracking) instead of than treating such content as
   stand-alone content. The renderers are therefore not required to render
   same-page content as continuation of the current line because of this.
+
+## Code portability, compatibility and style
+
+This project aims to maximize portability and compatibility with various
+compilers. To accomplish this, it is written in ANSI C (C89) with the
+`-Wtraditional` gcc flag set. While this does not guarantee compatibility with
+every C compiler out there (the original K&R C compiler, for example), if you
+are using an open source, freeware, or free for non-commercial use C compiler
+that cannot compile this project, please let us know, we might be able to fix
+this.
+
+The project is verified to be compilable in the following compilers:
+
+- gcc 9.4
+
+The code itself uses no dependencies apart from the standard lib C, using only
+functions from ANSI C era.
+
+The code style is borrowed from Linux kernel and is enforced using
+[`indent`](https://www.gnu.org/software/indent/manual/indent.html).
