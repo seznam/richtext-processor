@@ -36,7 +36,7 @@ specification itself), but also supports a more strict behavior.
   encouraged to deal reasonably with improperly nested richtext', this
   implementation rejects such content with an error. The specification does not
   state how should such situation be resolved (the two obvious choices are
-  terminated all unterminated commands and ignoring extra terminations, and
+  terminate all unterminated commands and ignoring extra terminations, and
   preserving the behavior of the command not terminated before terminating its
   ancestor until the command at hand is terminated; and various commands may
   be preferred to be treated differently). Because of this, this implementation
@@ -46,9 +46,9 @@ specification itself), but also supports a more strict behavior.
   content to the processor.
 - The &lt;SamePage> command acts as layout block separator and is processed
   into a pair of blocks marking the start and end of the same-page content. The
-  content is therefore placed inside a non-explicit paragraph. This enables the
-  renderer to process it as inline content if desired, even though that makes
-  the layout computation lot more complex (requiring possible bail-out and
-  backtracking) than treating such content as stand-alone content. The
-  renderers are therefore not required to render same-page content as
-  continuation of the current line because of this.
+  content is therefore placed inside a non-explicit paragraph. This still
+  allows the renderer to process it as inline content if desired, even though
+  that makes the layout computation lot more complex (requiring possible
+  bail-out and backtracking) instead of than treating such content as
+  stand-alone content. The renderers are therefore not required to render
+  same-page content as continuation of the current line because of this.
