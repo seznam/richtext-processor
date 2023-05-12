@@ -22,7 +22,7 @@ INDENTFLAGS = -nbad -bap -nbc -bbo -hnl -br -brs -c33 -cd33 -ncdb -ce -ci4 \
 
 SRCDIR = src
 OBJDIR = obj
-SRCS   = $(wildcard $(SRCDIR)/*.c)
+SRCS   = $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/json/*.c)
 OBJS   = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
 
 TARGET  = richtext
@@ -30,7 +30,10 @@ TARGET  = richtext
 # Inspired by check and GNU Autotools - https://libcheck.github.io/check/
 TESTDIR = tests
 TESTS = $(patsubst $(TESTDIR)/%,%,\
-                $(patsubst %.c,%,$(wildcard $(TESTDIR)/check_*.c))\
+                $(patsubst %.c,%, \
+			$(wildcard $(TESTDIR)/check_*.c) \
+			$(wildcard $(TESTDIR)/json/check_*.c) \
+		)\
         )
 check_PROGRAMS = $(TESTS)
 check_CFLAGS = $(CFLAGS)
@@ -52,6 +55,10 @@ check_string_CFLAGS  = $(check_CFLAGS)
 check_vector_SOURCES = $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
                        $(TESTDIR)/check_vector.c
 check_vector_CFLAGS  = $(check_CFLAGS)
+json_check_json_value_SOURCES = $(SRCDIR)/json/json_value.c $(SRCDIR)/vector.c \
+				$(SRCDIR)/string.c $(TESTDIR)/unit.c \
+				$(TESTDIR)/json/check_json_value.c
+json_check_json_value_CFLAGS  = $(check_CFLAGS)
 
 .PHONY: all
 
@@ -64,9 +71,17 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPDIR)/%.d | $(DEPDIR) $(OBJDIR)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 clean:
-	$(RM) $(OBJS)
+	$(RM) -r $(OBJDIR)
 	$(RM) -r $(DEPDIR)
-	$(RM) $(SRCDIR)/*.h~ $(SRCDIR)/*.c~ $(TESTDIR)/*.h~ $(TESTDIR)/*.c~
+	$(RM) \
+		$(SRCDIR)/*.h~ \
+		$(SRCDIR)/*.c~ \
+		$(SRCDIR)/json/*.h~ \
+		$(SRCDIR)/json/*.c~ \
+		$(TESTDIR)/*.h~ \
+		$(TESTDIR)/*.c~ \
+		$(TESTDIR)/json/*.h~ \
+		$(TESTDIR)/json/*.c~
 
 distclean:
 	$(RM) $(TARGET)
@@ -80,17 +95,25 @@ test: check
 
 check:
 	@mkdir -p /tmp/richtext-processor/tests/
+	@mkdir -p /tmp/richtext-processor/tests/json/
 	$(foreach program,$(check_PROGRAMS), \
-		$(CC) $($(program)_CFLAGS) $(LDFLAGS) \
+		$(CC) $($(subst /,_,$(program))_CFLAGS) $(LDFLAGS) \
 			-o /tmp/richtext-processor/tests/$(program) \
-			$($(program)_SOURCES) && \
+			$($(subst /,_,$(program))_SOURCES) && \
 	) true
 
 indent:
-	indent $(INDENTFLAGS) $(SRCDIR)/*.h $(SRCDIR)/*.c $(TESTDIR)/*.h $(TESTDIR)/*.c
+	indent $(INDENTFLAGS) \
+		$(SRCDIR)/*.h \
+		$(SRCDIR)/*.c \
+		$(SRCDIR)/json/*.h \
+		$(SRCDIR)/json/*.c \
+		$(TESTDIR)/*.h \
+		$(TESTDIR)/*.c \
+		$(TESTDIR)/json/*.c
 
 $(DEPDIR) $(OBJDIR):
-	@mkdir -p $@
+	@mkdir -p $@ $@/json
 
 DEPFILES := $(SRCS:$(SRCDIR)/%.c=$(DEPDIR)/%.d)
 $(DEPFILES):
