@@ -221,10 +221,12 @@ JSONValue *value;
 
 	case JSONValueType_ARRAY:
 		JSONValuePointerVector_free(value->value.array);
+		value->value.array = NULL;
 		break;
 
 	case JSONValueType_OBJECT:
 		JSONObjectPropertyVector_free(value->value.object);
+		value->value.object = NULL;
 		break;
 
 	default:
