@@ -222,6 +222,7 @@ JSONValue *value;
 	case JSONValueType_ARRAY:
 		JSONValuePointerVector_free(value->value.array);
 		break;
+
 	case JSONValueType_OBJECT:
 		JSONObjectPropertyVector_free(value->value.object);
 		break;
