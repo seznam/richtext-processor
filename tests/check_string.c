@@ -17,9 +17,9 @@ static void all_tests(void);
 
 int main(void);
 
-START_TEST(string_create_createsStringOfDesiredSize)
+START_TEST(string_new_createsStringOfDesiredSize)
 {
-	string *str = string_create(5);
+	string *str = string_new(5);
 	char *testingBuffer;
 	size_t bigBufferSize = 1024 * 1024;
 
@@ -32,7 +32,7 @@ START_TEST(string_create_createsStringOfDesiredSize)
 
 	/* 1MiB should be big enough to span multiple memory blocks */
 
-	str = string_create(bigBufferSize);
+	str = string_new(bigBufferSize);
 	testingBuffer = malloc(bigBufferSize);
 	/*
 	   This *might* cause segfault or other issues if the string is not allocated
@@ -69,7 +69,7 @@ END_TEST}
 
 START_TEST(string_substring_returnsNullIfEndIsLowerThanStart)
 {
-	string *testingString = string_create(4);
+	string *testingString = string_new(4);
 	string *substring = string_substring(testingString, 2, 1);
 	string_free(testingString);
 	string_free(substring);
@@ -78,7 +78,7 @@ END_TEST}
 
 START_TEST(string_substring_returnsEmptyStringForIndexesOutOfBounds)
 {
-	string *testingString = string_create(2);
+	string *testingString = string_new(2);
 	string *substring = string_substring(testingString, 3, 4);
 	bool result = substring != NULL && substring->length == 0;
 	string_free(testingString);
@@ -88,7 +88,7 @@ END_TEST}
 
 START_TEST(string_substring_returnsNullContentForEmptySubstring)
 {
-	string *testingString = string_create(2);
+	string *testingString = string_new(2);
 	string *substring = string_substring(testingString, 2, 4);
 	int result = substring != NULL && substring->content == NULL;
 	string_free(testingString);
@@ -242,7 +242,7 @@ END_TEST}
 
 START_TEST(string_free_acceptsStringWillNullContent)
 {
-	string *testingString = string_create(0);
+	string *testingString = string_new(0);
 	string_free(testingString);
 END_TEST}
 
@@ -254,7 +254,7 @@ END_TEST}
 
 static void all_tests()
 {
-	runTest(string_create_createsStringOfDesiredSize);
+	runTest(string_new_createsStringOfDesiredSize);
 	runTest(string_from_copiesTheSourceString);
 	runTest(string_substring_returnsNullIfEndIsLowerThanStart);
 	runTest(string_substring_returnsEmptyStringForIndexesOutOfBounds);

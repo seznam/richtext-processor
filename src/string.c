@@ -2,7 +2,7 @@
 #include <string.h>
 #include "string.h"
 
-string *string_create(length)
+string *string_new(length)
 unsigned long length;
 {
 	string *newString = malloc(sizeof(string));
@@ -26,7 +26,7 @@ string *string_from(text)
 const char *text;
 {
 	unsigned long length = strlen(text);
-	string *newString = string_create(length);
+	string *newString = string_new(length);
 	if (newString == NULL) {
 		return NULL;
 	}

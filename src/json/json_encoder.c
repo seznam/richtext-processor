@@ -136,7 +136,7 @@ JSONValue *value;
 		}
 	}
 
-	result = string_create(length);
+	result = string_new(length);
 	if (result == NULL) {
 		return NULL;
 	}
@@ -301,8 +301,7 @@ JSONValue *value;
 		}
 
 		encodedProperty =
-		    string_create(encodedKey->length + 1 +
-				  encodedValue->length);
+		    string_new(encodedKey->length + 1 + encodedValue->length);
 		if (encodedProperty == NULL) {
 			string_free(encodedKey);
 			string_free(encodedValue);
@@ -377,7 +376,7 @@ string *suffix;
 	}
 	length += suffix->length;
 
-	result = string_create(length);
+	result = string_new(length);
 	if (result == NULL) {
 		return NULL;
 	}

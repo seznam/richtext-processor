@@ -6,7 +6,7 @@ typedef struct string {
 	unsigned char *content;
 } string;
 
-string *string_create(unsigned long length);
+string *string_new(unsigned long length);
 
 string *string_from(const char *text);
 

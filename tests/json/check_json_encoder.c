@@ -74,7 +74,7 @@ END_TEST}
 
 START_TEST(JSON_encode_encodesStrings)
 {
-	string *sourceString = string_create(3);
+	string *sourceString = string_new(3);
 	assert_json(JSONValue_newString(string_from("")), "\"\"",
 		    "Expected the result to be the '\"\"' string");
 	assert_json(JSONValue_newString(string_from("abc def")), "\"abc def\"",
