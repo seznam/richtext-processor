@@ -37,28 +37,37 @@ TESTS = $(patsubst $(TESTDIR)/%,%,\
         )
 check_PROGRAMS = $(TESTS)
 check_CFLAGS = $(CFLAGS)
-check_layout_resolver_SOURCES = $(SRCDIR)/layout_resolver.c $(SRCDIR)/string.c \
-				$(SRCDIR)/vector.c $(SRCDIR)/parser.c \
-				$(SRCDIR)/lexer.c $(TESTDIR)/unit.c \
-				$(TESTDIR)/check_layout_resolver.c
-check_layout_resolver_CFLAGS  = $(check_CFLAGS)
-check_lexer_SOURCES  = $(SRCDIR)/lexer.c $(SRCDIR)/string.c $(SRCDIR)/vector.c \
-                       $(TESTDIR)/unit.c $(TESTDIR)/check_lexer.c
-check_lexer_CFLAGS   = $(check_CFLAGS)
-check_parser_SOURCES = $(SRCDIR)/parser.c $(SRCDIR)/lexer.c $(SRCDIR)/string.c \
-                       $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
-		       $(TESTDIR)/check_parser.c
-check_parser_CFLAGS  = $(check_CFLAGS)
-check_string_SOURCES = $(SRCDIR)/string.c $(TESTDIR)/unit.c \
-                       $(TESTDIR)/check_string.c
-check_string_CFLAGS  = $(check_CFLAGS)
-check_vector_SOURCES = $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
-                       $(TESTDIR)/check_vector.c
-check_vector_CFLAGS  = $(check_CFLAGS)
-json_check_json_value_SOURCES = $(SRCDIR)/json/json_value.c $(SRCDIR)/vector.c \
-				$(SRCDIR)/string.c $(TESTDIR)/unit.c \
-				$(TESTDIR)/json/check_json_value.c
-json_check_json_value_CFLAGS  = $(check_CFLAGS)
+check_layout_resolver_SOURCES	= $(SRCDIR)/layout_resolver.c \
+				  $(SRCDIR)/string.c $(SRCDIR)/vector.c \
+				  $(SRCDIR)/parser.c $(SRCDIR)/lexer.c \
+				  $(TESTDIR)/unit.c \
+				  $(TESTDIR)/check_layout_resolver.c
+check_layout_resolver_CFLAGS	= $(check_CFLAGS)
+check_lexer_SOURCES		= $(SRCDIR)/lexer.c $(SRCDIR)/string.c \
+				  $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
+				  $(TESTDIR)/check_lexer.c
+check_lexer_CFLAGS		= $(check_CFLAGS)
+check_parser_SOURCES		= $(SRCDIR)/parser.c $(SRCDIR)/lexer.c \
+				  $(SRCDIR)/string.c $(SRCDIR)/vector.c \
+				  $(TESTDIR)/unit.c $(TESTDIR)/check_parser.c
+check_parser_CFLAGS		= $(check_CFLAGS)
+check_string_SOURCES		= $(SRCDIR)/string.c $(TESTDIR)/unit.c \
+				  $(TESTDIR)/check_string.c
+check_string_CFLAGS		= $(check_CFLAGS)
+check_vector_SOURCES		= $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
+				  $(TESTDIR)/check_vector.c
+check_vector_CFLAGS		= $(check_CFLAGS)
+json_check_json_value_SOURCES	= $(SRCDIR)/json/json_value.c \
+				  $(SRCDIR)/vector.c $(SRCDIR)/string.c \
+				  $(TESTDIR)/unit.c \
+				  $(TESTDIR)/json/check_json_value.c
+json_check_json_value_CFLAGS	= $(check_CFLAGS)
+json_check_json_encoder_SOURCES = $(SRCDIR)/json/json_encoder.c \
+				  $(SRCDIR)/string.c $(SRCDIR)/vector.c \
+				  $(SRCDIR)/json/json_value.c \
+				  $(TESTDIR)/unit.c \
+				  $(TESTDIR)/json/check_json_encoder.c
+json_check_json_encoder_CLAGS   = $(check_CFLAGS)
 
 .PHONY: all
 
