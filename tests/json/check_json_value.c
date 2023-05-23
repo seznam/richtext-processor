@@ -380,6 +380,23 @@ START_TEST(JSONValue_free_freesObjectsAndArrays)
 	JSONValue_free(JSONValue_newObject());
 END_TEST}
 
+START_TEST(JSONValue_freeRecursive_acceptsNull)
+{
+	JSONValue_freeRecursive(NULL);
+END_TEST}
+
+START_TEST(JSONValue_freeRecursive_freesNestedObjectsAndArrays)
+{
+	JSONValue *obj1 = JSONValue_newObject();
+	JSONValue *obj2 = JSONValue_newObject();
+	JSONValue *arr = JSONValue_newArray();
+
+	JSONValue_setObjectProperty(obj1, string_from("x"), arr);
+	JSONValue_pushToArray(arr, obj2);
+
+	JSONValue_freeRecursive(obj1);
+END_TEST}
+
 static void all_tests()
 {
 	runTest(JSONValue_new_createsNewValueOfSpecifiedType);
@@ -410,6 +427,8 @@ static void all_tests()
 	runTest(JSONValue_free_acceptsNull);
 	runTest(JSONValue_free_freesPrimitives);
 	runTest(JSONValue_free_freesObjectsAndArrays);
+	runTest(JSONValue_freeRecursive_acceptsNull);
+	runTest(JSONValue_freeRecursive_freesNestedObjectsAndArrays);
 }
 
 int main()

@@ -63,4 +63,6 @@ JSONValue *JSONValue_deleteObjectProperty(JSONValue * object, string * key);
 
 void JSONValue_free(JSONValue * value);
 
+void JSONValue_freeRecursive(JSONValue * value);
+
 #endif

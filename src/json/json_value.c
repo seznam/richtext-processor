@@ -237,5 +237,46 @@ JSONValue *value;
 	free(value);
 }
 
+void JSONValue_freeRecursive(value)
+JSONValue *value;
+{
+	JSONValue **itemPointer = NULL;
+	JSONObjectProperty *property = NULL;
+	unsigned long i;
+
+	if (value == NULL) {
+		return;
+	}
+
+	switch (value->type) {
+	case JSONValueType_STRING:
+		string_free(value->value.string);
+		value->value.string = NULL;
+		break;
+
+	case JSONValueType_ARRAY:
+		itemPointer = value->value.array->items;
+		for (i = 0; i < value->value.array->size.length; i++) {
+			JSONValue_freeRecursive(*itemPointer);
+			itemPointer++;
+		}
+		break;
+
+	case JSONValueType_OBJECT:
+		property = value->value.object->items;
+		for (i = 0; i < value->value.object->size.length; i++) {
+			string_free(property->key);
+			JSONValue_freeRecursive(property->value);
+			property++;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	JSONValue_free(value);
+}
+
 Vector_ofPointerImplementation(JSONValue)
     Vector_ofTypeImplementation(JSONObjectProperty)
