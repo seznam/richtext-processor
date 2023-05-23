@@ -133,7 +133,7 @@ START_TEST(JSONValue_pushToArray_addTheValueToTheEnd)
 	JSONValue *value1 = JSONValue_newString(string_from("abc"));
 	JSONValue *value2 = JSONValue_newNumber(2);
 	JSONValue *value3 = JSONValue_newBoolean(false);
-	JSONValueVector *values;
+	JSONValuePointerVector *values;
 	assert(JSONValue_pushToArray(array, value1) == array,
 	       "Expected the array to be returned");
 	assert(JSONValue_pushToArray(array, value2) == array,
@@ -142,17 +142,17 @@ START_TEST(JSONValue_pushToArray_addTheValueToTheEnd)
 	       "Expected the array to be returned");
 	values = array->value.array;
 	assert(values->size.length == 3, "Expected 3 items in the array");
-	assert(values->items->type == value1->type,
+	assert((*values->items)->type == value1->type,
 	       "Expected the 1st item to be string 'abc'");
-	assert(values->items->value.string == value1->value.string,
+	assert((*values->items)->value.string == value1->value.string,
 	       "Expected the 1st item to be string 'abc'");
-	assert((values->items + 1)->type == value2->type,
+	assert((*(values->items + 1))->type == value2->type,
 	       "Expected the 2nd item to be the number 2");
-	assert((values->items + 1)->value.number == value2->value.number,
+	assert((*(values->items + 1))->value.number == value2->value.number,
 	       "Expected the 2nd item to be the number 2");
-	assert((values->items + 2)->type == value3->type,
+	assert((*(values->items + 2))->type == value3->type,
 	       "Expected the 3rd item to be the bool false");
-	assert((values->items + 2)->value.boolean == value3->value.boolean,
+	assert((*(values->items + 2))->value.boolean == value3->value.boolean,
 	       "Expected the 3rd item to be bool false");
 END_TEST}
 

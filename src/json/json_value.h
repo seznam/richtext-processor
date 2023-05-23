@@ -5,6 +5,7 @@
 #include "../string.h"
 #include "../vector.h"
 #include "../typed_vector.h"
+#include "../typed_pointer_vector.h"
 
 typedef enum JSONValueType {
 	JSONValueType_NULL,
@@ -18,7 +19,7 @@ typedef enum JSONValueType {
 struct JSONValue;
 typedef struct JSONValue JSONValue;
 
-Vector_ofType(JSONValue)
+Vector_ofPointer(JSONValue)
 struct JSONObjectProperty;
 typedef struct JSONObjectProperty JSONObjectProperty;
 
@@ -29,7 +30,7 @@ struct JSONValue {
 		bool boolean;
 		double number;
 		string *string;
-		JSONValueVector *array;
+		JSONValuePointerVector *array;
 		JSONObjectPropertyVector *object;
 	} value;
 };

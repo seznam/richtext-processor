@@ -59,7 +59,7 @@ JSONValue *JSONValue_newArray()
 {
 	JSONValue *jsonValue = JSONValue_new(JSONValueType_ARRAY);
 	if (jsonValue != NULL) {
-		jsonValue->value.array = JSONValueVector_new(0, 0);
+		jsonValue->value.array = JSONValuePointerVector_new(0, 0);
 		if (jsonValue->value.array == NULL) {
 			JSONValue_free(jsonValue);
 			return NULL;
@@ -85,7 +85,7 @@ JSONValue *JSONValue_pushToArray(array, value)
 JSONValue *array;
 JSONValue *value;
 {
-	JSONValueVector *grownArray;
+	JSONValuePointerVector *grownArray;
 	if (array == NULL || value == NULL) {
 		return NULL;
 	}
@@ -93,7 +93,7 @@ JSONValue *value;
 		return NULL;
 	}
 
-	grownArray = JSONValueVector_append(array->value.array, value);
+	grownArray = JSONValuePointerVector_append(array->value.array, &value);
 	if (grownArray == NULL) {
 		return NULL;
 	}
@@ -220,7 +220,7 @@ JSONValue *value;
 		break;
 
 	case JSONValueType_ARRAY:
-		JSONValueVector_free(value->value.array);
+		JSONValuePointerVector_free(value->value.array);
 		break;
 	case JSONValueType_OBJECT:
 		JSONObjectPropertyVector_free(value->value.object);
@@ -234,5 +234,5 @@ JSONValue *value;
 	free(value);
 }
 
-Vector_ofTypeImplementation(JSONValue)
+Vector_ofPointerImplementation(JSONValue)
     Vector_ofTypeImplementation(JSONObjectProperty)

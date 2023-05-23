@@ -187,8 +187,8 @@ JSONValue *value;
 static string *encodeArray(value)
 JSONValue *value;
 {
-	JSONValueVector *items = NULL;
-	JSONValue *item = NULL;
+	JSONValuePointerVector *items = NULL;
+	JSONValue **itemPointer = NULL;
 	stringPointerVector *encodedItems = NULL;
 	unsigned long i = 0;
 	string *result = NULL;
@@ -206,9 +206,9 @@ JSONValue *value;
 		return NULL;
 	}
 
-	item = items->items;
-	for (i = 0; i < items->size.length; i++, item++) {
-		string *encodedItem = JSON_encode(item);
+	itemPointer = items->items;
+	for (i = 0; i < items->size.length; i++, itemPointer++) {
+		string *encodedItem = JSON_encode(*itemPointer);
 		stringPointerVector *grownItems;
 		if (encodedItem == NULL) {
 			freeStrings(encodedItems);
