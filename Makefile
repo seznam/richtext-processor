@@ -75,6 +75,12 @@ json_check_json_value_SOURCES	= $(SRCDIR)/json/json_value.c \
 				  $(TESTDIR)/unit.c \
 				  $(TESTDIR)/json/check_json_value.c
 json_check_json_value_CFLAGS	= $(check_CFLAGS)
+json_check_layout_content_alignment_SOURCES =\
+	$(SRCDIR)/json/layout_content_alignment.c $(SRCDIR)/json/json_value.c \
+	$(SRCDIR)/json/json_encoder.c $(SRCDIR)/layout_resolver.c \
+	$(SRCDIR)/parser.c $(SRCDIR)/vector.c $(SRCDIR)/string.c \
+	$(TESTDIR)/unit.c $(TESTDIR)/json/check_layout_content_alignment.c
+json_check_layout_content_alignment_CFLAGS = $(check_CFLAGS)
 
 .PHONY: all
 
