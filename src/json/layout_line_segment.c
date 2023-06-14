@@ -3,17 +3,17 @@
 #include "layout_content_alignment.h"
 #include "layout_line_segment.h"
 
-const char *causingCommandKeyValue = "causingCommand";
-const char *contentAlignmentKeyValue = "contentAlignment";
-const char *leftIndentationLevelKeyValue = "leftIndentationLevel";
-const char *rightIndentationLevelKeyValue = "rightIndentationLevel";
-const char *fontSizeChangeKeyValue = "fontSizeChange";
-const char *fontBoldLevelKeyValue = "fontBoldLevel";
-const char *fontItalicLevelKeyValue = "fontItalicLevel";
-const char *fontUnderlinedLevelKeyValue = "fontUnderlinedLevel";
-const char *fontFixedLevelKeyValue = "fontFixedLevel";
-const char *otherSegmentMarkersKeyValue = "otherSegmentMarkers";
-const char *contentKeyValue = "content";
+static const char *causingCommandKeyValue = "causingCommand";
+static const char *contentAlignmentKeyValue = "contentAlignment";
+static const char *leftIndentationLevelKeyValue = "leftIndentationLevel";
+static const char *rightIndentationLevelKeyValue = "rightIndentationLevel";
+static const char *fontSizeChangeKeyValue = "fontSizeChange";
+static const char *fontBoldLevelKeyValue = "fontBoldLevel";
+static const char *fontItalicLevelKeyValue = "fontItalicLevel";
+static const char *fontUnderlinedLevelKeyValue = "fontUnderlinedLevel";
+static const char *fontFixedLevelKeyValue = "fontFixedLevel";
+static const char *otherSegmentMarkersKeyValue = "otherSegmentMarkers";
+static const char *contentKeyValue = "content";
 
 JSONValue *LayoutLineSegment_toJSON(segment)
 LayoutLineSegment *segment;

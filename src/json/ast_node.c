@@ -2,16 +2,16 @@
 #include "ast_node.h"
 #include "json_value.h"
 
-static char *byteIndexKeyContent = "byteIndex";
-static char *codepointIndexKeyContent = "codepointIndex";
-static char *tokenIndexKeyContent = "tokenIndex";
-static char *typeKeyContent = "type";
-static char *valueKeyContent = "value";
-static char *childrenKeyContent = "children";
+static const char *byteIndexKeyContent = "byteIndex";
+static const char *codepointIndexKeyContent = "codepointIndex";
+static const char *tokenIndexKeyContent = "tokenIndex";
+static const char *typeKeyContent = "type";
+static const char *valueKeyContent = "value";
+static const char *childrenKeyContent = "children";
 
-static char *typeCOMMANDContent = "COMMAND";
-static char *typeTEXTContent = "TEXT";
-static char *typeWHITESPACEContent = "WHITESPACE";
+static const char *typeCOMMANDContent = "COMMAND";
+static const char *typeTEXTContent = "TEXT";
+static const char *typeWHITESPACEContent = "WHITESPACE";
 
 static JSONValue *getNodeTypeAsJson(ASTNodeType type);
 

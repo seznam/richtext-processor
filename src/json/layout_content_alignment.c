@@ -1,10 +1,10 @@
 #include "json_value.h"
 #include "layout_content_alignment.h"
 
-const char *defaultAlignment = "DEFAULT";
-const char *justifyLeftAlignment = "JUSTIFY_LEFT";
-const char *justifyRightAlignment = "JUSTIFY_RIGHT";
-const char *centerAlignment = "CENTER";
+static const char *defaultAlignment = "DEFAULT";
+static const char *justifyLeftAlignment = "JUSTIFY_LEFT";
+static const char *justifyRightAlignment = "JUSTIFY_RIGHT";
+static const char *centerAlignment = "CENTER";
 
 JSONValue *LayoutContentAlignment_toJSON(alignment)
 LayoutContentAlignment alignment;
