@@ -81,6 +81,18 @@ json_check_layout_content_alignment_SOURCES =\
 	$(SRCDIR)/parser.c $(SRCDIR)/vector.c $(SRCDIR)/string.c \
 	$(TESTDIR)/unit.c $(TESTDIR)/json/check_layout_content_alignment.c
 json_check_layout_content_alignment_CFLAGS = $(check_CFLAGS)
+json_check_layout_line_SOURCES	= $(SRCDIR)/json/layout_line.c \
+				  $(SRCDIR)/json/layout_line_segment.c \
+				  $(SRCDIR)/json/layout_content_alignment.c \
+				  $(SRCDIR)/json/ast_node.c \
+				  $(SRCDIR)/json/json_value.c \
+				  $(SRCDIR)/json/json_encoder.c \
+				  $(SRCDIR)/vector.c $(SRCDIR)/string.c \
+				  $(SRCDIR)/parser.c \
+				  $(SRCDIR)/layout_resolver.c \
+				  $(TESTDIR)/unit.c \
+				  $(TESTDIR)/json/check_layout_line.c
+json_check_layout_line_CFLAGS	= $(check_CFLAGS)	
 json_check_layout_line_segment_SOURCES =\
 	$(SRCDIR)/json/layout_line_segment.c $(SRCDIR)/json/json_value.c \
 	$(SRCDIR)/string.c $(SRCDIR)/vector.c $(SRCDIR)/layout_resolver.c \
