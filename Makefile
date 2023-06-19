@@ -101,6 +101,12 @@ json_check_layout_line_segment_SOURCES = \
 	$(SRCDIR)/json/json_encoder.c $(TESTDIR)/unit.c \
 	$(TESTDIR)/json/check_layout_line_segment.c
 json_check_layout_line_segment_CFLAGS = $(check_CFLAGS)
+json_check_layout_paragraph_type_SOURCES = \
+	$(SRCDIR)/json/layout_paragraph_type.c $(SRCDIR)/json/json_encoder.c \
+	$(SRCDIR)/json/json_value.c $(SRCDIR)/layout_resolver.c \
+	$(SRCDIR)/vector.c $(SRCDIR)/string.c $(TESTDIR)/unit.c \
+	$(SRCDIR)/parser.c $(TESTDIR)/json/check_layout_paragraph_type.c
+json_check_layout_paragraph_type_CFLAGS = $(check_CFLAGS)
 
 .PHONY: all
 
