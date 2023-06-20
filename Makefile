@@ -145,6 +145,7 @@ check:
 	@mkdir -p /tmp/richtext-processor/tests/
 	@mkdir -p /tmp/richtext-processor/tests/json/
 	$(foreach program,$(check_PROGRAMS), \
+		echo "Compiling $(program)..." && \
 		$(CC) $($(subst /,_,$(program))_CFLAGS) $(LDFLAGS) \
 			-o /tmp/richtext-processor/tests/$(program) \
 			$($(subst /,_,$(program))_SOURCES) && \
