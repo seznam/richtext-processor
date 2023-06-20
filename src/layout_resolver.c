@@ -1,8 +1,10 @@
 #include <limits.h>
 #include <stdlib.h>
 #include "bool.h"
+#include "ast_node.h"
+#include "ast_node_pointer_vector.h"
+#include "ast_node_type.h"
 #include "layout_resolver.h"
-#include "parser.h"
 #include "string.h"
 #include "vector.h"
 

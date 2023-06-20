@@ -1,31 +1,12 @@
 #ifndef PARSER_HEADER_FILE
 #define PARSER_HEADER_FILE 1
 
+#include "ast_node_pointer_vector.h"
 #include "bool.h"
 #include "tokenizer.h"
 #include "string.h"
 #include "typed_pointer_vector.h"
 #include "vector.h"
-
-typedef enum ASTNodeType {
-	ASTNodeType_COMMAND,
-	ASTNodeType_TEXT,
-	ASTNodeType_WHITESPACE
-} ASTNodeType;
-
-struct ASTNode;
-typedef struct ASTNode ASTNode;
-
-Vector_ofPointer(ASTNode)
-struct ASTNode {
-	unsigned long byteIndex;
-	unsigned long codepointIndex;
-	unsigned long tokenIndex;
-	ASTNodeType type;
-	string *value;
-	ASTNode *parent;
-	ASTNodePointerVector *children;
-};
 
 typedef enum ParserErrorCode {
 	ParserErrorCode_OK,

@@ -1,4 +1,6 @@
-#include "../../src/parser.h"
+#include "../../src/ast_node.h"
+#include "../../src/ast_node_pointer_vector.h"
+#include "../../src/ast_node_type.h"
 #include "../../src/json/ast_node.h"
 #include "../../src/json/json_encoder.h"
 #include "../unit.h"

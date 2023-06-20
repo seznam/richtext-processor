@@ -1,8 +1,9 @@
 #ifndef LAYOUT_RESOLVER_HEADER_FILE
 #define LAYOUT_RESOLVER_HEADER_FILE 1
 
+#include "ast_node.h"
+#include "ast_node_pointer_vector.h"
 #include "bool.h"
-#include "parser.h"
 #include "typed_vector.h"
 #include "vector.h"
 

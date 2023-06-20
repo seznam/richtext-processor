@@ -1,4 +1,6 @@
-#include "../parser.h"
+#include "../ast_node.h"
+#include "../ast_node_type.h"
+#include "../ast_node_pointer_vector.h"
 #include "ast_node.h"
 #include "json_value.h"
 

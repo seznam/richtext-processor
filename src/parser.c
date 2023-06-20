@@ -1,4 +1,7 @@
 #include <stdlib.h>
+#include "ast_node.h"
+#include "ast_node_pointer_vector.h"
+#include "ast_node_type.h"
 #include "bool.h"
 #include "tokenizer.h"
 #include "parser.h"
@@ -313,5 +316,3 @@ bool caseInsensitive;
 		return string_compare(string1, string2) == 0;
 	}
 }
-
-Vector_ofPointerImplementation(ASTNode)

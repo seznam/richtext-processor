@@ -1,5 +1,8 @@
 #include <limits.h>
 #include <stdio.h>
+#include "../src/ast_node.h"
+#include "../src/ast_node_pointer_vector.h"
+#include "../src/ast_node_type.h"
 #include "../src/bool.h"
 #include "../src/layout_resolver.h"
 #include "../src/tokenizer.h"
