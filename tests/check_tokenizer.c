@@ -1,5 +1,5 @@
 #include <string.h>
-#include "../src/lexer.h"
+#include "../src/tokenizer.h"
 #include "../src/string.h"
 #include "unit.h"
 
@@ -17,9 +17,9 @@ int main(void);
 
 static char *_assertWarning(char *fileName, unsigned int lineOfCode,
 			    unsigned long warningOrdinalNumber,
-			    LexerWarning * warning, unsigned long byteIndex,
+			    TokenizerWarning * warning, unsigned long byteIndex,
 			    unsigned long codepointIndex,
-			    LexerWarningCode code);
+			    TokenizerWarningCode code);
 
 static char *_assertToken(char *fileName, unsigned int lineOfCode,
 			  unsigned long tokenOrdinalNumber, Token * token,
@@ -33,9 +33,9 @@ static char *STRINGIFIED_TOKEN_TYPE[] = {
 	"TokenType_WHITESPACE"
 };
 
-static char *STRINGIFIED_LEXER_WARNING[] = {
-	"LexerWarningCode_INVALID_UTF8_CHARACTER",
-	"LexerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE"
+static char *STRINGIFIED_TOKENIZER_WARNING[] = {
+	"TokenizerWarningCode_INVALID_UTF8_CHARACTER",
+	"TokenizerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE"
 };
 
 #define assertWarning(warningOrdinalNumber, warning, byteIndex, codepointIndex, code)\
@@ -61,10 +61,10 @@ END_TEST}
 
 START_TEST(tokenize_processesSingleWord)
 {
-	LexerResult *result = tokenize(string_from("foo"));
+	TokenizerResult *result = tokenize(string_from("foo"));
 	Token token;
 	assert(result != NULL, "Expected non-NULL result");
-	assert(result->type == LexerResultType_SUCCESS,
+	assert(result->type == TokenizerResultType_SUCCESS,
 	       "Expected successful result");
 	assert(result->warnings != NULL && result->warnings->size.length == 0,
 	       "Expected empty vector of warnings");
@@ -83,10 +83,10 @@ END_TEST}
 
 START_TEST(tokenize_processMultipleWordsSeparatedByRegularSpaces)
 {
-	LexerResult *result = tokenize(string_from("foo bar baz"));
+	TokenizerResult *result = tokenize(string_from("foo bar baz"));
 	Token *token;
 	assert(result != NULL
-	       && result->type == LexerResultType_SUCCESS,
+	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected successful result");
 	assert(result->warnings != NULL
 	       && result->warnings->size.length == 0,
@@ -137,10 +137,10 @@ END_TEST}
 
 START_TEST(tokenize_emitsTokensForEveryIndividualAsciiWhitespaceExceptCrLf)
 {
-	LexerResult *result = tokenize(string_from("\r \t\n\v\f"));
+	TokenizerResult *result = tokenize(string_from("\r \t\n\v\f"));
 	Token *token;
 	assert(result != NULL
-	       && result->type == LexerResultType_SUCCESS,
+	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected successful result");
 	assert(result->warnings != NULL
 	       && result->warnings->size.length == 0,
@@ -164,10 +164,10 @@ END_TEST}
 
 START_TEST(tokenize_emitsCrLfInSingleWhitespaceToken)
 {
-	LexerResult *result = tokenize(string_from(" \r\n "));
+	TokenizerResult *result = tokenize(string_from(" \r\n "));
 	Token *token;
 	assert(result != NULL
-	       && result->type == LexerResultType_SUCCESS,
+	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected successful result");
 	assert(result->warnings != NULL
 	       && result->warnings->size.length == 0,
@@ -185,10 +185,10 @@ END_TEST}
 
 START_TEST(tokenize_recognizesAllTwoByteWhitespaceAsSingleTokens)
 {
-	LexerResult *result = tokenize(string_from("\302\205\302\240"));
+	TokenizerResult *result = tokenize(string_from("\302\205\302\240"));
 	Token *token;
 	assert(result != NULL
-	       && result->type == LexerResultType_SUCCESS,
+	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected successful result");
 	assert(result->warnings != NULL
 	       && result->warnings->size.length == 0,
@@ -209,7 +209,7 @@ START_TEST(tokenize_recognizesAllThreeByteWhitespaceAsSingleTokens)
 {
 	Vector *whitespace = Vector_new(sizeof(char[3]), 0, 0);
 	char *whitespaceString;
-	LexerResult *result;
+	TokenizerResult *result;
 	Token *token;
 	unsigned long index;
 
@@ -242,7 +242,7 @@ START_TEST(tokenize_recognizesAllThreeByteWhitespaceAsSingleTokens)
 
 	result = tokenize(string_from(whitespaceString));
 	assert(result != NULL
-	       && result->type == LexerResultType_SUCCESS,
+	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected successful result");
 	assert(result->warnings != NULL
 	       && result->warnings->size.length == 0,
@@ -262,10 +262,10 @@ END_TEST}
 
 START_TEST(tokenize_processesCommandStarts)
 {
-	LexerResult *result = tokenize(string_from("<abc>"));
+	TokenizerResult *result = tokenize(string_from("<abc>"));
 	Token *token;
 	assert(result != NULL
-	       && result->type == LexerResultType_SUCCESS,
+	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected successful result");
 	assert(result->warnings != NULL
 	       && result->warnings->size.length == 0,
@@ -279,10 +279,10 @@ END_TEST}
 
 START_TEST(tokenize_processesCommandEnd)
 {
-	LexerResult *result = tokenize(string_from("</abc>a"));
+	TokenizerResult *result = tokenize(string_from("</abc>a"));
 	Token *token;
 	assert(result != NULL
-	       && result->type == LexerResultType_SUCCESS,
+	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected successful result");
 	assert(result->warnings != NULL
 	       && result->warnings->size.length == 0,
@@ -297,11 +297,11 @@ END_TEST}
 
 START_TEST(tokenize_emitsWarningsForInvalidUtf8CharactersButTreatsThemAsText)
 {
-	LexerResult *result = tokenize(string_from("a\370\373\377b"));
-	LexerWarning *warning;
+	TokenizerResult *result = tokenize(string_from("a\370\373\377b"));
+	TokenizerWarning *warning;
 	Token *token;
 	assert(result != NULL
-	       && result->type == LexerResultType_SUCCESS,
+	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected successful result");
 	assert(result->warnings != NULL
 	       && result->warnings->size.length == 3, "Expected 3 warnings");
@@ -311,22 +311,22 @@ START_TEST(tokenize_emitsWarningsForInvalidUtf8CharactersButTreatsThemAsText)
 	token = result->result.tokens->items;
 
 	assertWarning(1, warning, 1, 1,
-		      LexerWarningCode_INVALID_UTF8_CHARACTER);
+		      TokenizerWarningCode_INVALID_UTF8_CHARACTER);
 	assertWarning(2, warning + 1, 2, 2,
-		      LexerWarningCode_INVALID_UTF8_CHARACTER);
+		      TokenizerWarningCode_INVALID_UTF8_CHARACTER);
 	assertWarning(3, warning + 2, 3, 3,
-		      LexerWarningCode_INVALID_UTF8_CHARACTER);
+		      TokenizerWarningCode_INVALID_UTF8_CHARACTER);
 
 	assertToken(1, token, 0, 0, TokenType_TEXT, "a\370\373\377b");
 END_TEST}
 
 START_TEST(tokenize_emitsWarningsForUnexpectedContinuationBytes)
 {
-	LexerResult *result = tokenize(string_from("a\201b\226\300c"));
-	LexerWarning *warning;
+	TokenizerResult *result = tokenize(string_from("a\201b\226\300c"));
+	TokenizerWarning *warning;
 	Token *token;
 	assert(result != NULL
-	       && result->type == LexerResultType_SUCCESS,
+	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected successful result");
 	assert(result->warnings != NULL
 	       && result->warnings->size.length == 3, "Expected 3 warnings");
@@ -336,35 +336,35 @@ START_TEST(tokenize_emitsWarningsForUnexpectedContinuationBytes)
 	token = result->result.tokens->items;
 
 	assertWarning(1, warning, 1, 1,
-		      LexerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE);
+		      TokenizerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE);
 	assertWarning(2, warning + 1, 3, 3,
-		      LexerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE);
+		      TokenizerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE);
 	assertWarning(3, warning + 2, 4, 4,
-		      LexerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE);
+		      TokenizerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE);
 
 	assertToken(1, token, 0, 0, TokenType_TEXT, "a\201b\226\300c");
 END_TEST}
 
 START_TEST(tokenize_rejectsCommandStartDelimiterInsideACommand)
 {
-	LexerResult *result = tokenize(string_from("<a<b>"));
+	TokenizerResult *result = tokenize(string_from("<a<b>"));
 	assert(result != NULL
-	       && result->type == LexerResultType_ERROR,
+	       && result->type == TokenizerResultType_ERROR,
 	       "Expected an error result");
 	assert(result->result.error.byteIndex == 2,
 	       "Expected the error's byteIndex to 2");
 	assert(result->result.error.codepointIndex == 2,
 	       "Expected the error's codepointIndex to be 2");
 	assert(result->result.error.code ==
-	       LexerErrorCode_UNEXPECTED_COMMAND_START,
+	       TokenizerErrorCode_UNEXPECTED_COMMAND_START,
 	       "Expected the error's code to be UNEXPECTED_COMMAND_START");
 END_TEST}
 
 START_TEST(tokenize_rejectsUnterminatedCommand)
 {
-	LexerResult *result = tokenize(string_from("<aa"));
+	TokenizerResult *result = tokenize(string_from("<aa"));
 	assert(result != NULL
-	       && result->type == LexerResultType_ERROR,
+	       && result->type == TokenizerResultType_ERROR,
 	       "Expected an error result");
 	assert(result->warnings->size.length == 0,
 	       "Expected an empty vector of warnings");
@@ -372,12 +372,13 @@ START_TEST(tokenize_rejectsUnterminatedCommand)
 	       "Expected the error's byteIndex to be 3");
 	assert(result->result.error.codepointIndex == 3,
 	       "Expected the errro's codepointIndex to be 3");
-	assert(result->result.error.code == LexerErrorCode_UNTERMINATED_COMMAND,
+	assert(result->result.error.code ==
+	       TokenizerErrorCode_UNTERMINATED_COMMAND,
 	       "Expected the error's code to be UNTERMINATED_COMMAND");
 
 	result = tokenize(string_from("</ab"));
 	assert(result != NULL
-	       && result->type == LexerResultType_ERROR,
+	       && result->type == TokenizerResultType_ERROR,
 	       "Expected an error result");
 	assert(result->warnings->size.length == 0,
 	       "Expected an empty vector of warnings");
@@ -385,26 +386,27 @@ START_TEST(tokenize_rejectsUnterminatedCommand)
 	       "Expected the error's byteIndex to be 3");
 	assert(result->result.error.codepointIndex == 4,
 	       "Expected the errro's codepointIndex to be 3");
-	assert(result->result.error.code == LexerErrorCode_UNTERMINATED_COMMAND,
+	assert(result->result.error.code ==
+	       TokenizerErrorCode_UNTERMINATED_COMMAND,
 	       "Expected the error's code to be UNTERMINATED_COMMAND");
 END_TEST}
 
 START_TEST(tokenize_returnsEncounteredWarningsOnError)
 {
-	LexerResult *result = tokenize(string_from("a\226<b<c"));
+	TokenizerResult *result = tokenize(string_from("a\226<b<c"));
 	assert(result != NULL
-	       && result->type == LexerResultType_ERROR,
+	       && result->type == TokenizerResultType_ERROR,
 	       "Expected an error result");
 	assert(result->warnings->size.length == 1, "Expected 1 warning");
 	assertWarning(1, result->warnings->items, 1, 1,
-		      LexerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE);
+		      TokenizerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE);
 END_TEST}
 
 START_TEST(tokenize_treatsCommandEndDelimiterInTextAsText)
 {
-	LexerResult *result = tokenize(string_from("ab>c"));
+	TokenizerResult *result = tokenize(string_from("ab>c"));
 	assert(result != NULL
-	       && result->type == LexerResultType_SUCCESS,
+	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected a successful result");
 	assert(result->warnings->size.length == 0, "Expected no warnings");
 	assert(result->result.tokens->size.length == 1, "Expected 1 token");
@@ -412,15 +414,15 @@ START_TEST(tokenize_treatsCommandEndDelimiterInTextAsText)
 		    "ab>c");
 END_TEST}
 
-START_TEST(LexerResult_free_acceptsNull)
+START_TEST(TokenizerResult_free_acceptsNull)
 {
-	LexerResult_free(NULL);
+	TokenizerResult_free(NULL);
 END_TEST}
 
-START_TEST(LexerResult_free_freesSuccessfulResult)
+START_TEST(TokenizerResult_free_freesSuccessfulResult)
 {
-	LexerResult *result = tokenize(string_from("a"));
-	LexerResult_free(result);
+	TokenizerResult *result = tokenize(string_from("a"));
+	TokenizerResult_free(result);
 END_TEST}
 
 static void all_tests()
@@ -442,8 +444,8 @@ static void all_tests()
 	runTest(tokenize_rejectsUnterminatedCommand);
 	runTest(tokenize_returnsEncounteredWarningsOnError);
 	runTest(tokenize_treatsCommandEndDelimiterInTextAsText);
-	runTest(LexerResult_free_acceptsNull);
-	runTest(LexerResult_free_freesSuccessfulResult);
+	runTest(TokenizerResult_free_acceptsNull);
+	runTest(TokenizerResult_free_freesSuccessfulResult);
 }
 
 int main()
@@ -457,10 +459,10 @@ static char *_assertWarning(fileName, lineOfCode, warningOrdinalNumber, warning,
 char *fileName;
 unsigned int lineOfCode;
 unsigned long warningOrdinalNumber;
-LexerWarning *warning;
+TokenizerWarning *warning;
 unsigned long byteIndex;
 unsigned long codepointIndex;
-LexerWarningCode code;
+TokenizerWarningCode code;
 {
 	char *errorMessage;
 	char *assertError;
@@ -486,8 +488,8 @@ LexerWarningCode code;
 	}
 	sprintf(errorMessage,
 		"Expected the %lu. warning's code to be %s, but was %s",
-		warningOrdinalNumber, STRINGIFIED_LEXER_WARNING[code],
-		STRINGIFIED_LEXER_WARNING[warning->code]);
+		warningOrdinalNumber, STRINGIFIED_TOKENIZER_WARNING[code],
+		STRINGIFIED_TOKENIZER_WARNING[warning->code]);
 	return unit_assert(fileName, lineOfCode, warning->code == code,
 			   errorMessage);
 }

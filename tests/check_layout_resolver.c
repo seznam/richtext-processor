@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "../src/bool.h"
 #include "../src/layout_resolver.h"
-#include "../src/lexer.h"
+#include "../src/tokenizer.h"
 #include "../src/parser.h"
 #include "../src/string.h"
 #include "unit.h"
@@ -209,7 +209,7 @@ START_TEST(resolveLayout_returnsErrorForNonRootNodes)
 {
 	char *input = "<Bold>text</Bold>";
 	ASTNode rootNode;
-	LexerResult *tokens;
+	TokenizerResult *tokens;
 	ParserResult *nodeTree;
 	ASTNodePointerVector *nodes;
 
@@ -1792,8 +1792,8 @@ START_TEST(resolveLayout_doesNotModifyItsInput)
 {
 	char *input =
 	    "<Bold><Italic>text</Italic></Bold><np><Paragraph>text2</Paragraph>";
-	LexerResult *tokens1 = tokenize(string_from(input));
-	LexerResult *tokens2 = tokenize(string_from(input));
+	TokenizerResult *tokens1 = tokenize(string_from(input));
+	TokenizerResult *tokens2 = tokenize(string_from(input));
 	ParserResult *nodes1 = parse(tokens1->result.tokens, false);
 	ParserResult *nodes2 = parse(tokens2->result.tokens, false);
 	LayoutResolverResult *blocks =
@@ -2984,8 +2984,8 @@ CustomCommandLayoutInterpretation customCommandHook(ASTNode *, bool);
 bool caseInsensitiveCommands;
 {
 	ParserResult *parserResult;
-	LexerResult *tokens = tokenize(string_from(richtext));
-	if (tokens == NULL || tokens->type != LexerResultType_SUCCESS) {
+	TokenizerResult *tokens = tokenize(string_from(richtext));
+	if (tokens == NULL || tokens->type != TokenizerResultType_SUCCESS) {
 		return NULL;
 	}
 

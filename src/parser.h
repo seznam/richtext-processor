@@ -2,7 +2,7 @@
 #define PARSER_HEADER_FILE 1
 
 #include "bool.h"
-#include "lexer.h"
+#include "tokenizer.h"
 #include "string.h"
 #include "typed_pointer_vector.h"
 #include "vector.h"

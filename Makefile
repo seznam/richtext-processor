@@ -39,21 +39,21 @@ check_PROGRAMS = $(TESTS)
 check_CFLAGS = $(CFLAGS)
 check_layout_resolver_SOURCES	= $(SRCDIR)/layout_resolver.c \
 				  $(SRCDIR)/string.c $(SRCDIR)/vector.c \
-				  $(SRCDIR)/parser.c $(SRCDIR)/lexer.c \
+				  $(SRCDIR)/parser.c $(SRCDIR)/tokenizer.c \
 				  $(TESTDIR)/unit.c \
 				  $(TESTDIR)/check_layout_resolver.c
 check_layout_resolver_CFLAGS	= $(check_CFLAGS)
-check_lexer_SOURCES		= $(SRCDIR)/lexer.c $(SRCDIR)/string.c \
-				  $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
-				  $(TESTDIR)/check_lexer.c
-check_lexer_CFLAGS		= $(check_CFLAGS)
-check_parser_SOURCES		= $(SRCDIR)/parser.c $(SRCDIR)/lexer.c \
+check_parser_SOURCES		= $(SRCDIR)/parser.c $(SRCDIR)/tokenizer.c \
 				  $(SRCDIR)/string.c $(SRCDIR)/vector.c \
 				  $(TESTDIR)/unit.c $(TESTDIR)/check_parser.c
 check_parser_CFLAGS		= $(check_CFLAGS)
 check_string_SOURCES		= $(SRCDIR)/string.c $(TESTDIR)/unit.c \
 				  $(TESTDIR)/check_string.c
 check_string_CFLAGS		= $(check_CFLAGS)
+check_tokenizer_SOURCES		= $(SRCDIR)/tokenizer.c $(SRCDIR)/string.c \
+				  $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
+				  $(TESTDIR)/check_tokenizer.c
+check_tokenizer_CFLAGS		= $(check_CFLAGS)
 check_vector_SOURCES		= $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
 				  $(TESTDIR)/check_vector.c
 check_vector_CFLAGS		= $(check_CFLAGS)

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "bool.h"
-#include "lexer.h"
+#include "tokenizer.h"
 #include "parser.h"
 #include "string.h"
 #include "typed_pointer_vector.h"

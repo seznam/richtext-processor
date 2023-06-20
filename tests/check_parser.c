@@ -162,14 +162,14 @@ END_TEST}
 
 START_TEST(parse_matchingBalancingCommandEndsInCaseInsensitiveWay)
 {
-	LexerResult *lexerResult = tokenize(string_from("<abc></ABC>"));
+	TokenizerResult *tokenizerResult = tokenize(string_from("<abc></ABC>"));
 	ParserResult *result;
 	ASTNodePointerVector *nodes;
 	ASTNode *node;
-	assert(lexerResult != NULL
-	       && lexerResult->type == LexerResultType_SUCCESS,
+	assert(tokenizerResult != NULL
+	       && tokenizerResult->type == TokenizerResultType_SUCCESS,
 	       "Expected successful tokenization");
-	result = parse(lexerResult->result.tokens, false);
+	result = parse(tokenizerResult->result.tokens, false);
 	assert(result != NULL
 	       && result->type == ParserResultType_ERROR,
 	       "Expected failed parsing");
@@ -179,7 +179,7 @@ START_TEST(parse_matchingBalancingCommandEndsInCaseInsensitiveWay)
 	assert(result->result.error.tokenIndex == 1,
 	       "Expected the error token index to be 1");
 
-	result = parse(lexerResult->result.tokens, true);
+	result = parse(tokenizerResult->result.tokens, true);
 	assert(result != NULL
 	       && result->type == ParserResultType_SUCCESS,
 	       "Expected successful parsing");
@@ -191,14 +191,15 @@ END_TEST}
 
 START_TEST(parse_processesNonBalancingCommandsWithoutNesting)
 {
-	LexerResult *lexerResult = tokenize(string_from("<lt><nl><np>"));
+	TokenizerResult *tokenizerResult =
+	    tokenize(string_from("<lt><nl><np>"));
 	ParserResult *result;
 	ASTNodePointerVector *nodes;
 	ASTNode **nodePointer;
-	assert(lexerResult != NULL
-	       && lexerResult->type == LexerResultType_SUCCESS,
+	assert(tokenizerResult != NULL
+	       && tokenizerResult->type == TokenizerResultType_SUCCESS,
 	       "Expected successful tokenization");
-	result = parse(lexerResult->result.tokens, false);
+	result = parse(tokenizerResult->result.tokens, false);
 	assert(result != NULL
 	       && result->type == ParserResultType_SUCCESS,
 	       "Expected successful parsing");
@@ -209,11 +210,11 @@ START_TEST(parse_processesNonBalancingCommandsWithoutNesting)
 	assert_node(2, *(nodePointer + 1), 4, 4, 1, ASTNodeType_COMMAND, "nl");
 	assert_node(3, *(nodePointer + 2), 8, 8, 2, ASTNodeType_COMMAND, "np");
 
-	lexerResult = tokenize(string_from("<Np><lT><NL>"));
-	assert(lexerResult != NULL
-	       && lexerResult->type == LexerResultType_SUCCESS,
+	tokenizerResult = tokenize(string_from("<Np><lT><NL>"));
+	assert(tokenizerResult != NULL
+	       && tokenizerResult->type == TokenizerResultType_SUCCESS,
 	       "Expected successful tokenization");
-	result = parse(lexerResult->result.tokens, false);
+	result = parse(tokenizerResult->result.tokens, false);
 	assert(result != NULL
 	       && result->type == ParserResultType_ERROR,
 	       "Expected parsing error");
@@ -221,7 +222,7 @@ START_TEST(parse_processesNonBalancingCommandsWithoutNesting)
 	       ParserErrorCode_UNTERMINATED_COMMAND,
 	       "Expected the UNTERMINATED_COMMAND error");
 
-	result = parse(lexerResult->result.tokens, true);
+	result = parse(tokenizerResult->result.tokens, true);
 	assert(result != NULL
 	       && result->type == ParserResultType_SUCCESS,
 	       "Expected successful parsing");
@@ -301,13 +302,13 @@ END_TEST}
 
 START_TEST(parse_rejectsInvalidTokenType)
 {
-	LexerResult *lexerResult = tokenize(string_from("foo"));
+	TokenizerResult *tokenizerResult = tokenize(string_from("foo"));
 	ParserResult *result;
-	assert(lexerResult != NULL
-	       && lexerResult->type == LexerResultType_SUCCESS,
+	assert(tokenizerResult != NULL
+	       && tokenizerResult->type == TokenizerResultType_SUCCESS,
 	       "Expected tokenization to succeed");
-	lexerResult->result.tokens->items->type = 12000;
-	result = parse(lexerResult->result.tokens, false);
+	tokenizerResult->result.tokens->items->type = 12000;
+	result = parse(tokenizerResult->result.tokens, false);
 	assert(result != NULL
 	       && result->type == ParserResultType_ERROR,
 	       "Expected parsing error");
@@ -363,11 +364,12 @@ static ParserResult *parseStringToResult(input, caseInsensitiveCommands)
 const char *input;
 bool caseInsensitiveCommands;
 {
-	LexerResult *lexerResult = tokenize(string_from(input));
-	if (lexerResult == NULL || lexerResult->type == LexerResultType_ERROR) {
+	TokenizerResult *tokenizerResult = tokenize(string_from(input));
+	if (tokenizerResult == NULL
+	    || tokenizerResult->type == TokenizerResultType_ERROR) {
 		return NULL;
 	}
-	return parse(lexerResult->result.tokens, caseInsensitiveCommands);
+	return parse(tokenizerResult->result.tokens, caseInsensitiveCommands);
 }
 
 static ASTNodePointerVector *parseString(input, caseInsensitiveCommands)
