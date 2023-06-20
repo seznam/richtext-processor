@@ -2,8 +2,7 @@
 #define TOKENIZER_HEADER_FILE 1
 
 #include "string.h"
-#include "typed_vector.h"
-#include "vector.h"
+#include "token_vector.h"
 
 /*
   Note: UTF-8 uses 1-4 bytes to encode a codepoint, but some "characters" may
@@ -17,21 +16,6 @@
 	more details on UTF-8 encoding.
  */
 
-typedef enum TokenType {
-	TokenType_COMMAND_START,
-	TokenType_COMMAND_END,
-	TokenType_TEXT,
-	TokenType_WHITESPACE
-} TokenType;
-
-typedef struct Token {
-	unsigned long byteIndex;
-	unsigned long codepointIndex;
-	TokenType type;
-	string *value;
-} Token;
-
-Vector_ofType(Token)
 typedef enum TokenizerErrorCode {
 	TokenizerErrorCode_OK,
 	TokenizerErrorCode_UNEXPECTED_COMMAND_START,

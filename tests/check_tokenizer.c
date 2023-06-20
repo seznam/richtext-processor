@@ -1,6 +1,8 @@
 #include <string.h>
 #include "../src/tokenizer.h"
 #include "../src/string.h"
+#include "../src/token.h"
+#include "../src/token_type.h"
 #include "unit.h"
 
 /*

@@ -5,5 +5,4 @@
 #include "typed_pointer_vector.h"
 
 Vector_ofPointer(ASTNode)
-
 #endif

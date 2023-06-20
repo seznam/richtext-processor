@@ -3,11 +3,11 @@
 #include "ast_node_pointer_vector.h"
 #include "ast_node_type.h"
 #include "bool.h"
-#include "tokenizer.h"
 #include "parser.h"
 #include "string.h"
-#include "typed_pointer_vector.h"
-#include "vector.h"
+#include "token.h"
+#include "token_type.h"
+#include "token_vector.h"
 
 static void freeNodes(ASTNodePointerVector * nodes);
 

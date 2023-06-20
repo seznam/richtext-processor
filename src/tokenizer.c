@@ -2,6 +2,10 @@
 #include "tokenizer.h"
 #include "bool.h"
 #include "string.h"
+#include "token.h"
+#include "token_type.h"
+#include "token_vector.h"
+#include "typed_vector.h"
 
 static TokenizerResult *addWarning(TokenizerResult * result,
 				   TokenizerWarningVector ** warnings,
@@ -486,5 +490,4 @@ bool isUtf8;
 	return 0;
 }
 
-Vector_ofTypeImplementation(Token)
-    Vector_ofTypeImplementation(TokenizerWarning)
+Vector_ofTypeImplementation(TokenizerWarning)

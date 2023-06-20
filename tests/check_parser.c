@@ -5,6 +5,7 @@
 #include "../src/ast_node_type.h"
 #include "../src/bool.h"
 #include "../src/parser.h"
+#include "../src/token_type.h"
 #include "unit.h"
 
 /*
