@@ -5,7 +5,6 @@
 #include "bool.h"
 #include "tokenizer.h"
 #include "string.h"
-#include "typed_pointer_vector.h"
 #include "vector.h"
 
 typedef enum ParserErrorCode {
