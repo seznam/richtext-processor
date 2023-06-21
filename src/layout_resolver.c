@@ -4,6 +4,7 @@
 #include "ast_node.h"
 #include "ast_node_pointer_vector.h"
 #include "ast_node_type.h"
+#include "custom_command_layout_interpretation.h"
 #include "layout_resolver.h"
 #include "string.h"
 #include "vector.h"

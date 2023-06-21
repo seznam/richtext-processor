@@ -4,6 +4,7 @@
 #include "../src/ast_node_pointer_vector.h"
 #include "../src/ast_node_type.h"
 #include "../src/bool.h"
+#include "../src/custom_command_layout_interpretation.h"
 #include "../src/layout_resolver.h"
 #include "../src/tokenizer.h"
 #include "../src/parser.h"
