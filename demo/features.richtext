@@ -7,7 +7,7 @@ Text can also be rendered in <Smaller>smaller</Smaller>, even
 Combining and balancing the <lt>Smaller> and <lt>Bigger> commands results in
 text rendered in <Smaller><Bigger>regular font</Bigger></Smaller>. It is also
 possible to use <Superscript>superscript</Superscript> and
-<Subscript>subscript</Subscript>, which can be useful especialy for
+<Subscript>subscript</Subscript>, which can be useful especially for
 mathematical formula.
 
 <Paragraph>
@@ -18,10 +18,10 @@ mathematical formula.
 
 <Paragraph>
   <Fixed>
-    This text will be rendered  using fixed-width font, with special treatement
-    of the	horizontal	tab	character, respecting the common semantics of the
-    TAB (HT) character should be observed, namely that it moves to the next
-    column position that is a multiple of 8.
+    This text will be rendered  using fixed-width font, with special treatment
+    of the	horizontal	tab	character, respecting the common
+    semantics of the TAB (HT) character should be observed, namely that it
+    moves to the next column position that is a multiple of 8.
   </Fixed>
 </Paragraph>
 
@@ -50,7 +50,7 @@ mathematical formula.
   The <lt>No-op> command has <No-op>no effect</No-op>, as is the case with any
   <X-Custom>custom commands not recognized by the processor</X-Custom>. The
   processor supports providing a custom command interpreter function for
-  intrepreting any non-standard commands.
+  interpreting any non-standard commands.
 </Paragraph>
 
 <Comment>
