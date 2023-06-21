@@ -1,4 +1,4 @@
-#include "../layout_resolver.h"
+#include "../layout_paragraph_type.h"
 #include "json_value.h"
 #include "layout_paragraph_type.h"
 

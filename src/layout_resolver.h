@@ -5,27 +5,10 @@
 #include "ast_node_pointer_vector.h"
 #include "bool.h"
 #include "custom_command_layout_interpretation.h"
-#include "layout_line_vector.h"
+#include "layout_paragraph_vector.h"
 #include "typed_vector.h"
 #include "vector.h"
 
-typedef enum LayoutParagraphType {
-	/*
-	 * Only used for paragraphs started by the <Paragraph> command or
-	 * </Paragraph> command end if nested within another <Paragraph>, or
-	 * custom command representing isolated paragraph.
-	 */
-	LayoutParagraphType_EXPLICIT,
-	LayoutParagraphType_IMPLICIT
-} LayoutParagraphType;
-
-typedef struct LayoutParagraph {
-	ASTNode *causingCommand;
-	LayoutParagraphType type;
-	LayoutLineVector *lines;
-} LayoutParagraph;
-
-Vector_ofType(LayoutParagraph)
 typedef enum LayoutBlockType {
 	LayoutBlockType_HEADING,
 	LayoutBlockType_FOOTING,

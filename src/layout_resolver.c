@@ -10,6 +10,8 @@
 #include "layout_line_segment.h"
 #include "layout_line_segment_vector.h"
 #include "layout_line_vector.h"
+#include "layout_paragraph.h"
+#include "layout_paragraph_vector.h"
 #include "layout_resolver.h"
 #include "string.h"
 #include "vector.h"
@@ -1718,8 +1720,7 @@ bool caseInsensitive;
 	}
 }
 
-Vector_ofTypeImplementation(LayoutParagraph)
-    Vector_ofTypeImplementation(LayoutBlock)
+Vector_ofTypeImplementation(LayoutBlock)
     Vector_ofTypeImplementation(LayoutResolverWarning)
     Vector_ofTypeImplementation(LayoutContentAlignment)
     Vector_ofTypeImplementation(LayoutBlockType)
