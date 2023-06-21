@@ -1,4 +1,5 @@
-#include "../layout_resolver.h"
+#include "../layout_line_segment.h"
+#include "../layout_line_segment_vector.h"
 #include "ast_node.h"
 #include "layout_content_alignment.h"
 #include "layout_line_segment.h"

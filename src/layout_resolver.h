@@ -5,35 +5,10 @@
 #include "ast_node_pointer_vector.h"
 #include "bool.h"
 #include "custom_command_layout_interpretation.h"
+#include "layout_line_segment_vector.h"
 #include "typed_vector.h"
 #include "vector.h"
 
-typedef enum LayoutContentAlignment {
-	LayoutContentAlignment_DEFAULT,
-	LayoutContentAlignment_JUSTIFY_LEFT,
-	LayoutContentAlignment_JUSTIFY_RIGHT,
-	LayoutContentAlignment_CENTER
-} LayoutContentAlignment;
-
-typedef struct LayoutLineSegment {
-	ASTNode *causingCommand;
-	LayoutContentAlignment contentAlignment;
-	signed short leftIndentationLevel;
-	signed short rightIndentationLevel;
-	signed short fontSizeChange;
-	unsigned short fontBoldLevel;
-	unsigned short fontItalicLevel;
-	unsigned short fontUnderlinedLevel;
-	unsigned short fontFixedLevel;
-	/*
-	 * Used for the <Subscript>, <Superscript>, <Excerpt>, <Signature> and
-	 * new line segment-causing custom commands.
-	 */
-	ASTNodePointerVector *otherSegmentMarkers;
-	ASTNodePointerVector *content;
-} LayoutLineSegment;
-
-Vector_ofType(LayoutLineSegment)
 typedef struct LayoutLine {
 	ASTNode *causingCommand;
 	LayoutLineSegmentVector *segments;

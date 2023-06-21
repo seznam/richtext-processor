@@ -39,6 +39,7 @@ check_PROGRAMS = $(TESTS)
 check_CFLAGS = $(CFLAGS)
 check_layout_resolver_SOURCES	= $(SRCDIR)/layout_resolver.c \
 				  $(SRCDIR)/ast_node_pointer_vector.c \
+				  $(SRCDIR)/layout_line_segment_vector.c \
 				  $(SRCDIR)/string.c $(SRCDIR)/vector.c \
 				  $(SRCDIR)/parser.c $(SRCDIR)/tokenizer.c \
 				  $(SRCDIR)/token_vector.c $(TESTDIR)/unit.c \
@@ -81,8 +82,9 @@ json_check_json_value_CFLAGS	= $(check_CFLAGS)
 json_check_layout_content_alignment_SOURCES = \
 	$(SRCDIR)/json/layout_content_alignment.c $(SRCDIR)/json/json_value.c \
 	$(SRCDIR)/ast_node_pointer_vector.c $(SRCDIR)/json/json_encoder.c \
-	$(SRCDIR)/layout_resolver.c $(SRCDIR)/vector.c $(SRCDIR)/string.c \
-	$(TESTDIR)/unit.c $(TESTDIR)/json/check_layout_content_alignment.c
+	$(SRCDIR)/layout_line_segment_vector.c $(SRCDIR)/vector.c \
+	$(SRCDIR)/string.c $(TESTDIR)/unit.c \
+	$(TESTDIR)/json/check_layout_content_alignment.c
 json_check_layout_content_alignment_CFLAGS = $(check_CFLAGS)
 json_check_layout_line_SOURCES	= $(SRCDIR)/json/layout_line.c \
 				  $(SRCDIR)/json/layout_line_segment.c \
@@ -92,6 +94,7 @@ json_check_layout_line_SOURCES	= $(SRCDIR)/json/layout_line.c \
 				  $(SRCDIR)/json/json_encoder.c \
 				  $(SRCDIR)/ast_node_pointer_vector.c \
 				  $(SRCDIR)/vector.c $(SRCDIR)/string.c \
+				  $(SRCDIR)/layout_line_segment_vector.c \
 				  $(SRCDIR)/layout_resolver.c \
 				  $(TESTDIR)/unit.c \
 				  $(TESTDIR)/json/check_layout_line.c
@@ -99,16 +102,18 @@ json_check_layout_line_CFLAGS	= $(check_CFLAGS)
 json_check_layout_line_segment_SOURCES = \
 	$(SRCDIR)/json/layout_line_segment.c $(SRCDIR)/json/json_value.c \
 	$(SRCDIR)/ast_node_pointer_vector.c $(SRCDIR)/string.c \
-	$(SRCDIR)/vector.c $(SRCDIR)/layout_resolver.c \
-	$(SRCDIR)/json/ast_node.c $(SRCDIR)/json/layout_content_alignment.c \
+	$(SRCDIR)/vector.c $(SRCDIR)/layout_line_segment_vector.c \
+	$(SRCDIR)/layout_resolver.c $(SRCDIR)/json/ast_node.c \
+	$(SRCDIR)/json/layout_content_alignment.c \
 	$(SRCDIR)/json/json_encoder.c $(TESTDIR)/unit.c \
 	$(TESTDIR)/json/check_layout_line_segment.c
 json_check_layout_line_segment_CFLAGS = $(check_CFLAGS)
 json_check_layout_paragraph_type_SOURCES = \
 	$(SRCDIR)/json/layout_paragraph_type.c $(SRCDIR)/json/json_encoder.c \
 	$(SRCDIR)/ast_node_pointer_vector.c $(SRCDIR)/json/json_value.c \
-	$(SRCDIR)/layout_resolver.c $(SRCDIR)/vector.c $(SRCDIR)/string.c \
-	$(TESTDIR)/unit.c $(TESTDIR)/json/check_layout_paragraph_type.c
+	$(SRCDIR)/layout_line_segment_vector.c $(SRCDIR)/vector.c \
+	$(SRCDIR)/string.c $(TESTDIR)/unit.c \
+	$(TESTDIR)/json/check_layout_paragraph_type.c
 json_check_layout_paragraph_type_CFLAGS = $(check_CFLAGS)
 
 .PHONY: all

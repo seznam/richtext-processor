@@ -5,6 +5,9 @@
 #include "ast_node_pointer_vector.h"
 #include "ast_node_type.h"
 #include "custom_command_layout_interpretation.h"
+#include "layout_content_alignment.h"
+#include "layout_line_segment.h"
+#include "layout_line_segment_vector.h"
 #include "layout_resolver.h"
 #include "string.h"
 #include "vector.h"
@@ -1713,8 +1716,7 @@ bool caseInsensitive;
 	}
 }
 
-Vector_ofTypeImplementation(LayoutLineSegment)
-    Vector_ofTypeImplementation(LayoutLine)
+Vector_ofTypeImplementation(LayoutLine)
     Vector_ofTypeImplementation(LayoutParagraph)
     Vector_ofTypeImplementation(LayoutBlock)
     Vector_ofTypeImplementation(LayoutResolverWarning)

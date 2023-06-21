@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "../../src/json/layout_line_segment.h"
 #include "../../src/json/json_encoder.h"
-#include "../../src/layout_resolver.h"
+#include "../../src/layout_content_alignment.h"
 #include "../../src/ast_node.h"
 #include "../../src/ast_node_pointer_vector.h"
 #include "../../src/ast_node_type.h"
