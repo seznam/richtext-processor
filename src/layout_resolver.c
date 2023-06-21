@@ -6,8 +6,10 @@
 #include "ast_node_type.h"
 #include "custom_command_layout_interpretation.h"
 #include "layout_content_alignment.h"
+#include "layout_line.h"
 #include "layout_line_segment.h"
 #include "layout_line_segment_vector.h"
+#include "layout_line_vector.h"
 #include "layout_resolver.h"
 #include "string.h"
 #include "vector.h"
@@ -1716,8 +1718,7 @@ bool caseInsensitive;
 	}
 }
 
-Vector_ofTypeImplementation(LayoutLine)
-    Vector_ofTypeImplementation(LayoutParagraph)
+Vector_ofTypeImplementation(LayoutParagraph)
     Vector_ofTypeImplementation(LayoutBlock)
     Vector_ofTypeImplementation(LayoutResolverWarning)
     Vector_ofTypeImplementation(LayoutContentAlignment)

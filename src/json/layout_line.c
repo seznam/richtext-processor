@@ -1,4 +1,5 @@
-#include "../layout_resolver.h"
+#include "../layout_line.h"
+#include "../layout_line_vector.h"
 #include "../string.h"
 #include "ast_node.h"
 #include "layout_line.h"
