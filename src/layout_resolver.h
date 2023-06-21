@@ -5,27 +5,10 @@
 #include "ast_node_pointer_vector.h"
 #include "bool.h"
 #include "custom_command_layout_interpretation.h"
-#include "layout_paragraph_vector.h"
+#include "layout_block_vector.h"
 #include "typed_vector.h"
 #include "vector.h"
 
-typedef enum LayoutBlockType {
-	LayoutBlockType_HEADING,
-	LayoutBlockType_FOOTING,
-	LayoutBlockType_MAIN_CONTENT,
-	LayoutBlockType_PAGE_BREAK,
-	LayoutBlockType_SAME_PAGE_START,
-	LayoutBlockType_SAME_PAGE_END,
-	LayoutBlockType_CUSTOM
-} LayoutBlockType;
-
-typedef struct LayoutBlock {
-	ASTNode *causingCommand;
-	LayoutBlockType type;
-	LayoutParagraphVector *paragraphs;
-} LayoutBlock;
-
-Vector_ofType(LayoutBlock)
 typedef enum LayoutResolverErrorCode {
 	LayoutResolverErrorCode_OK,
 	LayoutResolverErrorCode_NULL_NODES_PROVIDED,

@@ -5,6 +5,8 @@
 #include "ast_node_pointer_vector.h"
 #include "ast_node_type.h"
 #include "custom_command_layout_interpretation.h"
+#include "layout_block.h"
+#include "layout_block_type.h"
 #include "layout_content_alignment.h"
 #include "layout_line.h"
 #include "layout_line_segment.h"
@@ -1720,7 +1722,6 @@ bool caseInsensitive;
 	}
 }
 
-Vector_ofTypeImplementation(LayoutBlock)
-    Vector_ofTypeImplementation(LayoutResolverWarning)
+Vector_ofTypeImplementation(LayoutResolverWarning)
     Vector_ofTypeImplementation(LayoutContentAlignment)
     Vector_ofTypeImplementation(LayoutBlockType)

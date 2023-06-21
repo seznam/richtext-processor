@@ -42,6 +42,7 @@ check_layout_resolver_SOURCES	= $(SRCDIR)/layout_resolver.c \
 				  $(SRCDIR)/layout_line_segment_vector.c \
 				  $(SRCDIR)/layout_line_vector.c \
 				  $(SRCDIR)/layout_paragraph_vector.c \
+				  $(SRCDIR)/layout_block_vector.c \
 				  $(SRCDIR)/string.c $(SRCDIR)/vector.c \
 				  $(SRCDIR)/parser.c $(SRCDIR)/tokenizer.c \
 				  $(SRCDIR)/token_vector.c $(TESTDIR)/unit.c \
