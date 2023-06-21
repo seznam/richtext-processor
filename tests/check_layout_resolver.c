@@ -34,7 +34,7 @@ static char *_assert_result(char *fileName,
 			    unsigned int lineOfCode,
 			    ASTNodePointerVector * nodes,
 			    CustomCommandLayoutInterpretation
-			    customCommandHook(ASTNode *, bool),
+			    customCommandInterpreter(ASTNode *, bool),
 			    bool caseInsensitiveCommands,
 			    LayoutResolverResult ** resultPointer);
 
@@ -46,7 +46,7 @@ static char *_assert_success(char *fileName, unsigned int lineOfCode,
 static char *_assert_warning(char *fileName, unsigned int lineOfCode,
 			     ASTNodePointerVector * nodes,
 			     CustomCommandLayoutInterpretation
-			     customCommandHook(ASTNode *, bool),
+			     customCommandInterpreter(ASTNode *, bool),
 			     bool caseInsensitiveCommands,
 			     LayoutResolverWarningCode warningCode,
 			     ASTNode * warningCause);
@@ -55,7 +55,7 @@ static char *_assert_error(char *fileName,
 			   unsigned int lineOfCode,
 			   ASTNodePointerVector * nodes,
 			   CustomCommandLayoutInterpretation
-			   customCommandHook(ASTNode *, bool),
+			   customCommandInterpreter(ASTNode *, bool),
 			   bool caseInsensitiveCommands,
 			   LayoutResolverErrorCode errorCode,
 			   ASTNode * errorLocation);
@@ -141,7 +141,7 @@ static char *stringifyASTNode(ASTNode * node);
 
 static LayoutResolverResult *process(const char *richtext,
 				     CustomCommandLayoutInterpretation
-				     customCommandHook(ASTNode *, bool),
+				     customCommandInterpreter(ASTNode *, bool),
 				     bool caseInsensitiveCommands);
 
 static ASTNode *makeNode(unsigned long byteIndex, unsigned long codepointIndex,
@@ -159,11 +159,11 @@ _testingCommandInterpreter(ASTNode * node, bool caseInsensitive);
 static bool string_equals(string * string1, string * string2,
 			  bool caseInsensitive);
 
-#define assert_result(nodes, customCommandHook, caseInsensitiveCommands,\
+#define assert_result(nodes, customCommandInterpreter, caseInsensitiveCommands,\
 		      resultPointer)\
 do {\
 	char *_assert_failure =\
-	    _assert_result(__FILE__, __LINE__, nodes, customCommandHook,\
+	    _assert_result(__FILE__, __LINE__, nodes, customCommandInterpreter,\
 			   caseInsensitiveCommands, resultPointer);\
 	if (_assert_failure != NULL) {\
 		return _assert_failure;\
@@ -180,23 +180,23 @@ do {\
 	}\
 } while (false)
 
-#define assert_warning(nodes, customCommandHook, caseInsensitiveCommands,\
-		       warningCode, warningCause)\
+#define assert_warning(nodes, customCommandInterpreter,\
+		       caseInsensitiveCommands, warningCode, warningCause)\
 do {\
 	char *_assert_failure =\
-	    _assert_warning(__FILE__, __LINE__, nodes, customCommandHook,\
-			    caseInsensitiveCommands, warningCode,\
-			    warningCause);\
+	    _assert_warning(__FILE__, __LINE__, nodes,\
+			    customCommandInterpreter, caseInsensitiveCommands, \
+			    warningCode, warningCause);\
 	if (_assert_failure != NULL) {\
 		return _assert_failure;\
 	}\
 } while (false)
 
-#define assert_error(nodes, customCommandHook, caseInsensitiveCommands,\
+#define assert_error(nodes, customCommandInterpreter, caseInsensitiveCommands,\
 		     errorCode, errorLocation)\
 do {\
 	char *_assert_failure =\
-	    _assert_error(__FILE__, __LINE__, nodes, customCommandHook,\
+	    _assert_error(__FILE__, __LINE__, nodes, customCommandInterpreter,\
 	    caseInsensitiveCommands, errorCode, errorLocation);\
 	if (_assert_failure != NULL) {\
 		return _assert_failure;\
@@ -255,7 +255,7 @@ static CustomCommandLayoutInterpretation _customCommandRejector(ASTNode * node,
 static CustomCommandLayoutInterpretation
 _invalidCustomCommandInterpreter(ASTNode * node, bool caseInsensitive);
 
-START_TEST(resolveLayout_returnsErrorIfCustomCommandHookRejectsCommand)
+START_TEST(resolveLayout_returnsErrorIfCustomCommandInterpreterRejectsCommand)
 {
 	ASTNode *children[1];
 	ASTNode *node;
@@ -268,8 +268,8 @@ START_TEST(resolveLayout_returnsErrorIfCustomCommandHookRejectsCommand)
 		     LayoutResolverErrorCode_INVALID_CUSTOM_COMMAND, node);
 END_TEST}
 
-START_TEST(resolveLayout_returnsErrorIfCustomCommandHookReturnsInvalidValue)
-{
+START_TEST
+    (resolveLayout_returnsErrorIfCustomCommandInterpreterReturnsInvalidValue) {
 	LayoutResolverErrorCode INVALID_INTERPRETATION_ERROR =
 	    LayoutResolverErrorCode_INVALID_CUSTOM_COMMAND_INTERPRETATION;
 	ASTNode *children[1];
@@ -1534,7 +1534,7 @@ START_TEST(resolveLayout_supportsProcessingCommandsInCaseInsensitiveWay)
 			    result->result.blocks);
 END_TEST}
 
-START_TEST(resolveLayout_supportsCustomCommandHooks)
+START_TEST(resolveLayout_supportsCustomCommandInterpreters)
 {
 	char *input =
 	    "text1<x-block>text2</x-block>text3<x-paragraph>text4</x-paragraph>text5<x-isolated-paragraph>text6</x-isolated-paragraph>text7";
@@ -1857,9 +1857,10 @@ static void all_tests()
 	runTest(resolveLayout_returnsErrorForNullNodes);
 	runTest(resolveLayout_returnsErrorForNonRootNodes);
 	runTest(resolveLayout_returnsErrorForUnsupportedNodeType);
-	runTest(resolveLayout_returnsErrorIfCustomCommandHookRejectsCommand);
 	runTest
-	    (resolveLayout_returnsErrorIfCustomCommandHookReturnsInvalidValue);
+	    (resolveLayout_returnsErrorIfCustomCommandInterpreterRejectsCommand);
+	runTest
+	    (resolveLayout_returnsErrorIfCustomCommandInterpreterReturnsInvalidValue);
 	runTest(resolveLayout_returnsErrorForTooHighLeftOutdentLevel);
 	runTest(resolveLayout_returnsErrorForTooHighLeftIndentLevel);
 	runTest(resolveLayout_returnsErrorForTooHighRightOutdentLevel);
@@ -1891,7 +1892,7 @@ static void all_tests()
 	    (resolveLayout_marksContentAfterTopLevelParagraphAsImplicitParagraph);
 	runTest(resolveLayout_processesIncorrectlyCasedCommandsAsNoOps);
 	runTest(resolveLayout_supportsProcessingCommandsInCaseInsensitiveWay);
-	runTest(resolveLayout_supportsCustomCommandHooks);
+	runTest(resolveLayout_supportsCustomCommandInterpreters);
 	runTest(resolveLayout_preservesCommandsAsSegmentContent);
 	runTest(resolveLayout_warnsAboutNewPageInsideSamePage);
 	runTest(resolveLayout_warnsAboutNestedSamePageInsideSamePage);
@@ -1908,18 +1909,20 @@ int main()
 	return tests_failed;
 }
 
-static char *_assert_result(fileName, lineOfCode, nodes, customCommandHook,
-			    caseInsensitiveCommands, resultPointer)
+static char *_assert_result(fileName, lineOfCode, nodes,
+			    customCommandInterpreter, caseInsensitiveCommands,
+			    resultPointer)
 char *fileName;
 unsigned int lineOfCode;
 ASTNodePointerVector *nodes;
-CustomCommandLayoutInterpretation customCommandHook(ASTNode *, bool);
+CustomCommandLayoutInterpretation customCommandInterpreter(ASTNode *, bool);
 bool caseInsensitiveCommands;
 LayoutResolverResult **resultPointer;
 {
 	char *failure;
 	*resultPointer =
-	    resolveLayout(nodes, customCommandHook, caseInsensitiveCommands);
+	    resolveLayout(nodes, customCommandInterpreter,
+			  caseInsensitiveCommands);
 	failure =
 	    unit_assert(fileName, lineOfCode, *resultPointer != NULL,
 			"Expected a non-NULL result");
@@ -1991,12 +1994,13 @@ unsigned long expectedBlocks;
 			   blocksError);
 }
 
-static char *_assert_warning(fileName, lineOfCode, nodes, customCommandHook,
-			     caseInsensitiveCommands, warningCode, warningCause)
+static char *_assert_warning(fileName, lineOfCode, nodes,
+			     customCommandInterpreter, caseInsensitiveCommands,
+			     warningCode, warningCause)
 char *fileName;
 unsigned int lineOfCode;
 ASTNodePointerVector *nodes;
-CustomCommandLayoutInterpretation customCommandHook(ASTNode *, bool);
+CustomCommandLayoutInterpretation customCommandInterpreter(ASTNode *, bool);
 bool caseInsensitiveCommands;
 LayoutResolverWarningCode warningCode;
 ASTNode *warningCause;
@@ -2014,8 +2018,9 @@ ASTNode *warningCause;
 	char *failure = NULL;
 
 	failure =
-	    _assert_result(fileName, lineOfCode, nodes, customCommandHook,
-			   caseInsensitiveCommands, &result);
+	    _assert_result(fileName, lineOfCode, nodes,
+			   customCommandInterpreter, caseInsensitiveCommands,
+			   &result);
 	if (failure != NULL) {
 		return failure;
 	}
@@ -2064,12 +2069,13 @@ ASTNode *warningCause;
 	return NULL;
 }
 
-static char *_assert_error(fileName, lineOfCode, nodes, customCommandHook,
-			   caseInsensitiveCommands, errorCode, errorLocation)
+static char *_assert_error(fileName, lineOfCode, nodes,
+			   customCommandInterpreter, caseInsensitiveCommands,
+			   errorCode, errorLocation)
 char *fileName;
 unsigned int lineOfCode;
 ASTNodePointerVector *nodes;
-CustomCommandLayoutInterpretation customCommandHook(ASTNode *, bool);
+CustomCommandLayoutInterpretation customCommandInterpreter(ASTNode *, bool);
 bool caseInsensitiveCommands;
 LayoutResolverErrorCode errorCode;
 ASTNode *errorLocation;
@@ -2090,8 +2096,9 @@ ASTNode *errorLocation;
 	char *failure;
 
 	failure =
-	    _assert_result(fileName, lineOfCode, nodes, customCommandHook,
-			   caseInsensitiveCommands, &result);
+	    _assert_result(fileName, lineOfCode, nodes,
+			   customCommandInterpreter, caseInsensitiveCommands,
+			   &result);
 	if (failure != NULL) {
 		return failure;
 	}
@@ -2981,10 +2988,10 @@ static char *STRINGIFIED_LAYOUT_BLOCK_TYPE[] = {
 	"LayoutBlockType_CUSTOM"
 };
 
-static LayoutResolverResult *process(richtext, customCommandHook,
+static LayoutResolverResult *process(richtext, customCommandInterpreter,
 				     caseInsensitiveCommands)
 const char *richtext;
-CustomCommandLayoutInterpretation customCommandHook(ASTNode *, bool);
+CustomCommandLayoutInterpretation customCommandInterpreter(ASTNode *, bool);
 bool caseInsensitiveCommands;
 {
 	ParserResult *parserResult;
@@ -2999,8 +3006,8 @@ bool caseInsensitiveCommands;
 		return NULL;
 	}
 
-	return resolveLayout(parserResult->result.nodes, customCommandHook,
-			     caseInsensitiveCommands);
+	return resolveLayout(parserResult->result.nodes,
+			     customCommandInterpreter, caseInsensitiveCommands);
 }
 
 static ASTNode *makeNode(byteIndex, codepointIndex,

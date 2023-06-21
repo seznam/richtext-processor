@@ -92,15 +92,15 @@ typedef enum CommandLayoutInterpretation {
 	/*
 	 * The command has no effect, layout, formatting or otherwise, and will
 	 * be replaced by its children. This is the default behavior for custom
-	 * commands if no custom command hook is provided.
+	 * commands if no custom command interpreter is provided.
 	 */
 	CommandLayoutInterpretation_NO_OP,
 
 	/*
 	 * The command is not a standard richtext formatting command but a
 	 * custom one. Its layout interpretation will be determined by a custom
-	 * command hook function, if provided, otherwise it will be treated as a
-	 * No-op command.
+	 * command interpreter function, if provided, otherwise it will be
+	 * treated as a No-op command.
 	 */
 	CommandLayoutInterpretation_CUSTOM,
 
@@ -123,7 +123,8 @@ typedef enum CommandLayoutInterpretation {
 Vector_ofType(LayoutContentAlignment)
     Vector_ofType(LayoutBlockType)
 typedef struct LayoutResolverState {
-	CustomCommandLayoutInterpretation(*customCommandHook) (ASTNode *, bool);
+	CustomCommandLayoutInterpretation(*customCommandInterpreter) (ASTNode *,
+								      bool);
 	bool caseInsensitiveCommands;
 	ASTNodePointerVector *rootNodes;
 	LayoutBlockTypeVector *blockTypeStack;
@@ -186,7 +187,7 @@ static bool nodeHasParentOfType(ASTNode * node, string * type,
 static CommandLayoutInterpretation
 getCommandLayoutInterpretation(ASTNode * command,
 			       CustomCommandLayoutInterpretation
-			       customCommandHook(ASTNode *, bool),
+			       customCommandInterpreter(ASTNode *, bool),
 			       bool caseInsensitive);
 
 static CommandLayoutInterpretation getLayoutInterpretation(LayoutResolverState *
@@ -207,10 +208,10 @@ static bool string_equals(string * string1, string * string2,
 
 static string *COMMAND_Comment = NULL;	/* The rest is declared bellow */
 
-LayoutResolverResult *resolveLayout(nodes, customCommandHook,
+LayoutResolverResult *resolveLayout(nodes, customCommandInterpreter,
 				    caseInsensitiveCommands)
 ASTNodePointerVector *nodes;
-CustomCommandLayoutInterpretation customCommandHook(ASTNode *, bool);
+CustomCommandLayoutInterpretation customCommandInterpreter(ASTNode *, bool);
 bool caseInsensitiveCommands;
 {
 	LayoutResolverState state;
@@ -404,7 +405,7 @@ bool caseInsensitiveCommands;
 		segment.causingCommand = *nodes->items;
 	}
 
-	state.customCommandHook = customCommandHook;
+	state.customCommandInterpreter = customCommandInterpreter;
 	state.caseInsensitiveCommands = caseInsensitiveCommands;
 	state.rootNodes = nodes;
 	state.blockTypeStack = blockTypeStack;
@@ -1472,14 +1473,15 @@ LayoutResolverState *state;
 ASTNode *commandNode;
 {
 	return getCommandLayoutInterpretation(commandNode,
-					      state->customCommandHook,
+					      state->customCommandInterpreter,
 					      state->caseInsensitiveCommands);
 }
 
 static CommandLayoutInterpretation
-getCommandLayoutInterpretation(command, customCommandHook, caseInsensitive)
+getCommandLayoutInterpretation(command, customCommandInterpreter,
+			       caseInsensitive)
 ASTNode *command;
-CustomCommandLayoutInterpretation customCommandHook(ASTNode *, bool);
+CustomCommandLayoutInterpretation customCommandInterpreter(ASTNode *, bool);
 bool caseInsensitive;
 {
 	CommandLayoutInterpretation interpretation;
@@ -1492,11 +1494,12 @@ bool caseInsensitive;
 		return interpretation;
 	}
 
-	if (customCommandHook == NULL) {
+	if (customCommandInterpreter == NULL) {
 		return CommandLayoutInterpretation_NO_OP;
 	}
 
-	customInterpretation = customCommandHook(command, caseInsensitive);
+	customInterpretation =
+	    customCommandInterpreter(command, caseInsensitive);
 	switch (customInterpretation) {
 	case CustomCommandLayoutInterpretation_NEW_BLOCK:
 		return CommandLayoutInterpretation_NEW_BLOCK;

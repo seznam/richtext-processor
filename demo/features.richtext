@@ -49,8 +49,8 @@ mathematical formula.
   another paragraph.<nl>
   The <lt>No-op> command has <No-op>no effect</No-op>, as is the case with any
   <X-Custom>custom commands not recognized by the processor</X-Custom>. The
-  processor supports providing a custom command hook function for intrepreting
-  any non-standard commands.
+  processor supports providing a custom command interpreter function for
+  intrepreting any non-standard commands.
 </Paragraph>
 
 <Comment>

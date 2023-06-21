@@ -140,7 +140,7 @@ typedef struct LayoutResolverResult {
 
 LayoutResolverResult *resolveLayout(ASTNodePointerVector * nodes,
 				    CustomCommandLayoutInterpretation
-				    customCommandHook(ASTNode *, bool),
+				    customCommandInterpreter(ASTNode *, bool),
 				    bool caseInsensitiveCommands);
 
 void LayoutResolverResult_free(LayoutResolverResult * result);
