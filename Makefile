@@ -82,6 +82,11 @@ json_check_json_value_SOURCES	= $(SRCDIR)/json/json_value.c \
 				  $(TESTDIR)/unit.c \
 				  $(TESTDIR)/json/check_json_value.c
 json_check_json_value_CFLAGS	= $(check_CFLAGS)
+json_check_layout_block_type_SOURCES = \
+	$(SRCDIR)/json/layout_block_type.c $(SRCDIR)/json/json_value.c \
+	$(SRCDIR)/string.c $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
+	$(TESTDIR)/json/check_layout_block_type.c
+json_check_layout_block_type_CFLAGS = $(check_CFLAGS)
 json_check_layout_content_alignment_SOURCES = \
 	$(SRCDIR)/json/layout_content_alignment.c $(SRCDIR)/json/json_value.c \
 	$(SRCDIR)/ast_node_pointer_vector.c $(SRCDIR)/json/json_encoder.c \
