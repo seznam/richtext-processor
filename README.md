@@ -16,7 +16,7 @@ specification itself), but also supports a more strict behavior.
   and `>`, while the RFC states that a command name must be up to 40
   characters, all of which must be 'in US-ASCII, restricted to the alphanumeric
   and hyphen ("-") characters' (these constraints can be enforced by providing
-  a custom command hook if desired).
+  a custom command interpreter if desired).
 - Command names can be processed in a case-sensitive way if desired. The
   default behavior is to treat command names as case-insensitive, so that the
   implementation is compliant with the standard. The standard command names are
