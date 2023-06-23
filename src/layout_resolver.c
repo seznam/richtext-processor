@@ -174,10 +174,12 @@ static LayoutResolverErrorCode newBlock(LayoutResolverState * state,
 
 static LayoutResolverErrorCode newParagraph(LayoutResolverState * state,
 					    ASTNode * node,
+					    CommandLayoutInterpretation layout,
 					    ASTNode * exitedNode);
 
 static LayoutResolverErrorCode newLine(LayoutResolverState * state,
-				       ASTNode * node);
+				       ASTNode * node,
+				       CommandLayoutInterpretation layout);
 
 static LayoutResolverErrorCode newSegment(LayoutResolverState * state,
 					  ASTNode * node);
@@ -723,13 +725,13 @@ CommandLayoutInterpretation layout;
 
 	case CommandLayoutInterpretation_NEW_PARAGRAPH:
 	case CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH:
-		errorCode = newParagraph(state, node, NULL);
+		errorCode = newParagraph(state, node, layout, NULL);
 		break;
 
 	case CommandLayoutInterpretation_NEW_LINE:
 	case CommandLayoutInterpretation_NEW_CUSTOM_LINE:
 	case CommandLayoutInterpretation_NEW_ISOLATED_LINE:
-		errorCode = newLine(state, node);
+		errorCode = newLine(state, node, layout);
 		break;
 
 	case CommandLayoutInterpretation_NEW_LINE_SEGMENT:
@@ -822,11 +824,11 @@ CommandLayoutInterpretation layout;
 		break;
 
 	case CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH:
-		errorCode = newParagraph(state, upcomingNode, node);
+		errorCode = newParagraph(state, upcomingNode, layout, node);
 		break;
 
 	case CommandLayoutInterpretation_NEW_ISOLATED_LINE:
-		errorCode = newLine(state, upcomingNode);
+		errorCode = newLine(state, upcomingNode, layout);
 		break;
 
 	case CommandLayoutInterpretation_NEW_LINE_SEGMENT:
@@ -893,7 +895,7 @@ ASTNode *exitedNode;
 	LayoutBlockVector *grownBlocks = NULL;
 	LayoutResolverErrorCode OOM_FOR_PARAGRAPHS_ERROR =
 	    LayoutResolverErrorCode_OUT_OF_MEMORY_FOR_PARAGRAPHS;
-	errorCode = newParagraph(state, node, exitedNode);
+	errorCode = newParagraph(state, node, layout, exitedNode);
 	if (errorCode != LayoutResolverErrorCode_OK) {
 		return errorCode;
 	}
@@ -970,9 +972,10 @@ ASTNode *exitedNode;
 	return LayoutResolverErrorCode_OK;
 }
 
-static LayoutResolverErrorCode newParagraph(state, node, exitedNode)
+static LayoutResolverErrorCode newParagraph(state, node, layout, exitedNode)
 LayoutResolverState *state;
 ASTNode *node;
+CommandLayoutInterpretation layout;
 ASTNode *exitedNode;
 {
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
@@ -982,7 +985,7 @@ ASTNode *exitedNode;
 	LayoutParagraphVector *grownParagraphs = NULL;
 	LayoutResolverErrorCode OOM_FOR_PARAGRAPHS_ERROR =
 	    LayoutResolverErrorCode_OUT_OF_MEMORY_FOR_PARAGRAPHS;
-	errorCode = newLine(state, node);
+	errorCode = newLine(state, node, layout);
 	if (errorCode != LayoutResolverErrorCode_OK) {
 		return errorCode;
 	}
@@ -1004,7 +1007,11 @@ ASTNode *exitedNode;
 		}
 	}
 
-	if (state->paragraph->lines->size.length > 0) {
+	if (state->paragraph->lines->size.length > 0
+	    || (exitedNode == state->paragraph->causingCommand
+		&& (layout == CommandLayoutInterpretation_NEW_PARAGRAPH
+		    || layout ==
+		    CommandLayoutInterpretation_NEW_ISOLATED_PARAGRAPH))) {
 		grownParagraphs =
 		    LayoutParagraphVector_append(state->paragraphs,
 						 state->paragraph);
@@ -1034,9 +1041,10 @@ ASTNode *exitedNode;
 	return LayoutResolverErrorCode_OK;
 }
 
-static LayoutResolverErrorCode newLine(state, node)
+static LayoutResolverErrorCode newLine(state, node, layout)
 LayoutResolverState *state;
 ASTNode *node;
+CommandLayoutInterpretation layout;
 {
 	LayoutResolverErrorCode errorCode = LayoutResolverErrorCode_OK;
 	LayoutLineSegmentVector *grownSegments = NULL;
@@ -1065,7 +1073,10 @@ ASTNode *node;
 		}
 	}
 
-	if (state->line->segments->size.length > 0) {
+	if (state->line->segments->size.length > 0
+	    || layout == CommandLayoutInterpretation_NEW_LINE
+	    || layout == CommandLayoutInterpretation_NEW_CUSTOM_LINE
+	    || layout == CommandLayoutInterpretation_NEW_ISOLATED_LINE) {
 		grownLines = LayoutLineVector_append(state->lines, state->line);
 		if (grownLines == NULL) {
 			return LayoutResolverErrorCode_OUT_OF_MEMORY_FOR_LINES;

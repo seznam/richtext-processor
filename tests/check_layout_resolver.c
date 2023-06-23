@@ -717,6 +717,9 @@ LayoutLineSegment_make(&causingCommand,\
 		       fontUnderlinedLevel, fontFixedLevel,\
 		       otherSegmentMarkers, content)
 
+#define make_segments0()\
+LayoutLineSegmentVector_new(0, 0)
+
 #define make_segments1(segment1)\
 LayoutLineSegmentVector_of1(segment1)
 
@@ -734,6 +737,9 @@ LayoutLineSegmentVector_of5(segment1, segment2, segment3, segment4, segment5)
 
 #define make_line(causingCommand, segments)\
 LayoutLine_make(&causingCommand, segments)
+
+#define make_lines0()\
+LayoutLineVector_new(0, 0)
 
 #define make_lines1(line1)\
 LayoutLineVector_of1(line1)
@@ -1188,6 +1194,44 @@ START_TEST(resolveLayout_processesExcerptAndSignatureAsSegmentMarkers)
 			    result->result.blocks);
 END_TEST}
 
+START_TEST(resolveLayout_preservesMultipleExplicitEmptyLines)
+{
+	char *input = "text<nl><nl>text2";
+	LayoutResolverResult *result = process(input, NULL, false);
+	ASTNode nodes[4];
+	LayoutLineSegment segments[2];
+	LayoutLine lines[2];
+	LayoutParagraph paragraphs[1];
+	LayoutBlock blocks[1];
+
+	nodes[0] = make_node(0, 0, 0, TEXT, "text");
+	nodes[1] = make_node(4, 4, 1, COMMAND, "nl");
+	nodes[2] = make_node(8, 8, 2, COMMAND, "nl");
+	nodes[3] = make_node(12, 12, 3, TEXT, "text2");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[0]));
+	segments[1] =
+	    make_segment(nodes[2], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[3]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+	lines[1] = make_line(nodes[1], make_segments0());
+	lines[2] = make_line(nodes[2], make_segments1(segments[1]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT,
+			   make_lines3(lines[0], lines[1], lines[2]));
+
+	blocks[0] =
+	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
 START_TEST(resolveLayout_resolvesImplicitAndExplicitParagraphs)
 {
 	char *input = "<Paragraph>text1</Paragraph><Footing>text2</Footing>";
@@ -1262,6 +1306,47 @@ START_TEST(resolveLayout_processesMultilineMultiNodeTextInParagraph)
 
 	blocks[0] =
 	    make_block(nodes[0], MAIN_CONTENT, make_paragraphs1(paragraphs[0]));
+
+	assert_success(result, 0, 1);
+	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
+			    result->result.blocks);
+END_TEST}
+
+START_TEST(resolveLayout_preservesMultipleExplicitParagraphs)
+{
+	char *input = "text<Paragraph></Paragraph><Paragraph>text2</Paragraph>";
+	LayoutResolverResult *result = process(input, NULL, false);
+	ASTNode nodes[4];
+	LayoutLineSegment segments[2];
+	LayoutLine lines[2];
+	LayoutParagraph paragraphs[3];
+	LayoutBlock blocks[1];
+
+	nodes[0] = make_node(0, 0, 0, TEXT, "text");
+	nodes[1] = make_node(4, 4, 1, COMMAND, "Paragraph");
+	nodes[2] = make_node(27, 27, 3, COMMAND, "Paragraph");
+	nodes[3] = make_node(38, 38, 4, TEXT, "text2");
+
+	segments[0] =
+	    make_segment(nodes[0], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[0]));
+	segments[1] =
+	    make_segment(nodes[2], DEFAULT, 0, 0, 0, 0, 0, 0, 0, make_nodes0(),
+			 make_nodes1(nodes[3]));
+
+	lines[0] = make_line(nodes[0], make_segments1(segments[0]));
+	lines[1] = make_line(nodes[2], make_segments1(segments[1]));
+
+	paragraphs[0] =
+	    make_paragraph(nodes[0], IMPLICIT, make_lines1(lines[0]));
+	paragraphs[1] = make_paragraph(nodes[1], EXPLICIT, make_lines0());
+	paragraphs[2] =
+	    make_paragraph(nodes[2], EXPLICIT, make_lines1(lines[1]));
+
+	blocks[0] =
+	    make_block(nodes[0], MAIN_CONTENT,
+		       make_paragraphs3(paragraphs[0], paragraphs[1],
+					paragraphs[2]));
 
 	assert_success(result, 0, 1);
 	assert_blocks_match(LayoutBlockVector_of1(blocks[0]),
@@ -1736,12 +1821,14 @@ END_TEST}
 #undef make_lines3
 #undef make_lines2
 #undef make_lines1
+#undef make_lines0
 #undef make_line
 #undef make_segments5
 #undef make_segments4
 #undef make_segments3
 #undef make_segments2
 #undef make_segments1
+#undef make_segments0
 #undef make_segment
 #undef make_nodes5
 #undef make_nodes4
@@ -1893,8 +1980,10 @@ static void all_tests()
 	runTest(resolveLayout_processesFontSizeChanges);
 	runTest(resolveLayout_processesNestedSubscriptAndSuperscript);
 	runTest(resolveLayout_processesExcerptAndSignatureAsSegmentMarkers);
+	runTest(resolveLayout_preservesMultipleExplicitEmptyLines);
 	runTest(resolveLayout_resolvesImplicitAndExplicitParagraphs);
 	runTest(resolveLayout_processesMultilineMultiNodeTextInParagraph);
+	runTest(resolveLayout_preservesMultipleExplicitParagraphs);
 	runTest(resolveLayout_handlesNestedSamePageCorrectly);
 	runTest(resolveLayout_skipsOverNoOpCommands);
 	runTest(resolveLayout_returnsEmptyVectorForEmptyInput);
@@ -2351,7 +2440,7 @@ LayoutParagraph paragraph2;
 	char *stringifiedType2 = paragraph2.type >= 0 && paragraph2.type < 2 ?
 	    STRINGIFIED_LAYOUT_PARAGRAPH_TYPE[paragraph2.type] : "<UNKNOWN>";
 	char *causingCommandErrorFormat =
-	    "The causing command is not equal, it was %s in the 1st line, but %s in the 2nd line";
+	    "The causing command is not equal, it was %s in the 1st paragraph, but %s in the 2nd paragraph";
 	char *causingCommandError =
 	    malloc(sizeof(char) *
 		   (strlen(causingCommandErrorFormat) +
