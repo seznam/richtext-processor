@@ -82,6 +82,24 @@ json_check_json_value_SOURCES	= $(SRCDIR)/json/json_value.c \
 				  $(TESTDIR)/unit.c \
 				  $(TESTDIR)/json/check_json_value.c
 json_check_json_value_CFLAGS	= $(check_CFLAGS)
+json_check_layout_block_SOURCES	= $(SRCDIR)/json/layout_block.c \
+				  $(SRCDIR)/json/json_value.c \
+				  $(SRCDIR)/json/ast_node.c \
+				  $(SRCDIR)/json/layout_block_type.c \
+				  $(SRCDIR)/json/layout_paragraph.c \
+				  $(SRCDIR)/json/layout_paragraph_type.c \
+				  $(SRCDIR)/json/layout_line.c \
+				  $(SRCDIR)/json/layout_line_segment.c \
+				  $(SRCDIR)/json/layout_content_alignment.c \
+				  $(SRCDIR)/json/json_encoder.c \
+				  $(SRCDIR)/ast_node_pointer_vector.c \
+				  $(SRCDIR)/layout_block_vector.c \
+				  $(SRCDIR)/layout_line_vector.c \
+				  $(SRCDIR)/layout_paragraph_vector.c \
+				  $(SRCDIR)/string.c $(SRCDIR)/vector.c \
+				  $(TESTDIR)/unit.c \
+				  $(TESTDIR)/json/check_layout_block.c
+json_check_layout_block_CFLAGS	= $(check_CFLAGS)
 json_check_layout_block_type_SOURCES = \
 	$(SRCDIR)/json/layout_block_type.c $(SRCDIR)/json/json_value.c \
 	$(SRCDIR)/string.c $(SRCDIR)/vector.c $(TESTDIR)/unit.c \
