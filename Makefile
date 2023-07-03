@@ -22,7 +22,7 @@ INDENTFLAGS = -nbad -bap -nbc -bbo -hnl -br -brs -c33 -cd33 -ncdb -ce -ci4 \
 
 SRCDIR = src
 OBJDIR = obj
-SRCS   = $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/json/*.c)
+SRCS   = $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/*/*.c)
 OBJS   = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
 
 TARGET  = richtext
@@ -32,11 +32,14 @@ TESTDIR = tests
 TESTS = $(patsubst $(TESTDIR)/%,%,\
                 $(patsubst %.c,%, \
 			$(wildcard $(TESTDIR)/check_*.c) \
-			$(wildcard $(TESTDIR)/json/check_*.c) \
+			$(wildcard $(TESTDIR)/*/check_*.c) \
 		)\
         )
-check_PROGRAMS = $(TESTS)
-check_CFLAGS = $(CFLAGS)
+check_PROGRAMS	= $(TESTS)
+check_CFLAGS	= $(CFLAGS)
+check_SOURCES	= $(SRCDIR)/*_vector.c $(SRCDIR)/layout_resolver.c \
+		  $(SRCDIR)/parser.c $(SRCDIR)/string.c $(SRCDIR)/tokenizer.c \
+		  $(SRCDIR)/vector.c $(SRCDIR)/*/*.c $(TESTDIR)/unit.c
 check_layout_resolver_SOURCES	= $(SRCDIR)/layout_resolver.c \
 				  $(SRCDIR)/ast_node_pointer_vector.c \
 				  $(SRCDIR)/layout_line_segment_vector.c \
@@ -151,6 +154,9 @@ json_check_layout_paragraph_type_SOURCES = \
 	$(SRCDIR)/string.c $(TESTDIR)/unit.c \
 	$(TESTDIR)/json/check_layout_paragraph_type.c
 json_check_layout_paragraph_type_CFLAGS = $(check_CFLAGS)
+utf8_check_utf8_encoder_SOURCES	= $(check_SOURCES) \
+				  $(TESTDIR)/utf8/check_utf8_encoder.c
+utf8_check_utf8_encoder_CFLAGS	= $(check_CFLAGS)
 
 .PHONY: all
 
@@ -168,12 +174,12 @@ clean:
 	$(RM) \
 		$(SRCDIR)/*.h~ \
 		$(SRCDIR)/*.c~ \
-		$(SRCDIR)/json/*.h~ \
-		$(SRCDIR)/json/*.c~ \
+		$(SRCDIR)/*/*.h~ \
+		$(SRCDIR)/*/*.c~ \
 		$(TESTDIR)/*.h~ \
 		$(TESTDIR)/*.c~ \
-		$(TESTDIR)/json/*.h~ \
-		$(TESTDIR)/json/*.c~
+		$(TESTDIR)/*/*.h~ \
+		$(TESTDIR)/*/*.c~
 
 distclean:
 	$(RM) $(TARGET)
@@ -188,6 +194,7 @@ test: check
 check:
 	@mkdir -p /tmp/richtext-processor/tests/
 	@mkdir -p /tmp/richtext-processor/tests/json/
+	@mkdir -p /tmp/richtext-processor/tests/utf8/
 	$(foreach program,$(check_PROGRAMS), \
 		echo "Compiling $(program)..." && \
 		$(CC) $($(subst /,_,$(program))_CFLAGS) $(LDFLAGS) \
@@ -199,14 +206,15 @@ indent:
 	indent $(INDENTFLAGS) \
 		$(SRCDIR)/*.h \
 		$(SRCDIR)/*.c \
-		$(SRCDIR)/json/*.h \
-		$(SRCDIR)/json/*.c \
+		$(SRCDIR)/*/*.h \
+		$(SRCDIR)/*/*.c \
 		$(TESTDIR)/*.h \
 		$(TESTDIR)/*.c \
-		$(TESTDIR)/json/*.c
+		$(TESTDIR)/*/*.c
 
 $(DEPDIR) $(OBJDIR):
 	@mkdir -p $@ $@/json
+	@mkdir -p $@ $@/utf8
 
 DEPFILES := $(SRCS:$(SRCDIR)/%.c=$(DEPDIR)/%.d)
 $(DEPFILES):
