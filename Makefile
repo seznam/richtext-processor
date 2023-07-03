@@ -157,6 +157,9 @@ json_check_layout_paragraph_type_CFLAGS = $(check_CFLAGS)
 utf8_check_utf8_encoder_SOURCES	= $(check_SOURCES) \
 				  $(TESTDIR)/utf8/check_utf8_encoder.c
 utf8_check_utf8_encoder_CFLAGS	= $(check_CFLAGS)
+utf8_check_iso_8859_SOURCES	= $(check_SOURCES) \
+				  $(TESTDIR)/utf8/check_iso_8859.c
+utf8_check_iso_8859_CFLAGS	= $(check_CFLAGS)
 
 .PHONY: all
 
