@@ -1,0 +1,46 @@
+#include "../string.h"
+#include "iso_8859.h"
+#include "iso_8859_2.h"
+
+static unsigned long decodeIso88592Byte(unsigned int byte);
+
+static unsigned long EXTENDED_CHARS_CODEPOINTS[128];
+
+string *iso88592ToUtf8(text)
+string *text;
+{
+	return transcodeIso8859ToUtf8(text, decodeIso88592Byte);
+}
+
+static unsigned long decodeIso88592Byte(byte)
+unsigned int byte;
+{
+	unsigned long codepoint = EXTENDED_CHARS_CODEPOINTS[byte - 0x80];
+	return codepoint != 0 ? codepoint : byte;
+}
+
+/* https://en.wikipedia.org/wiki/ISO/IEC_8859-2 */
+static unsigned long EXTENDED_CHARS_CODEPOINTS[] = {
+	/* 0x8x */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	/* 0x9x */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	/* 0xAx */
+	0, 0x104, 0x2d8, 0x141, 0, 0x13d, 0x15a, 0,
+	0, 0x160, 0x15e, 0x164, 0x179, 0, 0x17d, 0x17b,
+	/* 0xBx */
+	0, 0x105, 0x2db, 0x142, 0, 0x13e, 0x15b, 0x2c7,
+	0, 0x161, 0x15f, 0x165, 0x17a, 0x2dd, 0x17e, 0x17c,
+	/* 0xCx */
+	0x154, 0, 0, 0x102, 0, 0x139, 0x106, 0,
+	0x10c, 0, 0x118, 0, 0x11a, 0, 0, 0x10e,
+	/* 0xDx */
+	0x110, 0x143, 0x147, 0, 0, 0x150, 0, 0,
+	0x158, 0x16e, 0, 0x170, 0, 0, 0x162, 0,
+	/* 0xEx */
+	0x155, 0, 0, 0x103, 0, 0x13a, 0x107, 0,
+	0x10d, 0, 0x119, 0, 0x11b, 0, 0, 0x10f,
+	/* 0xFx */
+	0x111, 0x144, 0x148, 0, 0, 0x151, 0, 0,
+	0x159, 0x16f, 0, 0x171, 0, 0, 0x163, 0x2d9
+};
