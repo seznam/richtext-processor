@@ -37,9 +37,8 @@ TESTS = $(patsubst $(TESTDIR)/%,%,\
         )
 check_PROGRAMS	= $(TESTS)
 check_CFLAGS	= $(CFLAGS)
-check_SOURCES	= $(SRCDIR)/*_vector.c $(SRCDIR)/layout_resolver.c \
-		  $(SRCDIR)/parser.c $(SRCDIR)/string.c $(SRCDIR)/tokenizer.c \
-		  $(SRCDIR)/vector.c $(SRCDIR)/*/*.c $(TESTDIR)/unit.c
+check_SOURCES	= $(SRCDIR)/*.c $(SRCDIR)/json/*.c $(SRCDIR)/utf8/*.c \
+		  $(TESTDIR)/unit.c
 check_layout_resolver_SOURCES	= $(SRCDIR)/layout_resolver.c \
 				  $(SRCDIR)/ast_node_pointer_vector.c \
 				  $(SRCDIR)/layout_line_segment_vector.c \
@@ -216,6 +215,7 @@ indent:
 		$(TESTDIR)/*/*.c
 
 $(DEPDIR) $(OBJDIR):
+	@mkdir -p $& $@/cli
 	@mkdir -p $@ $@/json
 	@mkdir -p $@ $@/utf8
 
