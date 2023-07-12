@@ -20,9 +20,9 @@ specification itself), but also supports a more strict behavior.
 
   While the RFC states that 'As of the publication of this document, the
   legitimate values for "X" [in "ISO-8859-X"] are the digits 1 through 9.', all
-  ISO-8859 parts are supported, that is including 10, 11, 13, 14, 15 and 16
-  (The work in making ISO-8859-12 for Devanagari was officially abandoned in
-  1997).
+  [ISO-8859](https://en.wikipedia.org/wiki/ISO/IEC_8859) parts are supported,
+  that is including 10, 11, 13, 14, 15 and 16 (The work in making ISO-8859-12
+  for Devanagari was officially abandoned in 1997).
 - The processor is extensible through custom command processing interpreters,
   enabling easier implementation of extensions to the standard set of
   text/richtext commands.
