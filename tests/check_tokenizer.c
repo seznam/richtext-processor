@@ -1,4 +1,5 @@
 #include <string.h>
+#include "../src/bool.h"
 #include "../src/tokenizer.h"
 #include "../src/string.h"
 #include "../src/token.h"
@@ -58,12 +59,13 @@ do {\
 
 START_TEST(tokenize_returnsNullForNullInput)
 {
-	assert(tokenize(NULL) == NULL, "Expected NULL returned for NULL input");
+	assert(tokenize(NULL, false, false) == NULL,
+	       "Expected NULL returned for NULL input");
 END_TEST}
 
 START_TEST(tokenize_processesSingleWord)
 {
-	TokenizerResult *result = tokenize(string_from("foo"));
+	TokenizerResult *result = tokenize(string_from("foo"), true, true);
 	Token token;
 	assert(result != NULL, "Expected non-NULL result");
 	assert(result->type == TokenizerResultType_SUCCESS,
@@ -85,7 +87,8 @@ END_TEST}
 
 START_TEST(tokenize_processMultipleWordsSeparatedByRegularSpaces)
 {
-	TokenizerResult *result = tokenize(string_from("foo bar baz"));
+	TokenizerResult *result =
+	    tokenize(string_from("foo bar baz"), true, true);
 	Token *token;
 	assert(result != NULL
 	       && result->type == TokenizerResultType_SUCCESS,
@@ -139,7 +142,8 @@ END_TEST}
 
 START_TEST(tokenize_emitsTokensForEveryIndividualAsciiWhitespaceExceptCrLf)
 {
-	TokenizerResult *result = tokenize(string_from("\r \t\n\v\f"));
+	TokenizerResult *result =
+	    tokenize(string_from("\r \t\n\v\f"), true, true);
 	Token *token;
 	assert(result != NULL
 	       && result->type == TokenizerResultType_SUCCESS,
@@ -166,7 +170,7 @@ END_TEST}
 
 START_TEST(tokenize_emitsCrLfInSingleWhitespaceToken)
 {
-	TokenizerResult *result = tokenize(string_from(" \r\n "));
+	TokenizerResult *result = tokenize(string_from(" \r\n "), true, true);
 	Token *token;
 	assert(result != NULL
 	       && result->type == TokenizerResultType_SUCCESS,
@@ -187,7 +191,8 @@ END_TEST}
 
 START_TEST(tokenize_recognizesAllTwoByteWhitespaceAsSingleTokens)
 {
-	TokenizerResult *result = tokenize(string_from("\302\205\302\240"));
+	TokenizerResult *result =
+	    tokenize(string_from("\302\205\302\240"), true, true);
 	Token *token;
 	assert(result != NULL
 	       && result->type == TokenizerResultType_SUCCESS,
@@ -242,7 +247,7 @@ START_TEST(tokenize_recognizesAllThreeByteWhitespaceAsSingleTokens)
 		strcat(whitespaceString, character);
 	}
 
-	result = tokenize(string_from(whitespaceString));
+	result = tokenize(string_from(whitespaceString), true, true);
 	assert(result != NULL
 	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected successful result");
@@ -264,7 +269,7 @@ END_TEST}
 
 START_TEST(tokenize_processesCommandStarts)
 {
-	TokenizerResult *result = tokenize(string_from("<abc>"));
+	TokenizerResult *result = tokenize(string_from("<abc>"), true, true);
 	Token *token;
 	assert(result != NULL
 	       && result->type == TokenizerResultType_SUCCESS,
@@ -281,7 +286,7 @@ END_TEST}
 
 START_TEST(tokenize_processesCommandEnd)
 {
-	TokenizerResult *result = tokenize(string_from("</abc>a"));
+	TokenizerResult *result = tokenize(string_from("</abc>a"), true, true);
 	Token *token;
 	assert(result != NULL
 	       && result->type == TokenizerResultType_SUCCESS,
@@ -299,7 +304,8 @@ END_TEST}
 
 START_TEST(tokenize_emitsWarningsForInvalidUtf8CharactersButTreatsThemAsText)
 {
-	TokenizerResult *result = tokenize(string_from("a\370\373\377b"));
+	TokenizerResult *result =
+	    tokenize(string_from("a\370\373\377b"), true, true);
 	TokenizerWarning *warning;
 	Token *token;
 	assert(result != NULL
@@ -324,7 +330,8 @@ END_TEST}
 
 START_TEST(tokenize_emitsWarningsForUnexpectedContinuationBytes)
 {
-	TokenizerResult *result = tokenize(string_from("a\201b\226\300c"));
+	TokenizerResult *result =
+	    tokenize(string_from("a\201b\226\300c"), true, true);
 	TokenizerWarning *warning;
 	Token *token;
 	assert(result != NULL
@@ -349,7 +356,7 @@ END_TEST}
 
 START_TEST(tokenize_rejectsCommandStartDelimiterInsideACommand)
 {
-	TokenizerResult *result = tokenize(string_from("<a<b>"));
+	TokenizerResult *result = tokenize(string_from("<a<b>"), true, true);
 	assert(result != NULL
 	       && result->type == TokenizerResultType_ERROR,
 	       "Expected an error result");
@@ -364,7 +371,7 @@ END_TEST}
 
 START_TEST(tokenize_rejectsUnterminatedCommand)
 {
-	TokenizerResult *result = tokenize(string_from("<aa"));
+	TokenizerResult *result = tokenize(string_from("<aa"), true, true);
 	assert(result != NULL
 	       && result->type == TokenizerResultType_ERROR,
 	       "Expected an error result");
@@ -378,7 +385,7 @@ START_TEST(tokenize_rejectsUnterminatedCommand)
 	       TokenizerErrorCode_UNTERMINATED_COMMAND,
 	       "Expected the error's code to be UNTERMINATED_COMMAND");
 
-	result = tokenize(string_from("</ab"));
+	result = tokenize(string_from("</ab"), true, true);
 	assert(result != NULL
 	       && result->type == TokenizerResultType_ERROR,
 	       "Expected an error result");
@@ -395,7 +402,8 @@ END_TEST}
 
 START_TEST(tokenize_returnsEncounteredWarningsOnError)
 {
-	TokenizerResult *result = tokenize(string_from("a\226<b<c"));
+	TokenizerResult *result =
+	    tokenize(string_from("a\226<b<c"), true, true);
 	assert(result != NULL
 	       && result->type == TokenizerResultType_ERROR,
 	       "Expected an error result");
@@ -406,7 +414,7 @@ END_TEST}
 
 START_TEST(tokenize_treatsCommandEndDelimiterInTextAsText)
 {
-	TokenizerResult *result = tokenize(string_from("ab>c"));
+	TokenizerResult *result = tokenize(string_from("ab>c"), true, true);
 	assert(result != NULL
 	       && result->type == TokenizerResultType_SUCCESS,
 	       "Expected a successful result");
@@ -416,6 +424,114 @@ START_TEST(tokenize_treatsCommandEndDelimiterInTextAsText)
 		    "ab>c");
 END_TEST}
 
+START_TEST(tokenize_rejectsUnexpectedEncodingEndCommands)
+{
+	TokenizerResult *result =
+	    tokenize(string_from("text</US-ASCII>"), false, false);
+	assert(result != NULL
+	       && result->type == TokenizerResultType_ERROR,
+	       "Expected an error result");
+	assert(result->warnings->size.length == 0, "Expected 0 warnings");
+	assert(result->result.error.code ==
+	       TokenizerErrorCode_ENCODING_STACK_UNDERFLOW,
+	       "Expected the ENCODING_STACK_UNDERFLOW error code");
+
+	result =
+	    tokenize(string_from
+		     ("<US-ASCII>text<ISO-8859-1></US-ASCII></ISO-8859-1>"),
+		     false, false);
+	assert(result != NULL
+	       && result->type == TokenizerResultType_ERROR,
+	       "Expected an error result");
+	assert(result->warnings->size.length == 0, "Expected 0 warnings");
+	assert(result->result.error.code ==
+	       TokenizerErrorCode_UNBALANCED_ENCODING_COMMANDS,
+	       "Expected the UNBALANCED_ENCODING_COMMANDS error code");
+END_TEST}
+
+START_TEST(tokenize_respectsCommandsCaseSensitivity)
+{
+	TokenizerResult *result =
+	    tokenize(string_from("text</us-ascii>"), false, false);
+	assert(result != NULL
+	       && result->type == TokenizerResultType_SUCCESS,
+	       "Expected successful result");
+END_TEST}
+
+#define assert_token(ordinal, tokenPtr, expectedValue)\
+do {\
+	char *errorMessage =\
+	    malloc(46 + strlen(ordinal) + strlen(expectedValue) + 1);\
+	string *valueString = string_from(expectedValue);\
+	sprintf(errorMessage,\
+		"Expected the %s token to be \"%s\", but was \"%s\"", ordinal,\
+		expectedValue, (tokenPtr)->value->content);\
+	assert(string_compare((tokenPtr)->value, valueString) == 0,\
+	       errorMessage);\
+} while (false)
+
+#define assert_nth_token(index, tokenPtr, expectedValue)\
+do {\
+	char *ordinal = malloc(23);\
+	sprintf(ordinal, index == 0 ? "%dst" : index == 1 ? "%dnd" : index ==\
+		2 ? "%drd" : "%dth", index + 1);\
+	assert_token(ordinal, (tokenPtr) + index, expectedValue);\
+} while (false)
+
+START_TEST(tokenize_normalizesInputToUtf8)
+{
+	char *input =
+	    "ASCII text<ISO-8859-1>\240\243<ISO-8859-2>\243</ISO-8859-2>\253</ISO-8859-1><ISO-8859-3>\241</ISO-8859-3><ISO-8859-4>\242</ISO-8859-4><ISO-8859-5>\242</ISO-8859-5>";
+	TokenizerResult *result = tokenize(string_from(input), false, false);
+	Token *tokens;
+	assert(result != NULL
+	       && result->type == TokenizerResultType_SUCCESS,
+	       "Expected successful result");
+	tokens = result->result.tokens->items;
+
+	assert_nth_token(0, tokens, "ASCII");
+	assert_nth_token(4, tokens, " ");
+	assert_nth_token(5, tokens, "£");
+	assert_nth_token(7, tokens, "Ł");
+	assert_nth_token(9, tokens, "«");
+	assert_nth_token(12, tokens, "Ħ");
+	assert_nth_token(15, tokens, "ĸ");
+	assert_nth_token(18, tokens, "Ђ");
+
+	input =
+	    "<ISO-8859-6>\306</ISO-8859-6><ISO-8859-7>\304</ISO-8859-7><ISO-8859-8>\272</ISO-8859-8><ISO-8859-9>\272</ISO-8859-9><ISO-8859-10>\272</ISO-8859-10>";
+	result = tokenize(string_from(input), false, false);
+	tokens = result->result.tokens->items;
+
+	assert_nth_token(1, tokens, "ئ");
+	assert_nth_token(4, tokens, "Δ");
+	assert_nth_token(7, tokens, "÷");
+	assert_nth_token(10, tokens, "º");
+	assert_nth_token(13, tokens, "š");
+
+	input =
+	    "<ISO-8859-11>\277</ISO-8859-11><ISO-8859-13>\277</ISO-8859-13><ISO-8859-14>\277</ISO-8859-14><ISO-8859-15>\277</ISO-8859-15><ISO-8859-16>\277</ISO-8859-16>";
+	result = tokenize(string_from(input), false, false);
+	tokens = result->result.tokens->items;
+
+	assert_nth_token(1, tokens, "ฟ");
+	assert_nth_token(4, tokens, "æ");
+	assert_nth_token(7, tokens, "ṡ");
+	assert_nth_token(10, tokens, "¿");
+	assert_nth_token(13, tokens, "ż");
+
+	input = "😀😃😄😁<ISO-8859-1>\243</ISO-8859-1>😊";
+	result = tokenize(string_from(input), false, true);
+	tokens = result->result.tokens->items;
+
+	assert_nth_token(0, tokens, "😀😃😄😁");
+	assert_nth_token(2, tokens, "£");
+	assert_nth_token(4, tokens, "😊");
+END_TEST}
+
+#undef assert_nth_token
+#undef assert_token
+
 START_TEST(TokenizerResult_free_acceptsNull)
 {
 	TokenizerResult_free(NULL);
@@ -423,7 +539,7 @@ END_TEST}
 
 START_TEST(TokenizerResult_free_freesSuccessfulResult)
 {
-	TokenizerResult *result = tokenize(string_from("a"));
+	TokenizerResult *result = tokenize(string_from("a"), true, true);
 	TokenizerResult_free(result);
 END_TEST}
 
@@ -446,6 +562,9 @@ static void all_tests()
 	runTest(tokenize_rejectsUnterminatedCommand);
 	runTest(tokenize_returnsEncounteredWarningsOnError);
 	runTest(tokenize_treatsCommandEndDelimiterInTextAsText);
+	runTest(tokenize_rejectsUnexpectedEncodingEndCommands);
+	runTest(tokenize_respectsCommandsCaseSensitivity);
+	runTest(tokenize_normalizesInputToUtf8);
 	runTest(TokenizerResult_free_acceptsNull);
 	runTest(TokenizerResult_free_freesSuccessfulResult);
 }

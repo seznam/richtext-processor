@@ -1,6 +1,7 @@
 #ifndef TOKENIZER_HEADER_FILE
 #define TOKENIZER_HEADER_FILE 1
 
+#include "bool.h"
 #include "string.h"
 #include "token_vector.h"
 
@@ -20,9 +21,13 @@ typedef enum TokenizerErrorCode {
 	TokenizerErrorCode_OK,
 	TokenizerErrorCode_UNEXPECTED_COMMAND_START,
 	TokenizerErrorCode_UNTERMINATED_COMMAND,
+	TokenizerErrorCode_ENCODING_STACK_UNDERFLOW,
+	TokenizerErrorCode_UNBALANCED_ENCODING_COMMANDS,
+	TokenizerErrorCode_TEXT_DECODING_FAILURE,
 	TokenizerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING,
 	TokenizerErrorCode_OUT_OF_MEMORY_FOR_TOKENS,
-	TokenizerErrorCode_OUT_OF_MEMORY_FOR_WARNINGS
+	TokenizerErrorCode_OUT_OF_MEMORY_FOR_WARNINGS,
+	TokenizerErrorCode_OUT_OF_MEMORY_FOR_ENCODING_STACK
 } TokenizerErrorCode;
 
 typedef struct TokenizerError {
@@ -57,7 +62,8 @@ typedef struct TokenizerResult {
 	TokenizerWarningVector *warnings;
 } TokenizerResult;
 
-TokenizerResult *tokenize(string * richtext);
+TokenizerResult *tokenize(string * richtext, bool caseInsensitiveCommands,
+			  bool isUtf8);
 
 void TokenizerResult_free(TokenizerResult * result);
 

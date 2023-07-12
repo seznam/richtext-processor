@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include "utf8/single_byte_encoding.h"
+#include "utf8/single_byte_to_utf8.h"
 #include "tokenizer.h"
 #include "bool.h"
 #include "string.h"
@@ -7,6 +9,28 @@
 #include "token_vector.h"
 #include "typed_vector.h"
 
+typedef enum TextEncoding {
+	TextEncoding_UNKNOWN,
+	TextEncoding_US_ASCII,
+	TextEncoding_ISO_8859_1,
+	TextEncoding_ISO_8859_2,
+	TextEncoding_ISO_8859_3,
+	TextEncoding_ISO_8859_4,
+	TextEncoding_ISO_8859_5,
+	TextEncoding_ISO_8859_6,
+	TextEncoding_ISO_8859_7,
+	TextEncoding_ISO_8859_8,
+	TextEncoding_ISO_8859_9,
+	TextEncoding_ISO_8859_10,
+	TextEncoding_ISO_8859_11,
+	TextEncoding_ISO_8859_13,
+	TextEncoding_ISO_8859_14,
+	TextEncoding_ISO_8859_15,
+	TextEncoding_ISO_8859_16,
+	TextEncoding_UTF8
+} TextEncoding;
+
+Vector_ofType(TextEncoding)
 static TokenizerResult *addWarning(TokenizerResult * result,
 				   TokenizerWarningVector ** warnings,
 				   TokenVector * tokens,
@@ -21,18 +45,34 @@ static TokenizerResult *finalizeToError(TokenizerResult * result,
 					TokenizerWarningVector * warnings,
 					TokenVector * tokens);
 
-static TokenizerErrorCode addToken(TokenVector ** tokens, Token token,
+static TokenizerErrorCode addToken(TokenVector ** tokens, Token * token,
 				   string * input,
 				   unsigned long valueStartIndex,
-				   unsigned long valueEndIndex);
+				   unsigned long valueEndIndex,
+				   TextEncoding valueEncoding);
 
 static void freeTokens(TokenVector * tokens);
 
 static unsigned long getWhitespaceLength(string * input, unsigned long index,
 					 bool isUtf8);
 
-TokenizerResult *tokenize(richtext)
+static TokenizerErrorCode updateEncodingStack(TextEncodingVector **
+					      encodingStack,
+					      TextEncoding * currentEncoding,
+					      Token * token,
+					      bool caseInsensitiveCommands);
+
+static TextEncoding tokenToEncoding(Token * token, bool caseInsensitive);
+
+static string *transcodeToUtf8(string * input, TextEncoding inputEncoding);
+
+static bool string_equals(string * string1, string * string2,
+			  bool caseInsensitive);
+
+TokenizerResult *tokenize(richtext, caseInsensitiveCommands, isUtf8)
 string *richtext;
+bool caseInsensitiveCommands;
+bool isUtf8;
 {
 	unsigned long tokenCountEstimate;
 	TokenizerResult *result = malloc(sizeof(TokenizerResult));
@@ -47,6 +87,10 @@ string *richtext;
 	unsigned long valueStartIndex = 0;
 	unsigned long whitespaceLength;
 	bool isInsideCommand;
+	bool caseInsensitive = caseInsensitiveCommands;
+	TextEncodingVector *encodingStack = NULL;
+	TextEncoding currentEncoding =
+	    isUtf8 ? TextEncoding_UTF8 : TextEncoding_US_ASCII;
 	TokenizerWarningCode WARN_UNEXPECTED_CONT_BYTE =
 	    TokenizerWarningCode_UNEXPECTED_UTF8_CONTINUATION_BYTE;
 	TokenizerWarningCode WARN_INVALID_CHARACTER =
@@ -72,6 +116,16 @@ string *richtext;
 		result->result.error.code =
 		    TokenizerErrorCode_OUT_OF_MEMORY_FOR_WARNINGS;
 		result->warnings = NULL;
+		return result;
+	}
+
+	encodingStack = TextEncodingVector_new(0, 0);
+	if (encodingStack == NULL) {
+		result->type = TokenizerResultType_ERROR;
+		result->result.error.byteIndex = 0;
+		result->result.error.codepointIndex = 0;
+		result->result.error.code =
+		    TokenizerErrorCode_OUT_OF_MEMORY_FOR_ENCODING_STACK;
 		return result;
 	}
 
@@ -109,8 +163,9 @@ string *richtext;
 
 			if (currentByteIndex > token.byteIndex) {
 				errorCode =
-				    addToken(&tokens, token, richtext,
-					     token.byteIndex, currentByteIndex);
+				    addToken(&tokens, &token, richtext,
+					     token.byteIndex, currentByteIndex,
+					     currentEncoding);
 				if (errorCode != TokenizerErrorCode_OK) {
 					break;
 				}
@@ -132,8 +187,17 @@ string *richtext;
 				    (token.type ==
 				     TokenType_COMMAND_END ? 2 : 1);
 				errorCode =
-				    addToken(&tokens, token, richtext,
-					     valueStartIndex, currentByteIndex);
+				    addToken(&tokens, &token, richtext,
+					     valueStartIndex, currentByteIndex,
+					     currentEncoding);
+				if (errorCode != TokenizerErrorCode_OK) {
+					break;
+				}
+				errorCode =
+				    updateEncodingStack(&encodingStack,
+							&currentEncoding,
+							&token,
+							caseInsensitive);
 				if (errorCode != TokenizerErrorCode_OK) {
 					break;
 				}
@@ -146,10 +210,11 @@ string *richtext;
 			break;
 		default:
 			/*
-			   Since we are operating on a UTF-8 input, we need to
-			   correctly count the codepoints and correctly
-			   interpret Unicode whitespace (see
-			   getWhitespaceLength's implementation).
+			   Since we are operating on an input potentially
+			   containing UTF-8, we need to correctly count the
+			   codepoints and correctly interpret Unicode
+			   whitespace (see getWhitespaceLength's
+			   implementation).
 			 */
 
 			/*
@@ -160,16 +225,18 @@ string *richtext;
 
 			whitespaceLength =
 			    getWhitespaceLength(richtext, currentByteIndex,
-						true);
+						currentEncoding ==
+						TextEncoding_UTF8);
 
 			if (!isInsideCommand && whitespaceLength > 0) {
 				if (currentByteIndex > token.byteIndex) {
 					TokenizerErrorCode errorOk =
 					    TokenizerErrorCode_OK;
 					errorCode =
-					    addToken(&tokens, token, richtext,
+					    addToken(&tokens, &token, richtext,
 						     token.byteIndex,
-						     currentByteIndex);
+						     currentByteIndex,
+						     currentEncoding);
 					if (errorCode != errorOk) {
 						break;
 					}
@@ -179,10 +246,10 @@ string *richtext;
 				token.byteIndex = currentByteIndex;
 				token.type = TokenType_WHITESPACE;
 				errorCode =
-				    addToken(&tokens, token, richtext,
+				    addToken(&tokens, &token, richtext,
 					     token.byteIndex,
 					     currentByteIndex +
-					     whitespaceLength);
+					     whitespaceLength, currentEncoding);
 				if (errorCode != TokenizerErrorCode_OK) {
 					break;
 				}
@@ -200,7 +267,9 @@ string *richtext;
 				token.type = TokenType_TEXT;
 			}
 
-			if (*currentByte < 128) {
+			if (currentEncoding != TextEncoding_UTF8) {
+				/* Nothing to do for single-byte encodings */
+			} else if (*currentByte < 128) {
 				/* single-byte UTF-8 codepoints */
 				if (whitespaceLength > 1) {	/* CRLF */
 					currentByteIndex +=
@@ -342,20 +411,33 @@ TokenVector *tokens;
 }
 
 static TokenizerErrorCode addToken(tokens, token, input, valueStartIndex,
-				   valueEndIndex)
+				   valueEndIndex, valueEncoding)
 TokenVector **tokens;
-Token token;
+Token *token;
 string *input;
 unsigned long valueStartIndex;
 unsigned long valueEndIndex;
+TextEncoding valueEncoding;
 {
 	TokenVector *resizedTokens;
+	string *tokenValue;
 
-	token.value = string_substring(input, valueStartIndex, valueEndIndex);
-	if (token.value == NULL) {
+	tokenValue = string_substring(input, valueStartIndex, valueEndIndex);
+	if (tokenValue == NULL) {
 		return TokenizerErrorCode_OUT_OF_MEMORY_FOR_SUBSTRING;
 	}
-	resizedTokens = TokenVector_append(*tokens, &token);
+
+	if (valueEncoding == TextEncoding_UTF8) {
+		token->value = tokenValue;
+	} else {
+		token->value = transcodeToUtf8(tokenValue, valueEncoding);
+		string_free(tokenValue);
+		if (token->value == NULL) {
+			return TokenizerErrorCode_TEXT_DECODING_FAILURE;
+		}
+	}
+
+	resizedTokens = TokenVector_append(*tokens, token);
 	if (resizedTokens == NULL) {
 		return TokenizerErrorCode_OUT_OF_MEMORY_FOR_TOKENS;
 	}
@@ -413,6 +495,10 @@ bool isUtf8;
 	}
 
 	if (!isUtf8) {
+		/* ISO-8859-* has only one extra white-space above 127 */
+		if (byte1 == 160) {	/* Non-breaking space */
+			return 1;
+		}
 		return 0;
 	}
 
@@ -490,4 +576,182 @@ bool isUtf8;
 	return 0;
 }
 
+static TokenizerErrorCode updateEncodingStack(encodingStack, currentEncoding,
+					      token, caseInsensitiveCommands)
+TextEncodingVector **encodingStack;
+TextEncoding *currentEncoding;
+Token *token;
+bool caseInsensitiveCommands;
+{
+	TextEncoding tokenEncoding =
+	    tokenToEncoding(token, caseInsensitiveCommands);
+	TextEncodingVector *changedVector;
+
+	if (tokenEncoding == TextEncoding_UNKNOWN) {
+		/* The token is not an encoding-related command. */
+		return TokenizerErrorCode_OK;
+	}
+
+	if (token->type == TokenType_COMMAND_START) {
+		changedVector =
+		    TextEncodingVector_append(*encodingStack, currentEncoding);
+		if (changedVector == NULL) {
+			return
+			    TokenizerErrorCode_OUT_OF_MEMORY_FOR_ENCODING_STACK;
+		}
+		*encodingStack = changedVector;
+		*currentEncoding = tokenEncoding;
+	} else {
+		if (*currentEncoding != tokenEncoding) {
+			return TokenizerErrorCode_UNBALANCED_ENCODING_COMMANDS;
+		}
+		changedVector =
+		    TextEncodingVector_pop(*encodingStack, currentEncoding);
+		if (changedVector == NULL) {
+			return TokenizerErrorCode_ENCODING_STACK_UNDERFLOW;
+		}
+		*encodingStack = changedVector;
+	}
+
+	return TokenizerErrorCode_OK;
+}
+
+static TextEncoding tokenToEncoding(token, caseInsensitive)
+Token *token;
+bool caseInsensitive;
+{
+	unsigned char encodingValue[11];
+	string encoding;
+	unsigned char codepage;
+
+	if (token == NULL) {
+		return TextEncoding_UNKNOWN;
+	}
+
+	encoding.content = encodingValue;
+
+	encodingValue[0] = 'U';
+	encodingValue[1] = 'S';
+	encodingValue[2] = '-';
+	encodingValue[3] = 'A';
+	encodingValue[4] = 'S';
+	encodingValue[5] = 'C';
+	encodingValue[6] = 'I';
+	encodingValue[7] = 'I';
+	encoding.length = 8;
+
+	if (string_equals(token->value, &encoding, caseInsensitive)) {
+		return TextEncoding_US_ASCII;
+	}
+
+	encodingValue[0] = 'I';
+	encodingValue[1] = 'S';
+	encodingValue[2] = 'O';
+	encodingValue[3] = '-';
+	encodingValue[4] = '8';
+	encodingValue[5] = '8';
+	encodingValue[6] = '5';
+	encodingValue[7] = '9';
+	encodingValue[8] = '-';
+	encoding.length = 10;
+
+	for (codepage = 1; codepage <= 9; codepage++) {
+		encodingValue[9] = '0' + codepage;
+		if (string_equals(token->value, &encoding, caseInsensitive)) {
+			return TextEncoding_ISO_8859_1 + codepage - 1;
+		}
+	}
+
+	encodingValue[9] = '1';
+	encoding.length = 11;
+	for (codepage = 0; codepage <= 6; codepage++) {
+		if (codepage == 2) {
+			continue;
+		}
+
+		encodingValue[10] = '0' + codepage;
+		if (string_equals(token->value, &encoding, caseInsensitive)) {
+			return TextEncoding_ISO_8859_10 + codepage - (codepage >
+								      2 ? 1 :
+								      0);
+		}
+	}
+
+	return TextEncoding_UNKNOWN;
+}
+
+static string *transcodeToUtf8(input, inputEncoding)
+string *input;
+TextEncoding inputEncoding;
+{
+	SingleByteEncoding encoding;
+
+	switch (inputEncoding) {
+	case TextEncoding_US_ASCII:
+		encoding = SingleByteEncoding_US_ASCII;
+		break;
+	case TextEncoding_ISO_8859_1:
+		encoding = SingleByteEncoding_ISO_8859_1;
+		break;
+	case TextEncoding_ISO_8859_2:
+		encoding = SingleByteEncoding_ISO_8859_2;
+		break;
+	case TextEncoding_ISO_8859_3:
+		encoding = SingleByteEncoding_ISO_8859_3;
+		break;
+	case TextEncoding_ISO_8859_4:
+		encoding = SingleByteEncoding_ISO_8859_4;
+		break;
+	case TextEncoding_ISO_8859_5:
+		encoding = SingleByteEncoding_ISO_8859_5;
+		break;
+	case TextEncoding_ISO_8859_6:
+		encoding = SingleByteEncoding_ISO_8859_6;
+		break;
+	case TextEncoding_ISO_8859_7:
+		encoding = SingleByteEncoding_ISO_8859_7;
+		break;
+	case TextEncoding_ISO_8859_8:
+		encoding = SingleByteEncoding_ISO_8859_8;
+		break;
+	case TextEncoding_ISO_8859_9:
+		encoding = SingleByteEncoding_ISO_8859_9;
+		break;
+	case TextEncoding_ISO_8859_10:
+		encoding = SingleByteEncoding_ISO_8859_10;
+		break;
+	case TextEncoding_ISO_8859_11:
+		encoding = SingleByteEncoding_ISO_8859_11;
+		break;
+	case TextEncoding_ISO_8859_13:
+		encoding = SingleByteEncoding_ISO_8859_13;
+		break;
+	case TextEncoding_ISO_8859_14:
+		encoding = SingleByteEncoding_ISO_8859_14;
+		break;
+	case TextEncoding_ISO_8859_15:
+		encoding = SingleByteEncoding_ISO_8859_15;
+		break;
+	case TextEncoding_ISO_8859_16:
+		encoding = SingleByteEncoding_ISO_8859_16;
+		break;
+	default:
+		return NULL;
+	}
+
+	return transcodeSingleByteEncodedTextToUtf8(encoding, input);
+}
+
+static bool string_equals(string1, string2, caseInsensitive)
+string *string1;
+string *string2;
+bool caseInsensitive;
+{
+	if (caseInsensitive) {
+		return string_caseInsensitiveCompare(string1, string2) == 0;
+	}
+	return string_compare(string1, string2) == 0;
+}
+
 Vector_ofTypeImplementation(TokenizerWarning)
+    Vector_ofTypeImplementation(TextEncoding)

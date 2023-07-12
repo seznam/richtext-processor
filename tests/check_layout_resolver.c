@@ -236,7 +236,7 @@ START_TEST(resolveLayout_returnsErrorForNonRootNodes)
 	rootNode.parent = NULL;
 	rootNode.children = ASTNodePointerVector_new(0, 1);
 
-	tokens = tokenize(string_from(input));
+	tokens = tokenize(string_from(input), true, true);
 	nodeTree = parse(tokens->result.tokens, false);
 	nodes = nodeTree->result.nodes;
 	(*nodes->items)->parent = &rootNode;
@@ -1842,7 +1842,8 @@ START_TEST(resolveLayout_warnsAboutNewPageInsideSamePage)
 {
 	char *input = "<SamePage><np></SamePage>";
 	ParserResult *parsedInput =
-	    parse(tokenize(string_from(input))->result.tokens, false);
+	    parse(tokenize(string_from(input), true, true)->result.tokens,
+		  false);
 	ASTNodePointerVector *nodes = parsedInput->result.nodes;
 	ASTNode *warningCause;
 
@@ -1857,7 +1858,8 @@ START_TEST(resolveLayout_warnsAboutNestedSamePageInsideSamePage)
 {
 	char *input = "<SamePage><SamePage>text</SamePage></SamePage>";
 	ParserResult *parsedInput =
-	    parse(tokenize(string_from(input))->result.tokens, false);
+	    parse(tokenize(string_from(input), true, true)->result.tokens,
+		  false);
 	ASTNodePointerVector *nodes = parsedInput->result.nodes;
 	ASTNode *warningCause;
 
@@ -1872,7 +1874,8 @@ START_TEST(resolveLayout_emitsWarningsOnErrorsAsWell)
 {
 	char *input = "<SamePage><np></SamePage>";
 	ParserResult *parsedInput =
-	    parse(tokenize(string_from(input))->result.tokens, false);
+	    parse(tokenize(string_from(input), true, true)->result.tokens,
+		  false);
 	ASTNodePointerVector *nodes = parsedInput->result.nodes;
 	ASTNode *children[1];
 	ASTNode *nodeOfInvalidType, *warningCause;
@@ -1894,8 +1897,8 @@ START_TEST(resolveLayout_doesNotModifyItsInput)
 {
 	char *input =
 	    "<Bold><Italic>text</Italic></Bold><np><Paragraph>text2</Paragraph>";
-	TokenizerResult *tokens1 = tokenize(string_from(input));
-	TokenizerResult *tokens2 = tokenize(string_from(input));
+	TokenizerResult *tokens1 = tokenize(string_from(input), true, true);
+	TokenizerResult *tokens2 = tokenize(string_from(input), true, true);
 	ParserResult *nodes1 = parse(tokens1->result.tokens, false);
 	ParserResult *nodes2 = parse(tokens2->result.tokens, false);
 	LayoutResolverResult *blocks =
@@ -3095,7 +3098,7 @@ CustomCommandLayoutInterpretation customCommandInterpreter(ASTNode *, bool);
 bool caseInsensitiveCommands;
 {
 	ParserResult *parserResult;
-	TokenizerResult *tokens = tokenize(string_from(richtext));
+	TokenizerResult *tokens = tokenize(string_from(richtext), true, true);
 	if (tokens == NULL || tokens->type != TokenizerResultType_SUCCESS) {
 		return NULL;
 	}

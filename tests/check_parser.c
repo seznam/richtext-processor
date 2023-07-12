@@ -166,7 +166,8 @@ END_TEST}
 
 START_TEST(parse_matchingBalancingCommandEndsInCaseInsensitiveWay)
 {
-	TokenizerResult *tokenizerResult = tokenize(string_from("<abc></ABC>"));
+	TokenizerResult *tokenizerResult =
+	    tokenize(string_from("<abc></ABC>"), true, true);
 	ParserResult *result;
 	ASTNodePointerVector *nodes;
 	ASTNode *node;
@@ -196,7 +197,7 @@ END_TEST}
 START_TEST(parse_processesNonBalancingCommandsWithoutNesting)
 {
 	TokenizerResult *tokenizerResult =
-	    tokenize(string_from("<lt><nl><np>"));
+	    tokenize(string_from("<lt><nl><np>"), true, true);
 	ParserResult *result;
 	ASTNodePointerVector *nodes;
 	ASTNode **nodePointer;
@@ -214,7 +215,7 @@ START_TEST(parse_processesNonBalancingCommandsWithoutNesting)
 	assert_node(2, *(nodePointer + 1), 4, 4, 1, ASTNodeType_COMMAND, "nl");
 	assert_node(3, *(nodePointer + 2), 8, 8, 2, ASTNodeType_COMMAND, "np");
 
-	tokenizerResult = tokenize(string_from("<Np><lT><NL>"));
+	tokenizerResult = tokenize(string_from("<Np><lT><NL>"), true, true);
 	assert(tokenizerResult != NULL
 	       && tokenizerResult->type == TokenizerResultType_SUCCESS,
 	       "Expected successful tokenization");
@@ -306,7 +307,8 @@ END_TEST}
 
 START_TEST(parse_rejectsInvalidTokenType)
 {
-	TokenizerResult *tokenizerResult = tokenize(string_from("foo"));
+	TokenizerResult *tokenizerResult =
+	    tokenize(string_from("foo"), true, true);
 	ParserResult *result;
 	assert(tokenizerResult != NULL
 	       && tokenizerResult->type == TokenizerResultType_SUCCESS,
@@ -368,7 +370,8 @@ static ParserResult *parseStringToResult(input, caseInsensitiveCommands)
 const char *input;
 bool caseInsensitiveCommands;
 {
-	TokenizerResult *tokenizerResult = tokenize(string_from(input));
+	TokenizerResult *tokenizerResult =
+	    tokenize(string_from(input), true, true);
 	if (tokenizerResult == NULL
 	    || tokenizerResult->type == TokenizerResultType_ERROR) {
 		return NULL;
