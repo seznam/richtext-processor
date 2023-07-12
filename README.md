@@ -10,6 +10,23 @@ This implementation, while compatible with the specification, is slightly more
 lenient as for what kind of input it tolerates (as recommended by the
 specification itself), but also supports a more strict behavior.
 
+### Additional features
+
+- The processor supports the UTF8 encoding, and uses UTF8 internally and in its
+  output. The default input encoding can be set to either US-ASCII or UTF8.
+  Sections marked by the `ISO-8859-X` and `US-ASCII` commands are fully
+  supported, including arbitrary nesting, and will have their contents
+  converted to UTF8 during tokenization.
+
+  While the RFC states that 'As of the publication of this document, the
+  legitimate values for "X" [in "ISO-8859-X"] are the digits 1 through 9.', all
+  ISO-8859 parts are supported, that is including 10, 11, 13, 14, 15 and 16
+  (The work in making ISO-8859-12 for Devanagari was officially abandoned in
+  1997).
+- The processor is extensible through custom command processing interpreters,
+  enabling easier implementation of extensions to the standard set of
+  text/richtext commands.
+
 ### Supported (optional) extensions to text/richtext syntax
 
 - Command names may be of any length and contain any characters except for `<`
