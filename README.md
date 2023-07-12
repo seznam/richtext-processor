@@ -18,10 +18,10 @@ specification itself), but also supports a more strict behavior.
   and hyphen ("-") characters' (these constraints can be enforced by providing
   a custom command interpreter if desired).
 - Command names can be processed in a case-sensitive way if desired. The
-  default behavior is to treat command names as case-insensitive, so that the
-  implementation is compliant with the standard. The standard command names are
-  recognized in capitalization used in their definitions on pages 23 and 24 of
-  RFC 1341 when in case-sensitive mode.
+  specification-recommended (implied, actually) behavior is to treat command
+  names as case-insensitive, and this implementation supports this. When in
+  case-sensitive mode, the standard command names are recognized in
+  capitalization used in their definitions on pages 23 and 24 of RFC 1341.
 
   Please note that the C implementation is capable of interpreting only the A-Z
   letters of english alphabet in case-insensitive mode (which is compliant with
