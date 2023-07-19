@@ -49,6 +49,12 @@ specification itself), but also supports a more strict behavior.
 - Comment content, if containing commands, must be well-formed. The
   specification does not state how should the commands insides comments be
   treated and validated.
+- Single line of text may combine variously flushed text (e.g. a few words
+  aligned left and few words aligned right). Note that not all output formats
+  may support this feature.
+- Indentation level may be changed within a single line of text, and nested
+  formatting commands (e.g. &lt;Bold>) can be used to increase their effect
+  (e.g. even bolder text). Note that no all output formats may support this.
 - While the specification states that 'Those implementations that can do so are
   encouraged to deal reasonably with improperly nested richtext', this
   implementation rejects such content with an error. The specification does not
