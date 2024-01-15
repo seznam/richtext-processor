@@ -88,7 +88,7 @@ this.
 
 The project is verified to be compilable in the following compilers:
 
-- gcc 9.4
+- gcc 9.4 or higher
 
 The code itself uses no dependencies apart from the standard lib C, using only
 functions from ANSI C era.
