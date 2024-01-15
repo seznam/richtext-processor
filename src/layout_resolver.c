@@ -150,71 +150,71 @@ typedef struct LayoutResolverState {
 	ASTNode *errorLocation;
 } LayoutResolverState;
 
-static void freeLayoutBlocks(LayoutBlockVector * blocks);
+static void freeLayoutBlocks(LayoutBlockVector *blocks);
 
-static LayoutResolverErrorCode processCommands(LayoutResolverState * state,
-					       ASTNode * parent,
-					       ASTNodePointerVector * nodes);
+static LayoutResolverErrorCode processCommands(LayoutResolverState *state,
+					       ASTNode *parent,
+					       ASTNodePointerVector *nodes);
 
 static LayoutResolverErrorCode
-processCommandStart(LayoutResolverState * state, ASTNode * node,
+processCommandStart(LayoutResolverState *state, ASTNode *node,
 		    CommandLayoutInterpretation layout);
 
 static LayoutResolverErrorCode
-processCommandEnd(LayoutResolverState * state, ASTNode * node,
+processCommandEnd(LayoutResolverState *state, ASTNode *node,
 		  CommandLayoutInterpretation layout);
 
-static LayoutResolverErrorCode addSegmentContent(LayoutResolverState * state,
-						 ASTNode * nodePointer);
+static LayoutResolverErrorCode addSegmentContent(LayoutResolverState *state,
+						 ASTNode *nodePointer);
 
-static LayoutResolverErrorCode newBlock(LayoutResolverState * state,
-					ASTNode * node,
+static LayoutResolverErrorCode newBlock(LayoutResolverState *state,
+					ASTNode *node,
 					CommandLayoutInterpretation layout,
-					ASTNode * exitedNode);
+					ASTNode *exitedNode);
 
-static LayoutResolverErrorCode newParagraph(LayoutResolverState * state,
-					    ASTNode * node,
+static LayoutResolverErrorCode newParagraph(LayoutResolverState *state,
+					    ASTNode *node,
 					    CommandLayoutInterpretation layout,
-					    ASTNode * exitedNode);
+					    ASTNode *exitedNode);
 
-static LayoutResolverErrorCode newLine(LayoutResolverState * state,
-				       ASTNode * node,
+static LayoutResolverErrorCode newLine(LayoutResolverState *state,
+				       ASTNode *node,
 				       CommandLayoutInterpretation layout);
 
-static LayoutResolverErrorCode newSegment(LayoutResolverState * state,
-					  ASTNode * node);
+static LayoutResolverErrorCode newSegment(LayoutResolverState *state,
+					  ASTNode *node);
 
-static LayoutResolverErrorCode updateSegmentOnCommandStart(LayoutResolverState *
-							   state,
-							   ASTNode * command);
+static LayoutResolverErrorCode updateSegmentOnCommandStart(LayoutResolverState
+							   *state,
+							   ASTNode *command);
 
-static LayoutResolverErrorCode updateSegmentOnCommandEnd(LayoutResolverState *
-							 state,
-							 ASTNode * commandNode);
+static LayoutResolverErrorCode updateSegmentOnCommandEnd(LayoutResolverState
+							 *state,
+							 ASTNode *commandNode);
 
-static bool nodeHasParentOfType(ASTNode * node, string * type,
+static bool nodeHasParentOfType(ASTNode *node, string *type,
 				bool caseInsensitive);
 
 static CommandLayoutInterpretation
-getCommandLayoutInterpretation(ASTNode * command,
+getCommandLayoutInterpretation(ASTNode *command,
 			       CustomCommandLayoutInterpretation
 			       customCommandInterpreter(ASTNode *, bool),
 			       bool caseInsensitive);
 
-static CommandLayoutInterpretation getLayoutInterpretation(LayoutResolverState *
-							   state,
-							   ASTNode *
-							   commandNode);
+static CommandLayoutInterpretation getLayoutInterpretation(LayoutResolverState
+							   *state,
+							   ASTNode
+							   *commandNode);
 
 static CommandLayoutInterpretation
-getStandardCommandLayoutInterpretation(string * command, bool caseInsensitive);
+getStandardCommandLayoutInterpretation(string *command, bool caseInsensitive);
 
-static ASTNode *nextDFSNode(ASTNodePointerVector * rootNodes, ASTNode * node,
+static ASTNode *nextDFSNode(ASTNodePointerVector *rootNodes, ASTNode *node,
 			    bool leaveCurrentNode);
 
-static ASTNode *nextSibling(ASTNodePointerVector * rootNodes, ASTNode * node);
+static ASTNode *nextSibling(ASTNodePointerVector *rootNodes, ASTNode *node);
 
-static bool string_equals(string * string1, string * string2,
+static bool string_equals(string *string1, string *string2,
 			  bool caseInsensitive);
 
 static string *COMMAND_Comment = NULL;	/* The rest is declared bellow */

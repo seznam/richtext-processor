@@ -31,42 +31,42 @@ typedef enum TextEncoding {
 } TextEncoding;
 
 Vector_ofType(TextEncoding)
-static TokenizerResult *addWarning(TokenizerResult * result,
-				   TokenizerWarningVector ** warnings,
-				   TokenVector * tokens,
+static TokenizerResult *addWarning(TokenizerResult *result,
+				   TokenizerWarningVector **warnings,
+				   TokenVector *tokens,
 				   unsigned long byteIndex,
 				   unsigned long codepointIndex,
 				   TokenizerWarningCode code);
 
-static TokenizerResult *finalizeToError(TokenizerResult * result,
+static TokenizerResult *finalizeToError(TokenizerResult *result,
 					unsigned long byteIndex,
 					unsigned long codepointIndex,
 					TokenizerErrorCode code,
-					TokenizerWarningVector * warnings,
-					TokenVector * tokens);
+					TokenizerWarningVector *warnings,
+					TokenVector *tokens);
 
-static TokenizerErrorCode addToken(TokenVector ** tokens, Token * token,
-				   string * input,
+static TokenizerErrorCode addToken(TokenVector **tokens, Token *token,
+				   string *input,
 				   unsigned long valueStartIndex,
 				   unsigned long valueEndIndex,
 				   TextEncoding valueEncoding);
 
-static void freeTokens(TokenVector * tokens);
+static void freeTokens(TokenVector *tokens);
 
-static unsigned long getWhitespaceLength(string * input, unsigned long index,
+static unsigned long getWhitespaceLength(string *input, unsigned long index,
 					 bool isUtf8);
 
-static TokenizerErrorCode updateEncodingStack(TextEncodingVector **
-					      encodingStack,
-					      TextEncoding * currentEncoding,
-					      Token * token,
+static TokenizerErrorCode updateEncodingStack(TextEncodingVector
+					      **encodingStack,
+					      TextEncoding *currentEncoding,
+					      Token *token,
 					      bool caseInsensitiveCommands);
 
-static TextEncoding tokenToEncoding(Token * token, bool caseInsensitive);
+static TextEncoding tokenToEncoding(Token *token, bool caseInsensitive);
 
-static string *transcodeToUtf8(string * input, TextEncoding inputEncoding);
+static string *transcodeToUtf8(string *input, TextEncoding inputEncoding);
 
-static bool string_equals(string * string1, string * string2,
+static bool string_equals(string *string1, string *string2,
 			  bool caseInsensitive);
 
 TokenizerResult *tokenize(richtext, caseInsensitiveCommands, isUtf8)

@@ -62,9 +62,9 @@ typedef struct TokenizerResult {
 	TokenizerWarningVector *warnings;
 } TokenizerResult;
 
-TokenizerResult *tokenize(string * richtext, bool caseInsensitiveCommands,
+TokenizerResult *tokenize(string *richtext, bool caseInsensitiveCommands,
 			  bool isUtf8);
 
-void TokenizerResult_free(TokenizerResult * result);
+void TokenizerResult_free(TokenizerResult *result);
 
 #endif

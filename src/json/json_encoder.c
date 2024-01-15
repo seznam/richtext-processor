@@ -16,23 +16,23 @@ static const double MIN_SAFE_INTEGER = -9007199254740991;
 static const double MAX_SAFE_INTEGER = 9007199254740991;
 
 Vector_ofPointer(string)
-static string *encodeString(JSONValue * value);
+static string *encodeString(JSONValue *value);
 
-static string *encodeArray(JSONValue * value);
+static string *encodeArray(JSONValue *value);
 
-static string *encodeObject(JSONValue * value);
+static string *encodeObject(JSONValue *value);
 
-static string *createCompositeValueResult(stringPointerVector * items,
-					  string * prefix, string * separator,
-					  string * suffix);
+static string *createCompositeValueResult(stringPointerVector *items,
+					  string *prefix, string *separator,
+					  string *suffix);
 
-static unsigned long getJoinedStringLength(stringPointerVector * strings,
+static unsigned long getJoinedStringLength(stringPointerVector *strings,
 					   unsigned long separatorLength);
 
 static void joinStrings(unsigned char *destination,
-			stringPointerVector * strings, string * separator);
+			stringPointerVector *strings, string *separator);
 
-static void freeStrings(stringPointerVector * strings);
+static void freeStrings(stringPointerVector *strings);
 
 string *JSON_encode(value)
 JSONValue *value;

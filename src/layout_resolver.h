@@ -73,11 +73,11 @@ typedef struct LayoutResolverResult {
 	LayoutResolverWarningVector *warnings;
 } LayoutResolverResult;
 
-LayoutResolverResult *resolveLayout(ASTNodePointerVector * nodes,
+LayoutResolverResult *resolveLayout(ASTNodePointerVector *nodes,
 				    CustomCommandLayoutInterpretation
 				    customCommandInterpreter(ASTNode *, bool),
 				    bool caseInsensitiveCommands);
 
-void LayoutResolverResult_free(LayoutResolverResult * result);
+void LayoutResolverResult_free(LayoutResolverResult *result);
 
 #endif

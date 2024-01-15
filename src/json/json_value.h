@@ -48,21 +48,21 @@ JSONValue *JSONValue_newBoolean(bool value);
 
 JSONValue *JSONValue_newNumber(double value);
 
-JSONValue *JSONValue_newString(string * value);
+JSONValue *JSONValue_newString(string *value);
 
 JSONValue *JSONValue_newArray(void);
 
 JSONValue *JSONValue_newObject(void);
 
-JSONValue *JSONValue_pushToArray(JSONValue * array, JSONValue * value);
+JSONValue *JSONValue_pushToArray(JSONValue *array, JSONValue *value);
 
-JSONValue *JSONValue_setObjectProperty(JSONValue * object, string * key,
-				       JSONValue * value);
+JSONValue *JSONValue_setObjectProperty(JSONValue *object, string *key,
+				       JSONValue *value);
 
-JSONValue *JSONValue_deleteObjectProperty(JSONValue * object, string * key);
+JSONValue *JSONValue_deleteObjectProperty(JSONValue *object, string *key);
 
-void JSONValue_free(JSONValue * value);
+void JSONValue_free(JSONValue *value);
 
-void JSONValue_freeRecursive(JSONValue * value);
+void JSONValue_freeRecursive(JSONValue *value);
 
 #endif
