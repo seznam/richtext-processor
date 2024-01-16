@@ -6,6 +6,9 @@ defined in [RFC 1341](https://www.rfc-editor.org/rfc/rfc1341), section
 loading, normalizing and converting the input into multiple output formats, and
 is extensible.
 
+**This project is on a hiatus because I'm currently involved in ML & LLM
+research, which I find more challenging and therefore engaging.**
+
 ## Differences from the format specification
 
 This implementation, while compatible with the specification, is slightly more
