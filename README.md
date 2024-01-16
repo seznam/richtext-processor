@@ -2,7 +2,9 @@
 
 Utility for processing formatted text content in `text/richtext` format, as
 defined in [RFC 1341](https://www.rfc-editor.org/rfc/rfc1341), section
-[7.1.3](https://www.rfc-editor.org/rfc/rfc1341#page-23).
+[7.1.3](https://www.rfc-editor.org/rfc/rfc1341#page-23). The processor supports
+loading, normalizing and converting the input into multiple output formats, and
+is extensible.
 
 ## Differences from the format specification
 
@@ -75,6 +77,81 @@ specification itself), but also supports a more strict behavior.
   bail-out and backtracking) instead of than treating such content as
   stand-alone content. The renderers are therefore not required to render
   same-page content as continuation of the current line because of this.
+
+## Internal process details
+
+The processor handles the provided `text/richtext` input using the following
+pipeline:
+
+```
+input text/richtext document
+             ||
+             ||
+             \/
+      .-------------.
+      |  Tokenizer  |  Performs tokenization on input and converts tokens to
+      '-------------'  UTF-8
+             ||
+             ||  tokens
+             \/
+        .----------.
+        |  Parser  |  Parses the tokens into an abstract syntax tree (AST)
+        '----------'
+             ||
+             ||  abstract syntax tree
+             \/
+   .-------------------.
+   |  Layout resolver  |  Creates normalized abstract layout of input document
+   '-------------------'
+             ||
+             ||  input document's abstract layout
+             \/
+.-------------------------.
+|  Layout post-processor  |  Modifies the pre-processed document in any desired
+'-------------------------'  way
+             ||
+             ||  post-processed abstract layout
+             \/
+   .-------------------.
+   |  Output renderer  |  Formats the abstract layout into the output format.
+   '-------------------'
+             ||
+             ||
+             \/
+the input document in output format
+```
+
+While the Tokenizer, Parser and Layout resolver are fixed, the Layout
+post-processor and Output renderer are chosen by the caller of the processor.
+The Layout resolver, and some Layout post-processors and Output renderers,
+support further behavior customization through callback function(s) that enable
+more complex processing and easier implementation of extensions to the basic
+text/richtext feature set.
+
+## Simplified example usage
+
+```c
+#include <stdlib.h>
+#include <stdio.h>
+#include "bool.h"
+#include "processor.h"
+#include "string.h"
+#include "output/simple_plaintext.h"
+
+string *input = string_from("<bold>This</bold> is a simple demo");
+OutputRenderer outputRenderer = simplePlaintextOutputRenderer;
+SimplePlaintextOutputRendererConfiguration config;
+config.maxLineLength = 80;
+
+ProcessorResult *result =
+    process(input, true, true, NULL, NULL, outputRenderer, &config);
+string *output = result->result.output;
+
+/* Convert output to a C-style string */
+char *output_c = calloc((output->length + 1) * sizeof(char));
+memcpy(output_c, output->content, output->length);
+print(output_c); /* Prints "This is a simple demo" */
+```
 
 ## Code portability, compatibility and style
 
