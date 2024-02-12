@@ -106,7 +106,7 @@ indent:
 		$(TESTDIR)/*/*.c
 
 $(DEPDIR) $(OBJDIR):
-	@mkdir -p $& $@/cli
+	@mkdir -p $@ $@/cli
 	@mkdir -p $@ $@/json
 	@mkdir -p $@ $@/utf8
 
