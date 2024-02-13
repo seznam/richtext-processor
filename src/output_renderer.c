@@ -3,7 +3,7 @@
 #include "string.h"
 
 void OutputRendererResult_free(result)
-OutputRendererResult * result;
+OutputRendererResult *result;
 {
 	if (result == NULL) {
 		return;

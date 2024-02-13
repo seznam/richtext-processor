@@ -2,7 +2,7 @@
 #include "layout_post_processor.h"
 
 void LayoutPostProcessorResult_free(result)
-LayoutPostProcessorResult * result;
+LayoutPostProcessorResult *result;
 {
 	if (result == NULL) {
 		return;
